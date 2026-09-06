@@ -8,10 +8,10 @@
 
 ## README 三件套
 
-- [ ] 改 `README.md`「See It in Action」:段首 GIF 引用 + 英文 caption(design D5),文字 transcript 保留原样
-- [ ] 改 `README_CN.md`「看它干活」:同步三件套结构与中文 caption,与 EN 版结构一一对应
+- [x] 改 `README.md`「See It in Action」:段首 GIF 引用 + 英文 caption(design D5),文字 transcript 保留原样
+- [x] 改 `README_CN.md`「看它干活」:同步三件套结构与中文 caption,与 EN 版结构一一对应
 
 ## 校验
 
-- [ ] 两版结构与措辞对应;demo 段、caption 与 tape 源 grep 无硬编码版本号/测试数量
-- [ ] `node --test ./tests/*.test.mjs` 全绿(回归)
+- [x] 两版结构与措辞对应;demo 段、caption 与 tape 源 grep 无硬编码版本号/测试数量
+- [x] `node --test ./tests/*.test.mjs` 全绿(回归)
