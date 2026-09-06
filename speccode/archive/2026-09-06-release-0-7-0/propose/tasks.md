@@ -1,0 +1,14 @@
+# Tasks: release-0-7-0
+
+轻档发布;两处编辑同提交落盘(版本纪律:version bump MUST 与 CHANGELOG 同提交)。
+
+## 1. bump 与 CHANGELOG
+
+- [x] `.claude-plugin/plugin.json` `version`: `0.6.0` → `0.7.0`
+- [x] `CHANGELOG.md`:新增 `## [0.7.0] - 2026-09-06` 小节——顶部英文 highlights 块;中文条目按 Keep a Changelog 分组(`Added`/`Changed`/`Removed`),**BREAKING** 标注(新项目 worktree 缺省 `.speccode/worktrees`)与仓名改名说明;`Unreleased` 空段保留;compare 链接补 `[0.7.0]` 与 `[unreleased]` 指向
+
+## 2. 验证
+
+- [x] 一致性:`plugin.json` version 与 CHANGELOG 最新小节版本号一致;CHANGELOG 无硬编码漂移(条目为历史记录,允许含版本号字面量)
+- [x] 全量测试 `node --test ./tests/*.test.mjs` 全绿(299 基线;发布不改代码)
+- [x] 复审修复(With fixes,2 Important + 2 Minor 已修):①「17 条 requirement」计数错误(实为 19)→ 移除计数(免漂移,合「文档版本信息不漂移」纪律);②worktree_dir 缺省条目补 **BREAKING** 标注并移入 Changed(proposal/tasks 承诺兑现);③分组按 Keep a Changelog 惯例重排(Added 先于 Changed)+ 新增 Removed 组(旧嵌套布局移除);④compare 链接区剩余 6 行旧仓名统一为新仓名(链接区一次性切换)。
