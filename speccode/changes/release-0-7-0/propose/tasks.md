@@ -4,8 +4,8 @@
 
 ## 1. bump 与 CHANGELOG
 
-- [ ] `.claude-plugin/plugin.json` `version`: `0.6.0` → `0.7.0`
-- [ ] `CHANGELOG.md`:新增 `## [0.7.0] - 2026-09-06` 小节——顶部英文 highlights 块;中文条目按 Keep a Changelog 分组(`Added`/`Changed`/`Removed`),**BREAKING** 标注(新项目 worktree 缺省 `.speccode/worktrees`)与仓名改名说明;`Unreleased` 空段保留;compare 链接补 `[0.7.0]` 与 `[unreleased]` 指向
+- [x] `.claude-plugin/plugin.json` `version`: `0.6.0` → `0.7.0`
+- [x] `CHANGELOG.md`:新增 `## [0.7.0] - 2026-09-06` 小节——顶部英文 highlights 块;中文条目按 Keep a Changelog 分组(`Added`/`Changed`/`Removed`),**BREAKING** 标注(新项目 worktree 缺省 `.speccode/worktrees`)与仓名改名说明;`Unreleased` 空段保留;compare 链接补 `[0.7.0]` 与 `[unreleased]` 指向
 
 ## 2. 验证
 
