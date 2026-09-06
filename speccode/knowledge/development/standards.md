@@ -15,17 +15,15 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/plugin-packaging -->
-**裸调约定**:命令正文写 `speccode.mjs <verb> --cwd .`,依赖插件 bin/ 在启用期间被加入 Bash 工具 PATH;speccode.mjs MUST 具 #!/usr/bin/env node shebang 与 +x。已知限制:PATH 仅插件启用时生效,手动终端调试用全路径 node plugins/speccode/bin/speccode.mjs。process.argv[1].endsWith('speccode.mjs') 守卫在裸调下安全。
+**shim 调用约定**:命令正文写 `speccode <verb> --cwd .`——`bin/speccode` wrapper(符号链接安全,PATH shim 可链接至它)依赖插件 bin/ 进 PATH,或由宿主 adapter 提供的 shim 解析;prose 禁止 `speccode.mjs <verb>`、绝对路径、`${CLAUDE_PLUGIN_ROOT}` 形态(grep 守卫测试固化)。`speccode.mjs` 直调保留为手动调试形态(node bin/speccode.mjs <verb>,process.argv 守卫两入口均安全)。写 verb 一律 --json-stdin;未知 verb 或抛错 → {ok:false, error} + exit 1。
 
-**版本发布纪律**:bump plugin.json version 的提交 MUST 同一提交(或同一 PR)同步更新根 CHANGELOG.md 对应版本小节;未完成的 version bump MUST NOT 合入 trunk。发版 MUST 打 `v<version>` tag 并建 GitHub Release(notes 摘自 CHANGELOG);Release 是给人看的标记,更新检测实际走 marketplace git 拉取 + plugin.json version 比对,Release 不触发自动更新。**CHANGELOG 格式**:中文条目为主体 + Keep a Changelog 骨架(Added/Changed/Fixed/Removed + semver 比较链接),版本小节顶部加一句英文 highlights(控成本);CHANGELOG 是版本号与测试数量的单一数据源。**patch vs minor 判据**:全部为修复与小变更、无新能力、无 BREAKING 不发 minor/major(不夸大变更面);Fixed 对应修复项,Changed 收录清理与规格演进,对照 squash commit 逐一核对防漏。**syncing 顺序**:先 bump+CHANGELOG 再 sync,使「version 与 CHANGELOG 最新小节一致」合并后立即为真。**BREAKING 需在 CHANGELOG 显式标注**(含升级路径)。
+**版本发布纪律**:bump plugin.json version 的提交 MUST 同一提交(或同一 PR)同步更新根 CHANGELOG.md 对应版本小节;未完成的 version bump MUST NOT 合入 trunk。发版 MUST 打 `v<version>` tag 并建 GitHub Release(notes 摘自 CHANGELOG);Release 是给人看的标记,更新检测实际走 marketplace git 拉取 + plugin.json version 比对,Release 不触发自动更新。**CHANGELOG 格式**:中文条目为主体 + Keep a Changelog 骨架(Added/Changed/Fixed/Removed + semver 比较链接),版本小节顶部加一句英文 highlights(控成本);CHANGELOG 是版本号与测试数量的单一数据源。**patch vs minor 判据**:全部为修复与小变更、无新能力、无 BREAKING 不发 minor/major(不夸大变更面);Fixed 对应修复项,Changed 收录清理与规格演进,对照 squash commit 逐一核对防漏。**syncing 顺序**:先 bump+CHANGELOG 再 sync,使「version 与 CHANGELOG 最新小节一致」合并后立即为真。**BREAKING 需在 CHANGELOG 显式标注**(含升级路径)。**发布类 chore 走 proposing 轻档**(空 delta 专属 Tier 1),不再零文档直提。
 
-**命令 markdown 规范**:全程中文交互;0.6.0 起旧命令目录已全量迁移为 skills/ 布局(命令位于 plugins/speccode/skills/<name>/SKILL.md,一 skill 一目录,调用名 = 目录名,与迁移前的 /speccode:<name> 形态完全一致),frontmatter 只含 description(name/category/tags 全部移除——name 致 VS Code 菜单歧义已于 0.5.1 删,category/tags 非标遗留随 0.6.0 skills 迁移一并清理;description 兼作模型自动调用的匹配面,不设 disable-model-invocation);未知 verb 或抛错 → {ok:false, error} + exit 1。(出自 archive/2026-07-13-add-speccode-plugin、2026-08-07-restructure-as-claude-code-plugin、2026-08-09-plugin-release-process、2026-08-09-speccode-v2-sdd-flow、2026-08-10-release-0-2-1、2026-08-11-release-0-2-2;0.5.1 由 vscode-slash-command-name 变更修正,归档 archive/2026-09-04-vscode-slash-command-name;0.6.0 由 commands-to-skills 变更修正)
+**命令 markdown 规范**:全程中文交互;skills/<name>/SKILL.md 一 skill 一目录(调用名 = 目录名),frontmatter 只含 description(兼作模型自动调用的匹配面,不设 disable-model-invocation);命令表引用用「与 skills/ 实扫一致」措辞,MUST NOT 写死命令总数字面量。(出自 archive/2026-07-13-add-speccode-plugin、2026-08-07-restructure-as-claude-code-plugin、2026-08-09-plugin-release-process、2026-08-09-speccode-v2-sdd-flow、2026-08-10-release-0-2-1、2026-08-11-release-0-2-2、2026-09-04-vscode-slash-command-name、2026-09-04-commands-to-skills、2026-09-06-release-0-7-0)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/documentation-facade -->
-**多语言维护纪律**:双语文档结构 MUST 一一对应(根 README 12 段骨架 / 插件 README §1-14 节号),任何内容改动 MUST 同步全部语言版本;结构对齐(段/节为锚)是双语漂移的防线。翻译以中文版节号清单为纲;专名保留原文(/speccode: 命令名、worktree/trunk/feature/spec 等术语不意译);英文版无残留中文段落(代码块与 toggle 文本除外)。
-
-**文档版本信息不漂移纪律**:仓库文档 SHALL NOT 硬编码随时间漂移的信息——插件版本号、测试用例数量、命令总数;需要引用时以链接指向 CHANGELOG.md 或读自 plugin.json(单一数据源);涉及数量 MUST NOT 写死字面量。手维计数漂移的根治 = 去掉计数本身(改数字是治标,每次规格变动仍需手动同步)。badges 版本用 shields dynamic/json 从 raw plugin.json 读 $.version,绝不硬编码;shields 静态 version badge 需手工同步,重新引入漂移——demo 中基线测试写「全通过」不写具体数目。**互链矩阵 4 组链接钉死**(根 EN↔CN、插件 EN↔CN、根→插件同语言、插件门面指针→同语言根 README):散落各文档靠自觉会漏改,必须进 spec;文件重命名用 git mv 保留历史。**门面计数对齐**:门面与 CLAUDE.md 的 capability 数/命令数必须与实扫一致(计数漂移会让读者对单一真源失去信任;修正经 syncing MODIFIED,不绕过规格流程)。(出自 archive/2026-08-07-restructure-as-claude-code-plugin、2026-08-12-readme-docs-overhaul、2026-08-12-readme-english、2026-08-16-readme-optimization;门面对齐教训出自本次增量归档包 2026-09-03-tier1-facade-counts)
+**多语言维护纪律**:双语文档结构 MUST 一一对应——锚 = 实扫段落数(README/DESIGN 各自 EN=CN 同数同序),不以固定数字为锚(数字随重排漂移,如 README 重排后 12 段即失效);任何内容改动 MUST 成对执行全部语言版本。**交叉引用与互链**:删节后全文检索被删节号的交叉引用逐一改指新位置;改名后互链矩阵进 spec 逐链验证;翻译以一方节号清单为纲。(出自 archive/2026-08-10-rebrand-visual-companion、2026-08-12-readme-docs-overhaul、2026-08-12-readme-english、2026-08-16-readme-optimization、2026-09-06-docs-multi-host)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/sdd-document-lifecycle -->
@@ -66,4 +64,8 @@
 
 <!-- distilled-from: cap/tool-input-sanitization -->
 **清洗类 hook 工程准则**:fail-open——hook 任何异常(stdin 非法、载荷缺字段、清洗抛错)一律 exit 0 且无输出,放行原输入;清洗是增强不是门禁,绝不阻断用户交互。清洗范围最小化,第一版只清 U+000D 不扩控制字符;stripCR 无 CR 时返回原引用,hook 壳用引用比较(cleaned !== tool_input)判变化,无变化零输出,避免无谓 updatedInput 与 schema 校验开销。(出自 archive/2026-09-02-askuserquestion-cr-sanitizer)
+<!-- /distilled -->
+
+<!-- distilled-from: cap/host-neutral-prose -->
+**prose 宿主中立纪律**:skills/*/SKILL.md 正文零宿主专属 token(AskUserQuestion、Task tool、subagent_type、TodoWrite、${CLAUDE_PLUGIN_ROOT}、宿主指令文件名,grep 守卫测试固化——新增宿主 token 进守卫清单即持久防回潮)。**通用动词**:提问以「向用户提问(一次一问、给选项)」语义表达,子代理派发以「派发子代理」语义表达——宿主绑定经 per-host manifest(skillInstructions 内嵌摘要)与 references/host-mapping/<host>.md 映射文档承载,MUST NOT 回流正文(skill 正文不引用 host-mapping)。**降级路由**:依赖子代理的命令显式声明依赖与无子代理宿主的降级路径(串行/executing-plans/自查)。**插件内文件引用**:经 `speccode plugin-root --cwd .` 解析,禁用宿主变量。(出自 archive/2026-09-05-neutralize-prose)
 <!-- /distilled -->

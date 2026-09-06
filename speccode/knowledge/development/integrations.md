@@ -15,7 +15,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/code-intel-tool-integration -->
-**探测来源映射**:插件注册表(~/.claude/plugins/installed_plugins.json 的 plugins key,键大小写不敏感子串匹配)/ CLI(command -v 退出码 0)/ 项目级 MCP(项目 .mcp.json 的 mcpServers key)/ 用户级 MCP(~/.claude.json 全局 mcpServers 或 projects[<cwd>].mcpServers)/ 项目配置目录(每工具固定候选,first-existing wins)。**两维度模型**:available = 环境中存在(插件目录/CLI/MCP 任一);integrated = 当前项目集成(项目级 MCP、用户级项目作用域、配置目录任一);登记 = 双 true;available-only 不写入 config。命令咨询为 advisory:exploring/proposing/brainstorming 读 config.code_intel_tools 列表,会话中可用则优先、否则静默回退 Grep/Glob/Read,永不报错——commands-only 插件无法程序化调用另一插件的命令,现实机制就是配置驱动的 advisory 提示。**git check-ignore 退出码三态**:0 = 被忽略、1 = 仓库内未忽略、128 = 路径在仓库外(还覆盖其他 fatal,反推不可靠);只区分 0/非 0 会把 128 误判为「未忽略」。对目录的查询须带尾斜杠(裸路径即使被 dir 模式忽略也返回 1)。**verb 数据模型**:resolve-worktree-dir 返回 {ok, dir, source, ignore},ignore = {scope:'outside'} | {scope:'inside', ignored: boolean},向后兼容新增字段。**GitNexus 签名**:{id:'gitnexus', match:'gitnexus', bin:'gitnexus', dirs:['.gitnexus']};零服务端代码知识图谱引擎(tree-sitter → KuzuDB + MCP)。(出自 archive/2026-08-13-knowledge-tools-detection、2026-08-12-check-ignore-outside-repo、2026-08-15-gitnexus-detector、2026-08-16-code-intel-rename)
+**探测来源映射**:插件注册表(~/.claude/plugins/installed_plugins.json 的 plugins key,键大小写不敏感子串匹配)/ CLI(command -v 退出码 0)/ 项目级 MCP(项目 .mcp.json 的 mcpServers key)/ 用户级 MCP(~/.claude.json 全局 mcpServers 或 projects[<cwd>].mcpServers)/ 项目配置目录(每工具固定候选,first-existing wins)。**宿主分流**:config.host 缺失(未记录)或为 claude-code → 全量探测(行为与分流前一致);非 claude-code 宿主跳过 ~/.claude 两类探测(注册表/用户级 MCP),.mcp.json、bin、项目配置目录探测恒开;evidence 保留来源前缀可审计。**两维度模型**:available = 环境中存在(插件目录/CLI/MCP 任一);integrated = 当前项目集成(项目级 MCP、用户级项目作用域、配置目录任一);登记 = 双 true;available-only 不写入 config。命令咨询为 advisory:读 config.code_intel_tools,会话中可用则优先、否则静默回退 Grep/Glob/Read,永不报错。**git check-ignore 退出码三态**:0 = 被忽略、1 = 仓库内未忽略、128 = 路径在仓库外;对目录的查询须带尾斜杠。**verb 数据模型**:resolve-worktree-dir 返回 {ok, dir, source, ignore},ignore = {scope:'outside'} | {scope:'inside', ignored: boolean}。**GitNexus 签名**:{id:'gitnexus', match:'gitnexus', bin:'gitnexus', dirs:['.gitnexus']};零服务端代码知识图谱引擎(tree-sitter → KuzuDB + MCP)。(出自 archive/2026-08-13-knowledge-tools-detection、2026-08-12-check-ignore-outside-repo、2026-08-15-gitnexus-detector、2026-08-16-code-intel-rename、2026-09-05-host-detection)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/sdd-document-lifecycle -->
@@ -28,4 +28,8 @@
 
 <!-- distilled-from: cap/tool-input-sanitization -->
 **Claude Code PreToolUse updatedInput 机制(spike 实证)**:hook 输出 {hookSpecificOutput:{hookEventName:'PreToolUse', permissionDecision:'allow', updatedInput:<完整替换的 tool_input>}} 即可在工具执行前改写输入;updatedInput 会被目标工具的 schema 完整校验(不合法则整次调用报 schema 错,而非静默忽略——构造替换输入必须合法);hook 匹配经 hooks.json 的 matcher 字段;hook 载荷经 stdin 单行 JSON 含 tool_name/tool_input/tool_use_id/session_id 等;插件级 hooks/hooks.json 随插件启用自动生效,不写目标项目 settings,卸载无残留。(出自 archive/2026-09-02-askuserquestion-cr-sanitizer)
+<!-- /distilled -->
+
+<!-- distilled-from: cap/host-detection -->
+**detect-host verb**:分层启发探测宿主——env 标记(如 CLAUDECODE/CLAUDE_CODE_ENTRYPOINT)→ cwd 宿主配置目录(.claude/.codex/.zcode/.opencode/.pi/.kimi)→ 指令文件(仅 CLAUDE.md,AGENTS.md 为跨宿主标准不作单宿主信号)→ 回退 generic(不报错);--host <id> 显式覆盖优先级最高且经枚举校验(非法值 {ok:false});枚举 claude-code/codex/zcode/opencode/pi/kimi-code/generic,输出含 evidence 与 source(env/dir/file/explicit/fallback)。全部环境访问可注入(env/exists),单测不触真机。**config.host 记录**:init 探测后 MUST 经用户确认才写入(探测不静默落盘);缺失 = 未记录、走与 claude-code 相同的全量探测。启发为 best-effort:未知宿主标记缺失即回退 generic,用户确认是权威兜底;新宿主标记待真机验证后补充。(出自 archive/2026-09-05-host-detection)
 <!-- /distilled -->
