@@ -17,9 +17,9 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/plugin-packaging -->
-**references 自包含与品牌中立**:plugins/speccode/references/ 下辅助资源 MUST 自包含——渲染产物 MUST NOT 引用第三方品牌标识(名称、logo、链接)、MUST NOT 运行时请求第三方远程资源(图片、脚本、样式);所需版本号、仓库链接等元数据 MUST 读自 plugin.json 不硬编码(兜底常量除外)。防止供应链污染(远程 logo 被替换)与品牌残留;删除远程 logo 后失去作用对象的机制(如遥测关停开关)整块移除而非更名保留。
+**references 自包含与品牌中立**:仓库根 references/ 下辅助资源 MUST 自包含——渲染产物 MUST NOT 引用第三方品牌标识(名称、logo、链接)、MUST NOT 运行时请求第三方远程资源(图片、脚本、样式);所需版本号、仓库链接等元数据 MUST 读自 plugin.json 不硬编码(兜底常量除外)。防止供应链污染(远程 logo 被替换)与品牌残留;删除远程 logo 后失去作用对象的机制(如遥测关停开关)整块移除而非更名保留。
 
-**homepage scheme 门禁(纵深防御)**:visual companion 把 plugin.json 的 homepage 直接渲进 <a href>,escapeHtmlText 防住属性逃逸但防不住 javascript: scheme;门禁放读取时(readSpeccodeManifest)校验 /^https?:\//,非法/非字符串/空串统一回退兜底默认仓库 URL——消毒时机早,未来新增使用点无需各自记得。**元数据不盲信**:渲染层对元数据做 scheme 白名单只放行 http/https;spec 钉为可验证契约。**合法值无误杀面**:只放行 http/https 对当前值与可预见值(GitHub URL)无误杀。(出自 archive/2026-08-10-rebrand-visual-companion、2026-08-11-visual-companion-cleanup;visual companion 防御类按 plugin-packaging「references 自包含与品牌中立」requirement 归属,brief 默认归 documentation-facade 可改判)
+**homepage scheme 门禁(纵深防御)**:visual companion 把 plugin.json 的 homepage 直接渲进 <a href>,escapeHtmlText 防住属性逃逸但防不住 javascript: scheme;门禁放读取时(readSpeccodeManifest)校验 /^https?:\//,非法/非字符串/空串统一回退兜底默认仓库 URL——消毒时机早,未来新增使用点无需各自记得。**元数据不盲信**:渲染层对元数据做 scheme 白名单只放行 http/https;spec 钉为可验证契约。**合法值无误杀面**:只放行 http/https 对当前值与可预见值(GitHub URL)无误杀。(出自 archive/2026-08-10-rebrand-visual-companion、2026-08-11-visual-companion-cleanup)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/knowledge-set -->

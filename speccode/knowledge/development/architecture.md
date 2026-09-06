@@ -51,7 +51,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/documentation-facade -->
-**三层文档架构分工**:根 README = marketplace 用户门面 / 插件 README = 设计文档 / CLAUDE.md = 开发文档;「门面速览 + 深链」模式——根 README 只放速览与链接,完整命令表与风险表留插件 README,两处互链,避免双份维护漂移。**根 README 12 段骨架**(自上而下):定位标语 → badges → 为什么(痛点)→ 体验 demo(模拟 AI 会话代码块,非 GIF/视频)→ Quickstart 最小闭环 → 命令速览 → 简化拓扑图 → 对比定位 → 理念 → 文档地图 → 贡献 → License。**CLAUDE.md 的第一读者是 agent**:应写 agent 最常踩的坑,而非 AI 贡献劝退书。(出自 archive/2026-08-12-readme-docs-overhaul)
+**四文件文档架构分工**:根 README(EN/CN)= marketplace 用户门面 / docs/DESIGN.md(EN/CN)= 插件设计文档 / AGENTS.md = 开发文档真源 / CLAUDE.md = Claude Code 薄壳(@AGENTS.md 引入,不复制正文)。「门面速览 + 深链」模式——根 README 只放速览与链接,完整命令表与风险表留设计文档,两处互链,避免双份维护漂移。**根 README 骨架(以实扫为准)**:定位标语(多宿主口径)→ badges → 为什么 → 体验 demo → Prerequisites → Install(前置)→ 基础工作流 → 体验示例 → Quickstart → 命令速览 → 双层拓扑 → 对比定位 → 理念 → 文档地图 → git clean 警告 → 贡献 → License(#51 重排后的实际结构,数字不作锚)。**门面多宿主诚实分级**:Claude Code = 已验证主宿主,五宿主验证状态指向 host-mapping 总览表,MUST NOT 把待验证宿主表述为已验证。**AGENTS.md 的第一读者是 agent**:写 agent 最常踩的坑,而非 AI 贡献劝退书。(出自 archive/2026-08-12-readme-docs-overhaul、2026-09-04-readme-optimization、2026-09-06-docs-multi-host)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/knowledge-set -->
@@ -71,5 +71,5 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/tool-input-sanitization -->
-**第二 hook 家族**:插件自带 hooks/ 目录(hooks.json 顶层 hooks.PreToolUse 数组声明、matcher 匹配工具名、命令经 ${CLAUDE_PLUGIN_ROOT} 引用脚本)是 Claude Code settings hook;与 lib/hooks.mjs 的 config 生命周期事件(run-hook verb、warn-only、固定事件枚举)机制不同族,别混淆。清洗/加工类 hook 的确定性逻辑仍下沉 lib 纯函数,hook 壳只做 stdin/stdout 编排。CLAUDE.md 架构节已列为第 5 层。(出自 archive/2026-09-02-askuserquestion-cr-sanitizer)
+**第二 hook 家族**:插件自带 hooks/ 目录(hooks.json 顶层 hooks.PreToolUse 数组声明、matcher 匹配工具名、命令经 ${CLAUDE_PLUGIN_ROOT} 引用脚本——宿主变量仅此声明处合法,skill 正文禁用)是 Claude Code settings hook;与 lib/hooks.mjs 的 config 生命周期事件(run-hook verb、warn-only、固定事件枚举)机制不同族,别混淆。清洗/加工类 hook 的确定性逻辑仍下沉 lib 纯函数,hook 壳只做 stdin/stdout 编排。AGENTS.md 架构节已列为第 5 层。(出自 archive/2026-09-02-askuserquestion-cr-sanitizer)
 <!-- /distilled -->

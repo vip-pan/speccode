@@ -32,8 +32,19 @@
     "2026-09-03-dev-flow-tiering",
     "2026-09-03-knowledge-compact",
     "2026-09-03-knowledge-unified-entry",
+    "2026-09-03-release-0-5-0",
     "2026-09-03-remove-feature-layer",
     "2026-09-03-spec-count-23",
-    "2026-09-03-tier1-facade-counts"
+    "2026-09-03-tier1-facade-counts",
+    "2026-09-04-commands-to-skills",
+    "2026-09-04-flatten-repo",
+    "2026-09-04-readme-optimization",
+    "2026-09-04-vscode-slash-command-name",
+    "2026-09-04-workflow-skill-sync",
+    "2026-09-05-host-detection",
+    "2026-09-05-neutralize-prose",
+    "2026-09-06-docs-multi-host",
+    "2026-09-06-host-adapters",
+    "2026-09-06-release-0-7-0"
   ]
 }
