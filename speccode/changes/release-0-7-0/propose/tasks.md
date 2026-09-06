@@ -9,5 +9,5 @@
 
 ## 2. 验证
 
-- [ ] 一致性:`plugin.json` version 与 CHANGELOG 最新小节版本号一致;CHANGELOG 无硬编码漂移(条目为历史记录,允许含版本号字面量)
-- [ ] 全量测试 `node --test ./tests/*.test.mjs` 全绿(299 基线;发布不改代码)
+- [x] 一致性:`plugin.json` version 与 CHANGELOG 最新小节版本号一致;CHANGELOG 无硬编码漂移(条目为历史记录,允许含版本号字面量)
+- [x] 全量测试 `node --test ./tests/*.test.mjs` 全绿(299 基线;发布不改代码)
