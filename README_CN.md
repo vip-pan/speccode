@@ -36,6 +36,10 @@
 
 ## 看它干活
 
+![speccode 演示:init、creating-worktree、status、finishing-worktree——一次会话从 init 到 PR](./docs/assets/demo.gif)
+
+*压缩重放——真实会话中每条命令之间含模型思考。*
+
 ```console
 $ /speccode:init                      # 探测远端/主干/代码智能工具,写 .speccode/config.json
 ✓ config 就绪: trunk=main, remote=origin, pr_tool=gh

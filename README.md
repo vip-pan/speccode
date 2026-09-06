@@ -36,6 +36,10 @@ Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, command
 
 ## See It in Action
 
+![speccode demo: init, creating-worktree, status, finishing-worktree — one session from init to PR](./docs/assets/demo.gif)
+
+*Condensed replay — a real session includes Claude thinking between commands.*
+
 ```console
 $ /speccode:init                      # probe remote/trunk/code intelligence, write .speccode/config.json
 ✓ config ready: trunk=main, remote=origin, pr_tool=gh
