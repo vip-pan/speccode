@@ -3,7 +3,7 @@
 # 诚实级别:脚本化会话重放(design D3),README caption 明示 condensed
 # 约束:画面内容不含版本号与测试数量字面量(design Risks)
 # 清理:渲染会在 CWD 留下 fixture(d/ 与 d1-d4),渲染后 rm -rf d d1 d2 d3 d4
-# 实现注记:vhs 0.11.0 的 Hide 失效(键入仍可见),故用「Ctrl+U 擦除 +
+# 实现注记:vhs 的 Hide 命令不隐藏键入(brew 实测),故用「Ctrl+U 擦除 +
 #   短真实命令(command cat dN)输出 ANSI 重写(\033[A\033[2K)」呈现假会话;
 #   箭头字形 → 字体缺字形,一律用 ->。
 Output docs/assets/demo.gif
