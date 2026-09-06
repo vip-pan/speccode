@@ -11,3 +11,4 @@
 
 - [x] 一致性:`plugin.json` version 与 CHANGELOG 最新小节版本号一致;CHANGELOG 无硬编码漂移(条目为历史记录,允许含版本号字面量)
 - [x] 全量测试 `node --test ./tests/*.test.mjs` 全绿(299 基线;发布不改代码)
+- [x] 复审修复(With fixes,2 Important + 2 Minor 已修):①「17 条 requirement」计数错误(实为 19)→ 移除计数(免漂移,合「文档版本信息不漂移」纪律);②worktree_dir 缺省条目补 **BREAKING** 标注并移入 Changed(proposal/tasks 承诺兑现);③分组按 Keep a Changelog 惯例重排(Added 先于 Changed)+ 新增 Removed 组(旧嵌套布局移除);④compare 链接区剩余 6 行旧仓名统一为新仓名(链接区一次性切换)。
