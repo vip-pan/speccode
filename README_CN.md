@@ -1,19 +1,21 @@
 # speccode
 
-**基于 Claude Code 的整套 SDD(规格驱动开发)与自动化开发体系** —— 多需求并行开发、spec 文档仓内托管、PR 流程标准化,由全套 `/speccode:*` 命令固化为默认路径。本仓库 dogfood 全部成果:规格主档、每次变更的归档、自动化仓库自身开发的开发工作流 skills,全部仓内托管。
+**面向 coding-agent CLI 的整套 SDD(规格驱动开发)与自动化开发体系**——Claude Code 为经过持续 dogfood 的主宿主,并提供 Codex、Kimi Code、ZCode、OpenCode、Pi 适配(各宿主安装状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))——多需求并行开发、spec 文档仓内托管、PR 流程标准化,由全套 `/speccode:*` 命令固化为默认路径。本仓库 dogfood 全部成果:规格主档、每次变更的归档、自动化仓库自身开发的开发工作流 skills,全部仓内托管。
 
 [English](README.md) | [简体中文](README_CN.md)
 
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![platform: macOS/Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]() [![version](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/vip-pan/speccode-development/main/plugins/speccode/.claude-plugin/plugin.json&query=$.version&label=version&color=blue)](https://github.com/vip-pan/speccode-development/releases) [![tests](https://github.com/vip-pan/speccode-development/actions/workflows/test.yml/badge.svg)](https://github.com/vip-pan/speccode-development/actions/workflows/test.yml) [![GitHub stars](https://img.shields.io/github/stars/vip-pan/speccode-development)]()
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![platform: macOS/Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]() [![version](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/vip-pan/speccode/main/.claude-plugin/plugin.json&query=$.version&label=version&color=blue)](https://github.com/vip-pan/speccode/releases) [![tests](https://github.com/vip-pan/speccode/actions/workflows/test.yml/badge.svg)](https://github.com/vip-pan/speccode/actions/workflows/test.yml) [![GitHub stars](https://img.shields.io/github/stars/vip-pan/speccode)]()
 
 ## 安装
 
 ```bash
-/plugin marketplace add vip-pan/speccode-development
-/plugin install speccode@speccode-development
+/plugin marketplace add vip-pan/speccode
+/plugin install speccode@speccode
 ```
 
 依赖 [Node.js ≥ 24](#前置依赖) 与 `git`。安装后命令以 `/speccode:` 前缀出现,如 `/speccode:init`、`/speccode:status`、`/speccode:finishing-worktree`。
+
+**其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主还需把引擎 shim 装进 PATH:`bash scripts/install-shim.sh`。
 
 ## 为什么用 speccode
 
@@ -74,7 +76,7 @@ $ /speccode:finishing-worktree
 | 知识 | `distilling-knowledge` `recording-knowledge` |
 | 方法论 | `subagent-driven-development` `executing-plans` `dispatching-parallel-agents` `test-driven-development` `systematic-debugging` `requesting-code-review` `receiving-code-review` `verification-before-completion` |
 
-各命令作用与前置条件见 [插件 README §2 命令表](./plugins/speccode/README_CN.md)。
+各命令作用与前置条件见 [设计文档 §2 命令表](./docs/DESIGN_CN.md)。
 
 流程按需求体量分三层:极小需求可走 Tier 1(proposing 后由 `/speccode:applying` 按 tasks.md 逐条手动实现),中小型走 writing-plans + SDD/executing-plans,复杂需求先 brainstorming。
 
@@ -93,7 +95,7 @@ origin/trunk ── 集成分支 ──┬── feature/s1 ── finishing-wor
                                finishing-feature:children 全 completed → 单 PR → trunk
 ```
 
-完整拓扑与要点见 [插件 README §3](./plugins/speccode/README_CN.md)。
+完整拓扑与要点见 [设计文档 §3](./docs/DESIGN_CN.md)。
 
 ## 和谁比
 
@@ -101,7 +103,7 @@ origin/trunk ── 集成分支 ──┬── feature/s1 ── finishing-wor
 |---|---|---|---|---|---|
 | 双层分支拓扑 + 对账(多 worktree 并行) | ✅ | — | — | — | — |
 | spec 文档仓内托管(全分支 tracked) | ✅ | — | 部分 | 部分 | — |
-| Claude Code 原生插件 | ✅ | ✅ | —(跨 agent CLI) | —(npx 安装器) | — |
+| 多宿主安装(6 个 coding agent) | ✅(CC 已验证;其余宿主状态见 host-mapping) | ✅ | ✅(跨 agent CLI) | —(npx 安装器) | — |
 | SDD 方法论(探索/文档/计划/执行/评审) | ✅(自包含移植) | ✅(来源) | — | ✅(自有体系) | — |
 | 生命周期 hooks + 跨会话 memory | ✅ | — | — | — | — |
 | PR/MR 流程标准化 | ✅ | — | — | — | — |
@@ -116,15 +118,16 @@ origin/trunk ── 集成分支 ──┬── feature/s1 ── finishing-wor
 
 | 文档 | 内容 |
 |---|---|
-| [插件 README](./plugins/speccode/README_CN.md) | 全套命令详表、双层拓扑、R1-R13 风险、0.1→0.2 迁移(插件设计文档) |
+| [设计文档](./docs/DESIGN_CN.md) | 全套命令详表、双层拓扑、R1-R13 风险、0.1→0.2 迁移(插件设计文档) |
 | [CHANGELOG](./CHANGELOG.md) | 版本发布记录(Keep a Changelog,全中文) |
-| [CLAUDE.md](./CLAUDE.md) | 开发文档:引擎三层架构、测试约定、speccode 工作流 |
+| [宿主映射](./references/host-mapping/README.md) | 六个受支持 coding agent 的安装入口、工具映射与验证状态 |
+| [AGENTS.md](./AGENTS.md) | 开发文档真源(`CLAUDE.md` 为 Claude Code 薄壳):引擎三层架构、测试约定、speccode 工作流 |
 | `support/` | 开发工作流 skill(真源)与辅助脚本——`speccode-workflow` 经 `support/install-skills.sh` 安装到 `.claude/skills/`,供 Claude Code 懒加载 |
 | `speccode/spec/` · `speccode/archive/` | SDD 规格主档与变更归档——体系自身的活文档 |
 
 ## ⚠ 执行 `git clean` 前必读
 
-`.speccode/` 目录按设计不被 git 跟踪、**不会**被加入 `.gitignore` —— `git clean -fdx`(乃至 `-fd`)会删除你的 speccode 配置、分支状态与会话记忆。建议先 dry-run(`git clean -n`)或显式排除该路径。详见[插件 README §14](./plugins/speccode/README_CN.md)。
+`.speccode/` 目录按设计不被 git 跟踪、**不会**被加入 `.gitignore` —— `git clean -fdx`(乃至 `-fd`)会删除你的 speccode 配置、分支状态与会话记忆。建议先 dry-run(`git clean -n`)或显式排除该路径。详见[设计文档 §14](./docs/DESIGN_CN.md)。
 
 ## 贡献
 

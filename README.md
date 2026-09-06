@@ -1,19 +1,21 @@
 # speccode
 
-**An end-to-end SDD (Spec-Driven Development) and automated development system built on Claude Code** — parallel multi-requirement development, in-repo spec document hosting, and a standardized PR flow, crystallized into a default path by the full `/speccode:*` command set. This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
+**An end-to-end SDD (Spec-Driven Development) and automated development system for coding-agent CLIs** — Claude Code as the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)) — parallel multi-requirement development, in-repo spec document hosting, and a standardized PR flow, crystallized into a default path by the full `/speccode:*` command set. This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
 
 [English](README.md) | [简体中文](README_CN.md)
 
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![platform: macOS/Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]() [![version](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/vip-pan/speccode-development/main/plugins/speccode/.claude-plugin/plugin.json&query=$.version&label=version&color=blue)](https://github.com/vip-pan/speccode-development/releases) [![tests](https://github.com/vip-pan/speccode-development/actions/workflows/test.yml/badge.svg)](https://github.com/vip-pan/speccode-development/actions/workflows/test.yml) [![GitHub stars](https://img.shields.io/github/stars/vip-pan/speccode-development)]()
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![platform: macOS/Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]() [![version](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/vip-pan/speccode/main/.claude-plugin/plugin.json&query=$.version&label=version&color=blue)](https://github.com/vip-pan/speccode/releases) [![tests](https://github.com/vip-pan/speccode/actions/workflows/test.yml/badge.svg)](https://github.com/vip-pan/speccode/actions/workflows/test.yml) [![GitHub stars](https://img.shields.io/github/stars/vip-pan/speccode)]()
 
 ## Install
 
 ```bash
-/plugin marketplace add vip-pan/speccode-development
-/plugin install speccode@speccode-development
+/plugin marketplace add vip-pan/speccode
+/plugin install speccode@speccode
 ```
 
 Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, commands appear under the `/speccode:` prefix, e.g. `/speccode:init`, `/speccode:status`, `/speccode:finishing-worktree`.
+
+**Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts also need the engine shim on PATH: `bash scripts/install-shim.sh`.
 
 ## Why speccode
 
@@ -74,7 +76,7 @@ For the full path from requirement to PR, see [The Basic Workflow](#the-basic-wo
 | Knowledge | `distilling-knowledge` `recording-knowledge` |
 | Methodology | `subagent-driven-development` `executing-plans` `dispatching-parallel-agents` `test-driven-development` `systematic-debugging` `requesting-code-review` `receiving-code-review` `verification-before-completion` |
 
-See [plugin README §2 command table](./plugins/speccode/README.md) for each command's purpose and prerequisites.
+See [design doc §2 command table](./docs/DESIGN.md) for each command's purpose and prerequisites.
 
 The flow is tiered by requirement size: tiny changes can take Tier 1 (after proposing, `/speccode:applying` implements tasks.md item-by-item by hand), small-to-medium ones go `writing-plans` + SDD/`executing-plans`, and complex ones brainstorm first.
 
@@ -93,7 +95,7 @@ origin/trunk ── integration branch ──┬── feature/s1 ── finishi
                                           finishing-feature: children all completed → single PR → trunk
 ```
 
-See [plugin README §3](./plugins/speccode/README.md) for the full topology and key points.
+See [design doc §3](./docs/DESIGN.md) for the full topology and key points.
 
 ## How We Compare
 
@@ -101,7 +103,7 @@ See [plugin README §3](./plugins/speccode/README.md) for the full topology and 
 |---|---|---|---|---|---|
 | Two-layer branch topology + reconciliation (parallel worktrees) | ✅ | — | — | — | — |
 | In-repo spec document hosting (tracked on all branches) | ✅ | — | partial | partial | — |
-| Native Claude Code plugin | ✅ | ✅ | — (cross-agent CLI) | — (npx installer) | — |
+| Multi-host install (6 coding agents) | ✅ (CC verified; others per-host status in host-mapping) | ✅ | ✅ (cross-agent CLI) | — (npx installer) | — |
 | SDD methodology (explore / document / plan / execute / review) | ✅ (self-contained port) | ✅ (source) | — | ✅ (own system) | — |
 | Lifecycle hooks + cross-session memory | ✅ | — | — | — | — |
 | Standardized PR/MR flow | ✅ | — | — | — | — |
@@ -116,15 +118,16 @@ Test-driven · systematic over improvisation · reduce complexity · evidence ov
 
 | Document | Contents |
 |---|---|
-| [Plugin README](./plugins/speccode/README.md) | Full command reference, two-layer topology, R1-R13 risks, 0.1 → 0.2 migration (plugin design document) |
+| [Design Doc](./docs/DESIGN.md) | Full command reference, two-layer topology, R1-R13 risks, 0.1 → 0.2 migration (plugin design document) |
 | [CHANGELOG](./CHANGELOG.md) | Release history (Keep a Changelog, all in Chinese) |
-| [CLAUDE.md](./CLAUDE.md) | Development documentation: three-layer engine architecture, testing conventions, speccode workflow |
+| [Host mapping](./references/host-mapping/README.md) | Per-host install entries, tool mapping and verification status for the six supported coding agents |
+| [AGENTS.md](./AGENTS.md) | Development documentation (source of truth; `CLAUDE.md` is a thin Claude Code shell): three-layer engine architecture, testing conventions, speccode workflow |
 | `support/` | Dev-workflow skill (true source) and helper scripts — `speccode-workflow` installed to `.claude/skills/` via `support/install-skills.sh` for Claude Code lazy-loading |
 | `speccode/spec/` · `speccode/archive/` | SDD spec master and archive of every change — the system's own living documentation |
 
 ## ⚠ Before You Run `git clean`
 
-`.speccode/` is untracked by design and **not** added to `.gitignore` — `git clean -fdx` (and even `-fd`) will delete your speccode config, branch states, and session memory. Prefer a dry-run first (`git clean -n`) or exclude the path explicitly. See [plugin README §14](./plugins/speccode/README.md) for the full details.
+`.speccode/` is untracked by design and **not** added to `.gitignore` — `git clean -fdx` (and even `-fd`) will delete your speccode config, branch states, and session memory. Prefer a dry-run first (`git clean -n`) or exclude the path explicitly. See [design doc §14](./docs/DESIGN.md) for the full details.
 
 ## Contributing
 
