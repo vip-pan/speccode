@@ -8,6 +8,24 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-06
+
+> EN: speccode goes multi-host — the repo flattens into a single-repo plugin (root = plugin root = marketplace, renamed to `speccode`), all 24 skills become host-neutral with a `speccode <verb>` PATH shim, the engine gains host detection (`config.host` + `detect-host`), thin adapters ship for Codex / Kimi Code / ZCode / OpenCode / Pi, and the facade is repositioned accordingly.
+
+### Changed
+
+- **BREAKING · 仓库扁平化单仓**:插件根从 `plugins/speccode/` 迁至仓库根(marketplace `source: "./"`,`.claude-plugin/` 内 `plugin.json` 与 `marketplace.json` 并存);插件设计文档迁至 `docs/DESIGN.md` + `docs/DESIGN_CN.md`;`AGENTS.md` 升为开发文档真源,`CLAUDE.md` 收敛为 `@AGENTS.md` 薄壳;测试目录迁 `tests/`,CI glob 同步。规格主档 `plugin-packaging` 17 条 requirement 随布局更新。
+- **BREAKING · 仓库与 marketplace 改名 `speccode`**:`/plugin marketplace add vip-pan/speccode`、`/plugin install speccode@speccode`;旧 URL 经 GitHub 重定向保活,存量安装继续可用,但新装指引与文档均已改新名。
+- **prose 宿主中立 + 引擎 shim**:24 个 skill 正文零宿主专属 token(`AskUserQuestion`/`${CLAUDE_PLUGIN_ROOT}`/子代理类型等全部移出,grep 守卫测试固化);引擎调用统一为 `speccode <verb>`(新增符号链接安全的 `bin/speccode` wrapper,`speccode.mjs` 保留手动调试直调);新增只读 verb `plugin-root` 自定位插件根,替代宿主变量引用;提问与子代理派发走宿主中立语义,三个子代理依赖型命令显式声明降级路由。新增 capability `host-neutral-prose`。
+- **宿主探测**:新增只读 verb `detect-host`(分层启发 + `--host` 显式覆盖,枚举 claude-code/codex/zcode/opencode/pi/kimi-code/generic,未知回退 generic 不报错);config v3 新增可选 `host` 字段(init 探测并经用户确认写入);code_intel 探测按宿主分流(非 claude-code 宿主跳过 `~/.claude` 专属探测,bin/项目目录探测恒开)。新增 capability `host-detection`。
+- **门面多宿主改写**:README 双语定位改为「Claude Code 主宿主 + 五宿主适配」(验证状态如实分级,指向宿主映射总览表);marketplace description 展开;v2 残留的「三层分支拓扑」措辞统一修正为双层;文档地图补宿主映射条目。
+
+### Added
+
+- **五宿主 adapter**(薄 manifest 指向共享 `skills/`,零内容拷贝):`.codex-plugin/plugin.json`、`.kimi-plugin/plugin.json`(+`skillInstructions` 工具映射)、`.zcode-plugin/plugin.json`(按 Kimi 同款,待验证标注)、`.opencode/INSTALL.md`、`.pi/extensions/speccode.ts`;`references/host-mapping/` 五份三段式宿主映射文档(codex 含 multi_agent 子代理机制教学)与总览表。新增 capability `host-adapters`。
+- **PATH shim 安装器**:`scripts/install-shim.sh`——symlink `bin/speccode` 进 PATH(默认 `~/.local/bin`,可 `--dest` 覆盖;失败打印手动命令并非零退出),供非 Claude Code 宿主运行 `speccode <verb>`。
+- **中性 worktree 缺省**:`worktree_dir` 缺省由 `.claude/worktrees` 改为 `.speccode/worktrees`(`DEFAULT_WORKTREE_DIR` 单源常量,reconcile 回退同步)。
+
 ## [0.6.0] - 2026-09-04
 
 > EN: Migrate all 24 slash commands to the officially recommended `skills/` layout (`skills/<name>/SKILL.md`) — invocation names unchanged (`/speccode:<name>`), frontmatter trimmed to `description` only (nonstandard `category`/`tags` removed, following the 0.5.1 `name` removal), and skills now participate in model auto-invocation per their descriptions.
@@ -242,14 +260,15 @@ v2 全量迭代:四层拓扑收敛为三层、SDD 方法论与文档生命周期
 - 「文档剥离四步走」与 finish 阶段 `commit --amend` 折叠:保证 trunk 上功能提交为单一语义 commit,display reset 不误删文档。
 - GitHub / GitLab remote 探测,自动选择 `gh` / `glab` CLI,无 CLI 时降级为打印等效命令。
 
-[Unreleased]: https://github.com/vip-pan/speccode-development/compare/v0.5.1...HEAD
-[0.6.0]: https://github.com/vip-pan/speccode-development/compare/v0.5.1...v0.6.0
-[0.5.1]: https://github.com/vip-pan/speccode-development/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/vip-pan/speccode-development/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/vip-pan/speccode-development/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/vip-pan/speccode-development/compare/v0.2.6...v0.3.0
-[0.2.6]: https://github.com/vip-pan/speccode-development/compare/v0.2.5...v0.2.6
-[0.2.5]: https://github.com/vip-pan/speccode-development/compare/v0.2.4...v0.2.5
+[Unreleased]: https://github.com/vip-pan/speccode/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/vip-pan/speccode/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/vip-pan/speccode/compare/v0.5.1...v0.6.0
+[0.5.1]: https://github.com/vip-pan/speccode/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/vip-pan/speccode/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/vip-pan/speccode/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/vip-pan/speccode/compare/v0.2.6...v0.3.0
+[0.2.6]: https://github.com/vip-pan/speccode/compare/v0.2.5...v0.2.6
+[0.2.5]: https://github.com/vip-pan/speccode/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/vip-pan/speccode-development/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/vip-pan/speccode-development/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/vip-pan/speccode-development/compare/v0.2.1...v0.2.2
