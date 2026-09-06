@@ -2,9 +2,9 @@
 
 ## 环境与资产
 
-- [ ] 安装 VHS(`brew install vhs`;本机已有则跳过)
-- [ ] 编写 `docs/assets/demo.tape`:按 design D2 画面编排(init → creating-worktree → status 主打并行总览 → finishing-worktree),Output 控制尺寸/帧率,内容避开版本号与测试数量
-- [ ] `vhs docs/assets/demo.tape` 生成 `docs/assets/demo.gif`,核对体积 ≤2MB(超出则降帧/缩时长重生成)
+- [x] 安装 VHS(`brew install vhs`;本机已有则跳过)
+- [x] 编写 `docs/assets/demo.tape`:按 design D2 画面编排(init → creating-worktree → status 主打并行总览 → finishing-worktree),Output 控制尺寸/帧率,内容避开版本号与测试数量
+- [x] `vhs docs/assets/demo.tape` 生成 `docs/assets/demo.gif`,核对体积 ≤2MB(超出则降帧/缩时长重生成)
 
 ## README 三件套
 
