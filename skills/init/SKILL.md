@@ -2,7 +2,7 @@
 description: "Initialize or update the speccode environment: detect remote, trunk, host identity and code-intel tools, configure the worktree dir, hooks and working language, write .speccode/config.json (config v3) (初始化) Interact in the user's language; ask when it cannot be determined."
 ---
 
-初始化或更新 speccode 配置。全程用中文与用户交互。
+初始化或更新 speccode 配置。
 
 ## 前置
 

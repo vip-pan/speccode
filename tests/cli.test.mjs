@@ -1222,7 +1222,7 @@ test('skills 交互语言守卫:无「全程中文交互」硬指令', () => {
   const skillsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills');
   for (const name of readdirSync(skillsDir).sort()) {
     const md = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8');
-    assert.ok(!md.includes('全程中文交互'), `skills/${name}/SKILL.md 不得残留「全程中文交互」硬指令`);
+    assert.ok(!/全程用?中文/.test(md), `skills/${name}/SKILL.md 不得残留钉死交互语言的硬指令(含变体措辞)`);
   }
 });
 

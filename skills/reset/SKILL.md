@@ -2,7 +2,7 @@
 description: "Reset the speccode environment: clear state and worktrees, ask per-field whether to clear config (requires no active branches) Interact in the user's language; ask when it cannot be determined."
 ---
 
-重置 speccode 环境。全程中文。不接受 `--force`。
+重置 speccode 环境。不接受 `--force`。
 
 ## 前置
 
