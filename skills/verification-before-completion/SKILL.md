@@ -1,5 +1,5 @@
 ---
-description: "声称工作完成/已修复/通过之前使用,提交或建 PR 前先跑验证命令并确认输出;证据永远先于断言"
+description: "Before claiming work done/fixed/passing: run verification commands and confirm their output before committing or opening a PR — evidence always precedes assertion Interact in the user's language; ask when it cannot be determined."
 ---
 
 # 完成前先验证(Verification Before Completion)

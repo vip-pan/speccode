@@ -65,6 +65,37 @@ test('write-config reads stdin and persists atomically', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
+test('write-config rejects invalid language tag without writing', () => {
+  const repo = makeRepo();
+  const cfg = JSON.stringify({
+    version: 3, initialized_at: '2026-09-07T00:00:00.000Z', trunk: 'main',
+    remote: 'origin', pr_tool: 'none', worktree_dir: '.speccode/worktrees',
+    code_intel_tools: [], language: 'not a tag!',
+  });
+  const r = spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
+    { input: cfg, encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.ok, false);
+  assert.ok(!existsSync(join(repo, '.speccode', 'config.json')));
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('write-config accepts a valid language tag as-is', () => {
+  const repo = makeRepo();
+  const cfg = JSON.stringify({
+    version: 3, initialized_at: '2026-09-07T00:00:00.000Z', trunk: 'main',
+    remote: 'origin', pr_tool: 'none', worktree_dir: '.speccode/worktrees',
+    code_intel_tools: [], language: 'zh-CN',
+  });
+  const r = spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
+    { input: cfg, encoding: 'utf8' });
+  assert.equal(r.status, 0);
+  const saved = JSON.parse(readFileSync(join(repo, '.speccode', 'config.json'), 'utf8'));
+  assert.equal(saved.language, 'zh-CN');
+  rmSync(repo, { recursive: true, force: true });
+});
+
 test('write-state then feature-progress reflects it', () => {
   const repo = makeRepo();
   const state = JSON.stringify({
@@ -883,10 +914,26 @@ test('read-knowledge --topic --blocks parses current distilled markers', () => {
 test('write-knowledge mode index renders and writes _index.md', () => {
   const repo = makeRepo();
   const w = spawnSync('node', [BIN, 'write-knowledge', '--cwd', repo, '--rel', '_index.md', '--json-stdin'],
-    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'index', entries: [{ section: '业务方向', items: [{ title: '领域知识', file: 'business/domain.md', summary: '术语' }] }] }) });
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'index', heading: '知识索引', entries: [{ section: '业务方向', items: [{ title: '领域知识', file: 'business/domain.md', summary: '术语' }] }] }) });
   assert.equal(w.status, 0);
   assert.equal(JSON.parse(w.stdout.trim()).ok, true);
   assert.equal(readFileSync(join(repo, 'speccode', 'knowledge', '_index.md'), 'utf8'), '# 知识索引\n\n## 业务方向\n- 领域知识 → business/domain.md:术语\n');
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('write-knowledge mode index requires heading', () => {
+  const repo = makeRepo();
+  const base = { mode: 'index', entries: [{ section: 'dev', items: [{ title: 't', file: 'development/t.md', summary: 's' }] }] };
+  const missing = spawnSync('node', [BIN, 'write-knowledge', '--cwd', repo, '--rel', '_index.md', '--json-stdin'],
+    { input: JSON.stringify(base), encoding: 'utf8' });
+  assert.equal(missing.status, 1);
+  assert.equal(JSON.parse(missing.stdout).error, 'mode index requires heading');
+
+  const ok = spawnSync('node', [BIN, 'write-knowledge', '--cwd', repo, '--rel', '_index.md', '--json-stdin'],
+    { input: JSON.stringify({ ...base, heading: 'Knowledge Index' }), encoding: 'utf8' });
+  assert.equal(ok.status, 0);
+  const idx = readFileSync(join(repo, 'speccode', 'knowledge', '_index.md'), 'utf8');
+  assert.ok(idx.startsWith('# Knowledge Index\n'));
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -1171,6 +1218,14 @@ test('skills 宿主中立守卫:无宿主专属 token、无 speccode.mjs 调用�
   }
 });
 
+test('skills 交互语言守卫:无「全程中文交互」硬指令', () => {
+  const skillsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills');
+  for (const name of readdirSync(skillsDir).sort()) {
+    const md = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8');
+    assert.ok(!/全程用?中文/.test(md), `skills/${name}/SKILL.md 不得残留钉死交互语言的硬指令(含变体措辞)`);
+  }
+});
+
 test('bin/speccode wrapper 可执行且与 node 直调输出一致', () => {
   const repo = makeRepo();
   const wrapper = join(__dirname, '..', 'bin', 'speccode');
@@ -1214,6 +1269,14 @@ test('detect-host verb: explicit override wins, invalid id errors', () => {
   const bad = runCli(repo, 'detect-host', '--cwd', repo, '--host', 'cursor');
   assert.equal(bad.code, 1);
   assert.equal(bad.json.ok, false);
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('detect-host --host missing value reports usage error in English', () => {
+  const repo = makeRepo();
+  const r = spawnSync('node', [BIN, 'detect-host', '--cwd', repo, '--host'], { encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  assert.equal(JSON.parse(r.stdout).error, 'detect-host: --host requires a host id value');
   rmSync(repo, { recursive: true, force: true });
 });
 

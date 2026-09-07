@@ -1,8 +1,8 @@
 ---
-description: "从 trunk 或集成分支切出开发分支(git worktree)并登记 state,普通需求的唯一入口"
+description: "Cut a development branch (git worktree) from trunk or an integration branch and register its state — the single entry for normal changes (创建开发分支) Interact in the user's language; ask when it cannot be determined."
 ---
 
-创建开发分支(worktree)。普通需求的唯一入口;大需求场景从集成分支切出子分支。全程中文交互。
+创建开发分支(worktree)。普通需求的唯一入口;大需求场景从集成分支切出子分支。
 
 ## 前置
 

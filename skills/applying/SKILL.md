@@ -1,8 +1,16 @@
 ---
-description: "Tier 1 手动执行入口:按 tasks.md 勾选清单逐条实现(无 plan),条目勾选回填 + 簿记 commit,完成后必经 code review"
+description: "Tier 1 manual execution entry: implement tasks.md checklist items one by one (no plan), tick back-fill and bookkeeping commits, followed by mandatory code review (手动执行) Interact in the user's language; ask when it cannot be determined."
 ---
 
-按 `tasks.md` 勾选清单逐条手动实现变更——不走 plan、不派子代理,适用于 proposing 产物已完全覆盖需求的极小型需求(Tier 1)。全程中文交互。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**。
+按 `tasks.md` 勾选清单逐条手动实现变更——不走 plan、不派子代理,适用于 proposing 产物已完全覆盖需求的极小型需求(Tier 1)。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**。
+
+## 语言守护
+
+本命令即将产出工件(文档/PR/commit)。先做语言核对:
+
+1. 经 `speccode read-config --cwd .` 读取 config;未登记 `language` 字段 → 工件跟随当前交互语言,跳过本守护。
+2. 已登记且与当前会话交互语言不一致 → 向用户提问一次(本会话内不重复提问):按 config.language 产工件,或确认更换工作语言。
+3. 用户确认更换 → 提醒用户运行 `/speccode:init` 重置 config.language,本命令 MUST NOT 直接改写 config;用户选择保持 → 按 config.language 产工件。
 
 ## 前置
 

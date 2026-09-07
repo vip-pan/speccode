@@ -1,5 +1,5 @@
 ---
-description: "收到代码审查反馈时使用,实施建议之前先核实;要技术严谨与验证,不要表演式认同或盲目实施"
+description: "Use when receiving code-review feedback: verify before implementing; demand technical rigor and verification, not performative agreement or blind implementation Interact in the user's language; ask when it cannot be determined."
 ---
 
 # 接收代码审查(Code Review Reception)

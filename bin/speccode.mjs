@@ -6,7 +6,7 @@ import { isatty } from 'node:tty';
 import { git } from '../lib/git.mjs';
 import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSquashOnly } from '../lib/prtool.mjs';
 import { reconcile } from '../lib/reconcile.mjs';
-import { loadConfig, saveConfig, backupConfig } from '../lib/config.mjs';
+import { loadConfig, saveConfig, backupConfig, validateLanguage } from '../lib/config.mjs';
 import { readState, writeState, deleteState, migrateStateV2toV3, WORKTREE_STATUS } from '../lib/state.mjs';
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState, detectHost } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
@@ -97,6 +97,9 @@ const VERBS = {
   'write-config': ({ cwd, 'json-stdin': jsonStdin }) => {
     if (!jsonStdin) return { ok: false, error: 'write-config requires --json-stdin (pipe JSON via stdin)' };
     const cfg = JSON.parse(readStdin());
+    if ('language' in cfg && validateLanguage(cfg.language) === null) {
+      return { ok: false, error: `invalid language tag: ${JSON.stringify(cfg.language)}` };
+    }
     saveConfig(speccodeDirOf(cwd), cfg);
     return { ok: true };
   },
@@ -150,7 +153,7 @@ const VERBS = {
   // before it lands in config.host (an explicit --host always wins). Bare
   // --host without a value is rejected loudly, like every other malformed flag.
   'detect-host': ({ cwd, host }) => {
-    if (host === true) return { ok: false, error: 'detect-host: --host 需要一个宿主 id 值' };
+    if (host === true) return { ok: false, error: 'detect-host: --host requires a host id value' };
     return { ok: true, ...detectHost(repoRoot(cwd), host ? { host } : {}) };
   },
 
@@ -342,7 +345,7 @@ const VERBS = {
     }
     const root = knowledgeRoot(cwd);
     const target = join(root, safe.rel);
-    const { mode, content, blocks, entries } = payload;
+    const { mode, content, blocks, entries, heading } = payload;
     if (mode === 'replace') {
       writeKnowledge(root, safe.rel, String(content ?? ''));
       return { ok: true, path: safe.rel };
@@ -361,7 +364,8 @@ const VERBS = {
     }
     if (mode === 'index') {
       if (!Array.isArray(entries)) return { ok: false, error: 'mode index requires entries: [{section, items: [{title, file, summary}]}]' };
-      writeKnowledge(root, safe.rel, buildIndex(entries));
+      if (typeof heading !== 'string' || heading.trim() === '') return { ok: false, error: 'mode index requires heading' };
+      writeKnowledge(root, safe.rel, buildIndex(entries, heading));
       return { ok: true, path: safe.rel };
     }
     return { ok: false, error: `unknown mode: ${mode}` };

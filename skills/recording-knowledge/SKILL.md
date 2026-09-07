@@ -1,8 +1,16 @@
 ---
-description: "把知识直接记录进知识集:经人工闸门写入 speccode/knowledge/ 的 hand-written 段"
+description: "Record knowledge directly into the knowledge set: write hand-written blocks into speccode/knowledge/ through the human gate Interact in the user's language; ask when it cannot be determined."
 ---
 
-把用户/agent 提供的知识直接记录进 `speccode/knowledge/`(hand-written 段),经人工闸门落盘。全程中文交互。**应在 state 登记的 `chore/knowledge-*` worktree 分支上运行**(trunk 上运行时由本命令引导建分支,见 §3)。
+把用户/agent 提供的知识直接记录进 `speccode/knowledge/`(hand-written 段),经人工闸门落盘。**应在 state 登记的 `chore/knowledge-*` worktree 分支上运行**(trunk 上运行时由本命令引导建分支,见 §3)。
+
+## 语言守护
+
+本命令即将产出工件(文档/PR/commit)。先做语言核对:
+
+1. 经 `speccode read-config --cwd .` 读取 config;未登记 `language` 字段 → 工件跟随当前交互语言,跳过本守护。
+2. 已登记且与当前会话交互语言不一致 → 向用户提问一次(本会话内不重复提问):按 config.language 产工件,或确认更换工作语言。
+3. 用户确认更换 → 提醒用户运行 `/speccode:init` 重置 config.language,本命令 MUST NOT 直接改写 config;用户选择保持 → 按 config.language 产工件。
 
 ## 前置
 
@@ -41,7 +49,8 @@ description: "把知识直接记录进知识集:经人工闸门写入 speccode/k
 
 ## 落盘
 
-1. `_index.md` 需更新时(新 topic、摘要变化、或索引缺失)→ 组装 entries(实扫现有 topic 文件(跳过内容为空的 topic 文件),按顶层目录名分组为 sections,不硬编码固定 section 清单),经 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries=...)写入。
+1. `_index.md` 需更新时(新 topic、摘要变化、或索引缺失)→ 组装 entries(实扫现有 topic 文件(跳过内容为空的 topic 文件),按顶层目录名分组为 sections,不硬编码固定 section 清单),经 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries=...,heading=<索引标题>)写入。
+   heading 为工件语言的索引标题文本:config.language 已登记时按该语言,缺失时按当前交互语言(如中文「知识索引」、英文 "Knowledge Index")。
 2. MUST 立即提交:
    ```bash
    git add speccode/knowledge/

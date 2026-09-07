@@ -1,5 +1,5 @@
 ---
-description: "面对 2+ 个无共享状态、无顺序依赖的独立任务时,按问题域并行派发子代理"
+description: "Dispatch parallel subagents by problem domain when facing 2+ independent tasks with no shared state and no ordering dependencies Interact in the user's language; ask when it cannot be determined."
 ---
 
 # 派发并行子代理(Dispatching Parallel Agents)

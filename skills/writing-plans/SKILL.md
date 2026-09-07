@@ -1,10 +1,18 @@
 ---
-description: "把批准的设计转化为细粒度实现计划(每任务 2-5 分钟步,精确文件路径/完整代码/验证步骤),落 plan/ 并提交"
+description: "Turn an approved design into a fine-grained implementation plan (2-5 minute steps, exact file paths / full code / verification), saved to plan/ and committed (实现计划) Interact in the user's language; ask when it cannot be determined."
 ---
 
-编写一份面向「零上下文工程师」的实现计划:他们需要的一切——每个任务动哪些文件、代码、测试、怎么验证——都写进去。拆成一口大小的任务。DRY、YAGNI、TDD、频繁提交。全程中文交互。
+编写一份面向「零上下文工程师」的实现计划:他们需要的一切——每个任务动哪些文件、代码、测试、怎么验证——都写进去。拆成一口大小的任务。DRY、YAGNI、TDD、频繁提交。
 
 **开始时宣布:**"我在用 writing-plans 编写实现计划。"
+
+## 语言守护
+
+本命令即将产出工件(文档/PR/commit)。先做语言核对:
+
+1. 经 `speccode read-config --cwd .` 读取 config;未登记 `language` 字段 → 工件跟随当前交互语言,跳过本守护。
+2. 已登记且与当前会话交互语言不一致 → 向用户提问一次(本会话内不重复提问):按 config.language 产工件,或确认更换工作语言。
+3. 用户确认更换 → 提醒用户运行 `/speccode:init` 重置 config.language,本命令 MUST NOT 直接改写 config;用户选择保持 → 按 config.language 产工件。
 
 ## 前置
 
