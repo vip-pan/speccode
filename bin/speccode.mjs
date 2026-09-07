@@ -6,7 +6,7 @@ import { isatty } from 'node:tty';
 import { git } from '../lib/git.mjs';
 import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSquashOnly } from '../lib/prtool.mjs';
 import { reconcile } from '../lib/reconcile.mjs';
-import { loadConfig, saveConfig, backupConfig } from '../lib/config.mjs';
+import { loadConfig, saveConfig, backupConfig, validateLanguage } from '../lib/config.mjs';
 import { readState, writeState, deleteState, migrateStateV2toV3, WORKTREE_STATUS } from '../lib/state.mjs';
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState, detectHost } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
@@ -97,6 +97,9 @@ const VERBS = {
   'write-config': ({ cwd, 'json-stdin': jsonStdin }) => {
     if (!jsonStdin) return { ok: false, error: 'write-config requires --json-stdin (pipe JSON via stdin)' };
     const cfg = JSON.parse(readStdin());
+    if ('language' in cfg && validateLanguage(cfg.language) === null) {
+      return { ok: false, error: `invalid language tag: ${JSON.stringify(cfg.language)}` };
+    }
     saveConfig(speccodeDirOf(cwd), cfg);
     return { ok: true };
   },

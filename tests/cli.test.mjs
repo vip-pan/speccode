@@ -65,6 +65,35 @@ test('write-config reads stdin and persists atomically', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
+test('write-config rejects invalid language tag without writing', () => {
+  const repo = makeRepo();
+  const cfg = JSON.stringify({
+    version: 3, initialized_at: '2026-09-07T00:00:00.000Z', trunk: 'main',
+    remote: 'origin', pr_tool: 'none', worktree_dir: '.speccode/worktrees',
+    code_intel_tools: [], language: 'not a tag!',
+  });
+  const r = spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
+    { input: cfg, encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.ok, false);
+  assert.ok(!existsSync(join(repo, '.speccode', 'config.json')));
+});
+
+test('write-config accepts a valid language tag as-is', () => {
+  const repo = makeRepo();
+  const cfg = JSON.stringify({
+    version: 3, initialized_at: '2026-09-07T00:00:00.000Z', trunk: 'main',
+    remote: 'origin', pr_tool: 'none', worktree_dir: '.speccode/worktrees',
+    code_intel_tools: [], language: 'zh-CN',
+  });
+  const r = spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
+    { input: cfg, encoding: 'utf8' });
+  assert.equal(r.status, 0);
+  const saved = JSON.parse(readFileSync(join(repo, '.speccode', 'config.json'), 'utf8'));
+  assert.equal(saved.language, 'zh-CN');
+});
+
 test('write-state then feature-progress reflects it', () => {
   const repo = makeRepo();
   const state = JSON.stringify({
