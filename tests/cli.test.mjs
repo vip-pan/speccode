@@ -78,6 +78,7 @@ test('write-config rejects invalid language tag without writing', () => {
   const out = JSON.parse(r.stdout);
   assert.equal(out.ok, false);
   assert.ok(!existsSync(join(repo, '.speccode', 'config.json')));
+  rmSync(repo, { recursive: true, force: true });
 });
 
 test('write-config accepts a valid language tag as-is', () => {
@@ -92,6 +93,7 @@ test('write-config accepts a valid language tag as-is', () => {
   assert.equal(r.status, 0);
   const saved = JSON.parse(readFileSync(join(repo, '.speccode', 'config.json'), 'utf8'));
   assert.equal(saved.language, 'zh-CN');
+  rmSync(repo, { recursive: true, force: true });
 });
 
 test('write-state then feature-progress reflects it', () => {
