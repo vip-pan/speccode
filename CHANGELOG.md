@@ -6,6 +6,8 @@
 
 > **English highlights**: each version section below carries a one-line English summary at its top (`> EN: …`) for readers arriving from the English README. The Chinese entries remain the authoritative body.
 
+## [Unreleased]
+
 ## [0.7.1] - 2026-09-07
 
 > EN: speccode goes multi-language — `config.language` (BCP-47 free tag, init asks with conversation-derived recommendation, missing = follow interaction language with zero migration), interaction mirrors the user's language (the「全程中文交互」hard rule retires with a variant-aware guard), artifacts follow the configured team language with guards in ten artifact-producing commands, the facade (plugin.json / marketplace.json / all 24 descriptions) turns English, and the lib is language-neutral (knowledge index heading parameterized).
@@ -17,7 +19,7 @@
 - 交互语言纪律:「全程中文交互」硬规则退役,改为镜像用户语言(无法判断时提问确认);24 个命令 description 与插件门面(plugin.json/marketplace.json)转英文
 - 引擎语言中立:知识索引标题参数化(`write-knowledge` mode index 必填 `heading`);`detect-host` 用法报错转英文
 
-## [Unreleased]
+## [0.7.0] - 2026-09-06
 
 > EN: speccode goes multi-host — the repo flattens into a single-repo plugin (root = plugin root = marketplace, renamed to `speccode`), all 24 skills become host-neutral with a `speccode <verb>` PATH shim, the engine gains host detection (`config.host` + `detect-host`), thin adapters ship for Codex / Kimi Code / ZCode / OpenCode / Pi, and the facade is repositioned accordingly.
 
