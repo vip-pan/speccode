@@ -914,10 +914,26 @@ test('read-knowledge --topic --blocks parses current distilled markers', () => {
 test('write-knowledge mode index renders and writes _index.md', () => {
   const repo = makeRepo();
   const w = spawnSync('node', [BIN, 'write-knowledge', '--cwd', repo, '--rel', '_index.md', '--json-stdin'],
-    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'index', entries: [{ section: '业务方向', items: [{ title: '领域知识', file: 'business/domain.md', summary: '术语' }] }] }) });
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'index', heading: '知识索引', entries: [{ section: '业务方向', items: [{ title: '领域知识', file: 'business/domain.md', summary: '术语' }] }] }) });
   assert.equal(w.status, 0);
   assert.equal(JSON.parse(w.stdout.trim()).ok, true);
   assert.equal(readFileSync(join(repo, 'speccode', 'knowledge', '_index.md'), 'utf8'), '# 知识索引\n\n## 业务方向\n- 领域知识 → business/domain.md:术语\n');
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('write-knowledge mode index requires heading', () => {
+  const repo = makeRepo();
+  const base = { mode: 'index', entries: [{ section: 'dev', items: [{ title: 't', file: 'development/t.md', summary: 's' }] }] };
+  const missing = spawnSync('node', [BIN, 'write-knowledge', '--cwd', repo, '--rel', '_index.md', '--json-stdin'],
+    { input: JSON.stringify(base), encoding: 'utf8' });
+  assert.equal(missing.status, 1);
+  assert.equal(JSON.parse(missing.stdout).error, 'mode index requires heading');
+
+  const ok = spawnSync('node', [BIN, 'write-knowledge', '--cwd', repo, '--rel', '_index.md', '--json-stdin'],
+    { input: JSON.stringify({ ...base, heading: 'Knowledge Index' }), encoding: 'utf8' });
+  assert.equal(ok.status, 0);
+  const idx = readFileSync(join(repo, 'speccode', 'knowledge', '_index.md'), 'utf8');
+  assert.ok(idx.startsWith('# Knowledge Index\n'));
   rmSync(repo, { recursive: true, force: true });
 });
 

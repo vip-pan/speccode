@@ -345,7 +345,7 @@ const VERBS = {
     }
     const root = knowledgeRoot(cwd);
     const target = join(root, safe.rel);
-    const { mode, content, blocks, entries } = payload;
+    const { mode, content, blocks, entries, heading } = payload;
     if (mode === 'replace') {
       writeKnowledge(root, safe.rel, String(content ?? ''));
       return { ok: true, path: safe.rel };
@@ -364,7 +364,8 @@ const VERBS = {
     }
     if (mode === 'index') {
       if (!Array.isArray(entries)) return { ok: false, error: 'mode index requires entries: [{section, items: [{title, file, summary}]}]' };
-      writeKnowledge(root, safe.rel, buildIndex(entries));
+      if (typeof heading !== 'string' || heading.trim() === '') return { ok: false, error: 'mode index requires heading' };
+      writeKnowledge(root, safe.rel, buildIndex(entries, heading));
       return { ok: true, path: safe.rel };
     }
     return { ok: false, error: `unknown mode: ${mode}` };
