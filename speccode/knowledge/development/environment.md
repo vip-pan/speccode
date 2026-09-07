@@ -5,9 +5,9 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/speccode-config-management -->
-**config 字段集(v3)**:version:3、initialized_at、trunk、remote、pr_tool、worktree_dir、code_intel_tools;hooks 可选(缺失 = 无 hook);host 可选(枚举 claude-code/codex/zcode/opencode/pi/kimi-code/generic,init 经 detect-host 探测并经用户确认写入,缺失 = 未记录、走与 claude-code 相同的全量探测)。v1 三字段(display/spec_tools/untracked_permanent)与 v2 的 worktree_prefix MUST NOT 出现在 version:3 中;v2 读兼容,init 升级按字段 diff 移除(接受升级则移除死字段,拒绝则整体保持旧版,不存在混合态)。state 统一 `state/branches/<type>__<slug>.json`(v2 遗留 state/features/ 双格式原样运行,格式跟随既有文件);v3 普通分支 schema {branch, type, worktree, merge_target(恒写), status, created_at, initial_branch}(迁移产物 worktree 允许 null),父实体 {branch, kind:"integration", children:[{slug}], status, created_at, initial_branch} 无 worktree 字段;状态枚举不变。
+**config 字段集(v3)**:version:3、initialized_at、trunk、remote、pr_tool、worktree_dir、code_intel_tools;hooks 可选(缺失 = 无 hook);host 可选(枚举 claude-code/codex/zcode/opencode/pi/kimi-code/generic,init 经 detect-host 探测并经用户确认写入,缺失 = 未记录、走与 claude-code 相同的全量探测);language 可选(BCP-47 自由 tag,init 询问推荐取自对话并经用户确认写入,格式经 validateLanguage 校验;缺失 = 工件跟随交互语言,零迁移)。v1 三字段(display/spec_tools/untracked_permanent)与 v2 的 worktree_prefix MUST NOT 出现在 version:3 中;v2 读兼容,init 升级按字段 diff 移除(接受升级则移除死字段,拒绝则整体保持旧版,不存在混合态)。state 统一 `state/branches/<type>__<slug>.json`(v2 遗留 state/features/ 双格式原样运行,格式跟随既有文件);v3 普通分支 schema {branch, type, worktree, merge_target(恒写), status, created_at, initial_branch}(迁移产物 worktree 允许 null),父实体 {branch, kind:"integration", children:[{slug}], status, created_at, initial_branch} 无 worktree 字段;状态枚举不变。
 
-**worktree_dir 配置化**:默认 `.speccode/worktrees`(中性缺省,DEFAULT_WORKTREE_DIR 单源常量——detect.mjs 导出、reconcile.mjs 回退引用,消灭双硬编码);resolve-worktree-dir verb 输出 {dir, source, ignore},source ∈ {config, default}(default = 键缺失含被手删,命令层重问并 write-config 写回);ignore 三分支见 code-intel 块。**仓库根定位**:`git rev-parse --path-format=absolute --git-common-dir` + dirname(不是 --show-toplevel),让 linked worktree 内运行的命令也能解析到主仓 .speccode/。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-12-check-ignore-outside-repo、2026-09-03-remove-feature-layer、2026-08-16-knowledge-trunk-bootstrap、2026-09-05-host-detection)
+**worktree_dir 配置化**:默认 `.speccode/worktrees`(中性缺省,DEFAULT_WORKTREE_DIR 单源常量——detect.mjs 导出、reconcile.mjs 回退引用,消灭双硬编码);resolve-worktree-dir verb 输出 {dir, source, ignore},source ∈ {config, default}(default = 键缺失含被手删,命令层重问并 write-config 写回);ignore 三分支见 code-intel 块。**仓库根定位**:`git rev-parse --path-format=absolute --git-common-dir` + dirname(不是 --show-toplevel),让 linked worktree 内运行的命令也能解析到主仓 .speccode/。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-12-check-ignore-outside-repo、2026-09-03-remove-feature-layer、2026-08-16-knowledge-trunk-bootstrap、2026-09-05-host-detection、2026-09-07-i18n)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/sdd-document-lifecycle -->
@@ -19,7 +19,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/documentation-facade -->
-**visual companion server 取页流程**:需先带 ?key= 取 cookie、再携 cookie 请求等待页;直接 curl ?key= 只会得到 bootstrap 跳转页——冒烟测试须按此流程,否则断言落空。**文档与 CI 基础设施**:CONTRIBUTING.md 与 .github/ Issue/PR 模板;插件 README(14 段)加 ToC,根 README 短不加;版本徽章与 CI 徽章并列于根 README 徽章段。(出自 archive/2026-08-11-visual-companion-cleanup、2026-08-16-readme-optimization)
+**visual companion server 取页流程**:需先带 ?key= 取 cookie、再携 cookie 请求等待页;直接 curl ?key= 只会得到 bootstrap 跳转页——冒烟测试须按此流程,否则断言落空。**文档与 CI 基础设施**:CONTRIBUTING.md 与 .github/ Issue/PR 模板;插件 README(14 段)加 ToC,根 README 短不加;版本徽章与 CI 徽章并列于根 README 徽章段;README「See It in Action」为 GIF + 文字 transcript + caption 三件套(GIF 经 docs/assets/demo.tape VHS 脚本录制,改文本 + 跑一条命令即可重录;终端内容英文天然语言中立)。(出自 archive/2026-08-11-visual-companion-cleanup、2026-08-16-readme-optimization、2026-09-07-readme-vhs-demo)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/tool-input-sanitization -->
