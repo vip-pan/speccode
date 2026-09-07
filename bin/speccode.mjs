@@ -153,7 +153,7 @@ const VERBS = {
   // before it lands in config.host (an explicit --host always wins). Bare
   // --host without a value is rejected loudly, like every other malformed flag.
   'detect-host': ({ cwd, host }) => {
-    if (host === true) return { ok: false, error: 'detect-host: --host 需要一个宿主 id 值' };
+    if (host === true) return { ok: false, error: 'detect-host: --host requires a host id value' };
     return { ok: true, ...detectHost(repoRoot(cwd), host ? { host } : {}) };
   },
 

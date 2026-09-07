@@ -1264,6 +1264,14 @@ test('detect-host verb: explicit override wins, invalid id errors', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
+test('detect-host --host missing value reports usage error in English', () => {
+  const repo = makeRepo();
+  const r = spawnSync('node', [BIN, 'detect-host', '--cwd', repo, '--host'], { encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  assert.equal(JSON.parse(r.stdout).error, 'detect-host: --host requires a host id value');
+  rmSync(repo, { recursive: true, force: true });
+});
+
 test('detect-code-intel-tools passes config.host to probes', () => {
   const repo = makeRepo();
   const { code, json } = runCli(repo, 'detect-code-intel-tools', '--cwd', repo);
