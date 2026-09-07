@@ -1,6 +1,6 @@
 {
   "name": "speccode",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Multi-requirement parallel development + spec document hosting + standardized PR/MR flow + SDD methodology (explore / document / plan / subagent execution / review) as a workflow orchestration plugin",
   "author": { "name": "speccode" },
   "license": "MIT",
