@@ -43,5 +43,7 @@
 
 ## Open Questions
 
-- 守护段的命令清单在 writing-plans 定稿(候选:proposing / brainstorming / writing-plans / syncing / archiving / distilling-knowledge / recording-knowledge / applying / finishing-worktree)
-- description 逐条中文关键词的取舍在 plan 层定
+已在 plan(2026-09-07-i18n-plan.md)落定:
+
+- 守护命令清单终稿:proposing / brainstorming / writing-plans / syncing / archiving / distilling-knowledge / recording-knowledge / applying / finishing-worktree(9 个)
+- description 中文关键词:仅 8 个发现关键命令附注(init / exploring / proposing / creating-worktree / creating-feature / status / finishing-worktree / writing-plans)
