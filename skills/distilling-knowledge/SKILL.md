@@ -16,7 +16,7 @@ description: "从 spec/ 与 archive/ 蒸馏知识集:全量重蒸 distilled 段,
    - 无命中 → 向用户提问确认(给出选项) slug(默认 `knowledge-distill`;须匹配 `^[a-z0-9-]+$`),引导执行 `/speccode:creating-worktree chore/knowledge-<slug>`(type=`chore`,基点 trunk,登记 state)→ 建成后 `cd <worktree>` 进入 §4。若 creating-worktree 检测到大需求父实体并提议从集成分支切出,MUST 坚持基点为 `config.trunk`(知识维护不挂在任何大需求下),不接受其集成基点提议。
    - 「未完成」判定 MUST 基于 state 查询(reconcile 输出),MUST NOT 依赖 `git branch --no-merged` 等 git merge 判定(squash-only 合并下对已合并分支永真,会把已收尾分支误判为未完成)。
 4. 运行 `speccode read-knowledge --cwd .`(无 flag)获取现状:`files`(topic 清单)与 `index`(`_index.md` 内容,可能为 null)。
-5. `speccode/knowledge/` 不存在 → 创建骨架:6 个初始 topic 空文件(development/architecture.md、development/standards.md、development/environment.md、development/integrations.md、development/pitfalls.md、development/security.md)+ `_index.md`,不创建 business/ 目录。机制:对 6 个文件逐个执行 `write-knowledge --rel <file> --json-stdin`(mode=replace,content 为空串),再执行 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries 为 development 一个空清单 section)创建索引——绝不 mkdir/touch/手写文件。
+5. `speccode/knowledge/` 不存在 → 创建骨架:6 个初始 topic 空文件(development/architecture.md、development/standards.md、development/environment.md、development/integrations.md、development/pitfalls.md、development/security.md)+ `_index.md`,不创建 business/ 目录。机制:对 6 个文件逐个执行 `write-knowledge --rel <file> --json-stdin`(mode=replace,content 为空串),再执行 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries 为 development 一个空清单 section,heading=<索引标题>)创建索引——绝不 mkdir/touch/手写文件。
 6. 读 `speccode/spec/`(各 capability 主规格,**全量**——这是新鲜度审查的真值锚)。archive 保持**增量读**(纯读成本控制):运行 `speccode read-consumed-archives --cwd .` 得 `{consumed, unconsumed, present, bootstrap}`——`bootstrap=true`(sidecar `_distilled.meta.json` 缺失)则首次引导,本次全量读 archive 全部归档包;否则只读 `unconsumed` 列出的归档包,`consumed` 包整包跳过(含其 propose/design/brainstorm 子文档)。sidecar 只决定本次读哪些包,不参与任何蒸馏块存废判定。
 7. 删 `_distilled.meta.json` 再跑即强制全量重读归档包 + 重种子,为读成本控制失准后的官方逃生口,不另设 `--full` flag。(重蒸本就每次全量:既有块的新鲜度审查不依赖是否重读其来源包。)
 8. 若 `code_intel_tools`(config)非空且其能力在会话中可用,读 spec/archive 时优先参考;不可用回退直接读文件,不报错。
@@ -46,8 +46,8 @@ source 指向的 archive 或 spec capability 已不存在**不再构成独立处
 
 ## 落盘
 
-1. 各 topic 写入完成后更新 `_index.md`:为每个 topic 文件生成一行摘要(标题 + 文件 + 一句话摘要),组装 entries(实扫现有 topic 文件(跳过内容为空的 topic 文件),按顶层目录名分组为 sections,不硬编码固定 section 清单),经 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries=...)写入。
-   写入后文件布局自动归位为「手写段在前、蒸馏块在后」(引擎保证,幂等)。
+1. 各 topic 写入完成后更新 `_index.md`:为每个 topic 文件生成一行摘要(标题 + 文件 + 一句话摘要),组装 entries(实扫现有 topic 文件(跳过内容为空的 topic 文件),按顶层目录名分组为 sections,不硬编码固定 section 清单),经 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries=...,heading=<索引标题>)写入。
+   写入后文件布局自动归位为「手写段在前、蒸馏块在后」(引擎保证,幂等)。heading 为工件语言的索引标题文本:config.language 已登记时按该语言,缺失时按当前交互语言(如中文「知识索引」、英文 "Knowledge Index")。
 2. (新)登记消费:把本次读过的归档包目录名(含读了无产出的;首次引导时 = 本次全量读的全部归档包,即种子),经 `speccode write-consumed-archives --cwd . --json-stdin` 原子追记进 `_distilled.meta.json`:
    ```bash
    speccode write-consumed-archives --cwd . --json-stdin <<'EOF'

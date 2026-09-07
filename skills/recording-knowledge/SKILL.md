@@ -41,7 +41,8 @@ description: "把知识直接记录进知识集:经人工闸门写入 speccode/k
 
 ## 落盘
 
-1. `_index.md` 需更新时(新 topic、摘要变化、或索引缺失)→ 组装 entries(实扫现有 topic 文件(跳过内容为空的 topic 文件),按顶层目录名分组为 sections,不硬编码固定 section 清单),经 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries=...)写入。
+1. `_index.md` 需更新时(新 topic、摘要变化、或索引缺失)→ 组装 entries(实扫现有 topic 文件(跳过内容为空的 topic 文件),按顶层目录名分组为 sections,不硬编码固定 section 清单),经 `write-knowledge --rel _index.md --json-stdin`(mode=index,entries=...,heading=<索引标题>)写入。
+   heading 为工件语言的索引标题文本:config.language 已登记时按该语言,缺失时按当前交互语言(如中文「知识索引」、英文 "Knowledge Index")。
 2. MUST 立即提交:
    ```bash
    git add speccode/knowledge/
