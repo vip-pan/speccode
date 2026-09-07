@@ -186,8 +186,18 @@ test('buildIndex renders sections with topic lines', () => {
       section: '业务方向',
       items: [{ title: '领域知识', file: 'business/domain.md', summary: '术语与领域模型' }],
     },
-  ]);
+  ], '知识索引');
   assert.equal(out, '# 知识索引\n\n## 业务方向\n- 领域知识 → business/domain.md:术语与领域模型\n');
+});
+
+test('buildIndex requires a heading string (language-neutral lib)', () => {
+  const entries = [{ section: 'dev', items: [{ title: 't', file: 'f.md', summary: 's' }] }];
+  assert.throws(() => buildIndex(entries), TypeError);
+  assert.throws(() => buildIndex(entries, ''), TypeError);
+  assert.throws(() => buildIndex(entries, '   '), TypeError);
+  assert.throws(() => buildIndex(entries, 42), TypeError);
+  const out = buildIndex(entries, 'Knowledge Index');
+  assert.ok(out.startsWith('# Knowledge Index\n'));
 });
 
 test('writeKnowledge writes atomically and creates parent dirs', () => {
