@@ -6,7 +6,9 @@
 
 > **English highlights**: each version section below carries a one-line English summary at its top (`> EN: …`) for readers arriving from the English README. The Chinese entries remain the authoritative body.
 
-## [Unreleased]
+## [0.7.1] - 2026-09-07
+
+> EN: speccode goes multi-language — `config.language` (BCP-47 free tag, init asks with conversation-derived recommendation, missing = follow interaction language with zero migration), interaction mirrors the user's language (the「全程中文交互」hard rule retires with a variant-aware guard), artifacts follow the configured team language with guards in ten artifact-producing commands, the facade (plugin.json / marketplace.json / all 24 descriptions) turns English, and the lib is language-neutral (knowledge index heading parameterized).
 
 ### Added
 - 多国语言支持(语言模型 v4):config 新增可选 `language` 字段(BCP-47 自由 tag,init 询问登记,缺失=跟随交互语言);工件语言显式化,产工件命令带语言一致性守护
@@ -15,7 +17,7 @@
 - 交互语言纪律:「全程中文交互」硬规则退役,改为镜像用户语言(无法判断时提问确认);24 个命令 description 与插件门面(plugin.json/marketplace.json)转英文
 - 引擎语言中立:知识索引标题参数化(`write-knowledge` mode index 必填 `heading`);`detect-host` 用法报错转英文
 
-## [0.7.0] - 2026-09-06
+## [Unreleased]
 
 > EN: speccode goes multi-host — the repo flattens into a single-repo plugin (root = plugin root = marketplace, renamed to `speccode`), all 24 skills become host-neutral with a `speccode <verb>` PATH shim, the engine gains host detection (`config.host` + `detect-host`), thin adapters ship for Codex / Kimi Code / ZCode / OpenCode / Pi, and the facade is repositioned accordingly.
 
@@ -271,7 +273,8 @@ v2 全量迭代:四层拓扑收敛为三层、SDD 方法论与文档生命周期
 - 「文档剥离四步走」与 finish 阶段 `commit --amend` 折叠:保证 trunk 上功能提交为单一语义 commit,display reset 不误删文档。
 - GitHub / GitLab remote 探测,自动选择 `gh` / `glab` CLI,无 CLI 时降级为打印等效命令。
 
-[Unreleased]: https://github.com/vip-pan/speccode/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/vip-pan/speccode/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/vip-pan/speccode/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/vip-pan/speccode/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/vip-pan/speccode/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/vip-pan/speccode/compare/v0.5.0...v0.5.1
