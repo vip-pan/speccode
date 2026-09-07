@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { configPath, loadConfig, saveConfig, backupConfig, diffFields } from '../lib/config.mjs';
+import { configPath, loadConfig, saveConfig, backupConfig, diffFields, validateLanguage } from '../lib/config.mjs';
 
 function tmp() { return mkdtempSync(join(tmpdir(), 'sc-cfg-')); }
 
@@ -41,4 +41,27 @@ test('diffFields reports changed/added/removed top-level keys', () => {
   assert.ok('remote' in byKey && byKey.remote.new === undefined);
   assert.ok('display' in byKey && byKey.display.old === undefined);
   assert.ok(!('pr_tool' in byKey)); // unchanged omitted
+});
+
+test('validateLanguage accepts BCP-47 tags and normalizes case', () => {
+  assert.equal(validateLanguage('zh'), 'zh');
+  assert.equal(validateLanguage('en'), 'en');
+  assert.equal(validateLanguage('zh-CN'), 'zh-cn');
+  assert.equal(validateLanguage('ja'), 'ja');
+  assert.equal(validateLanguage('en-US'), 'en-us');
+});
+
+test('validateLanguage rejects malformed values', () => {
+  assert.equal(validateLanguage(''), null);
+  assert.equal(validateLanguage('not a tag!'), null);
+  assert.equal(validateLanguage('not_a_tag'), null);
+  assert.equal(validateLanguage('中文'), null);
+  assert.equal(validateLanguage('z'), null);       // 主子标签不足 2 段
+  assert.equal(validateLanguage('fren'), null);    // 主子标签超 3 段
+  assert.equal(validateLanguage('zh-'), null);     // 尾连字符
+  assert.equal(validateLanguage('zh--cn'), null);  // 双连字符
+  assert.equal(validateLanguage('zh_CN'), null);   // 下划线
+  assert.equal(validateLanguage(42), null);
+  assert.equal(validateLanguage(null), null);
+  assert.equal(validateLanguage(undefined), null);
 });
