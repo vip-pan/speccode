@@ -47,3 +47,7 @@
 <!-- distilled-from: cap/tool-input-sanitization -->
 **GLM 系模型后端在 tool_use 参数发射路径随机注入 CR(U+000D)**:实证 AskUserQuestion 参数含 CR 散布于中英/ASCII 边界,个数不定;其他工具参数与模型 text 输出零污染——诊断法 = 扫描 transcript JSONL 里 AskUserQuestion tool_use 的 input。坑:updatedInput 改写输入会被 schema 校验(如 options 数组最少 2 项),构造替换输入必须合法,否则整次工具调用报错而非静默忽略。(出自 archive/2026-09-02-askuserquestion-cr-sanitizer)
 <!-- /distilled -->
+
+<!-- distilled-from: cap/development-flow-tiering -->
+**变体措辞绕过字面守卫**:退役硬规则时仅 grep 精确串会漏同义变体——「全程中文交互」退役后 init/reset 正文残留「全程用中文与用户交互」「全程中文。」两个变体,字面守卫绿而语义未退役;守卫正则应收变体形态(`/全程用?中文/`),退役类改动收尾时全仓扫语义变体而非仅精确串。(出自 archive/2026-09-07-i18n)
+<!-- /distilled -->
