@@ -28,15 +28,16 @@ description: "初始化/更新 speccode 开发环境:探测远端、主干、宿
      - `integrated.value === true && available.value === false`(项目有集成痕迹但工具不可用)→ 展示告警,不登记。
      - `available.value === false && integrated.value === false`(两者皆 false,常态)→ 不展示、不询问、不登记(静默跳过)。
    - 一个都未确认则写 `"code_intel_tools": []`。
-6. **询问 hooks(可选)**:告知用户可在 SDD 各节点挂 shell 命令(如 IM 通知),事件名固定 14 个:onExplored / onFeatureCreated / onWorktreeCreated / onProposed / onBrainstormed / onPlanned / onTaskCompleted / onCodeReviewRequested / onCodeReviewCompleted / onWorktreeFinished / onFeatureFinished / onPrOpened / onSynced / onArchived。
+6. **询问工作语言**:向用户提问工件/文档语言(BCP-47 语言 tag)。推荐值取自当前会话的用户消息语言(依据对话判断,不读 LANG/LC_* 等环境变量;如对话为中文 → 推荐 `zh`)。选项:推荐值 / `en` / 自定义 tag(自由输入,合法形态如 `zh-CN`、`pt-BR`)。用户确认 → 该值纳入随后的 config 写入(`language` 字段);用户跳过 → 不写该字段(缺失 = 工件跟随交互语言)。二次 init 时该字段走既有字段级幂等 diff(旧值 → 新值,值未变跳过)。
+7. **询问 hooks(可选)**:告知用户可在 SDD 各节点挂 shell 命令(如 IM 通知),事件名固定 14 个:onExplored / onFeatureCreated / onWorktreeCreated / onProposed / onBrainstormed / onPlanned / onTaskCompleted / onCodeReviewRequested / onCodeReviewCompleted / onWorktreeFinished / onFeatureFinished / onPrOpened / onSynced / onArchived。
    - 用户选择配置 → 逐项询问「事件名 + shell 命令」,组装为 `hooks` 对象。
    - 用户跳过 → **不写入 `hooks` 字段**(缺失即无 hook)。
-7. **组装 config v3** 并通过 `echo '<json>' | speccode write-config --cwd . --json-stdin` 写入:
-   - `version: 3`、`initialized_at`(ISO 8601 UTC)、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`host` 仅在用户确认了具体宿主(非 generic/跳过)时存在;`hooks` 仅在用户配置时存在。
+8. **组装 config v3** 并通过 `echo '<json>' | speccode write-config --cwd . --json-stdin` 写入:
+   - `version: 3`、`initialized_at`(ISO 8601 UTC)、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`host` 仅在用户确认了具体宿主(非 generic/跳过)时存在;`hooks` 仅在用户配置时存在;`language` 仅在用户确认登记时存在(BCP-47 tag,非法值被 write-config 拒绝)。
    - **不得**包含任何 v1 遗留字段与 v2 的 `worktree_prefix`。
-8. **state 迁移(检测到 `state/features/` 时)**:展示迁移预览(逐文件 v2→v3 转换说明;`worktrees` 多于一条的文件将跳过并报告「请先按 v2 流程收尾」),经用户确认后运行 `echo '{}' | speccode migrate-state --cwd . --json-stdin`(该 verb 收 `--json-stdin` 但不消费 payload,stdin `{}` 即可——通道一致性同其他写 verb),随后跑 `reconcile` 验证 migrated 结果;拒绝 → `state/features/` 保持 v2 原样(v2 流程继续可用;config 此时已为 v3,双格式运行——v2 state 文件按 v2 语义原样读写)。
-9. **squash 探测**:init 完成 config 写入后运行 `speccode repo-merge-config --cwd .`;`squashOnly:false` → 打印警告「建议在仓库设置启用 squash-only 合并」+ 设置指引(不阻断);`config:null`(glab/none/失败)→ 静默跳过。
-10. 打印 config 摘要 + 下一步指引(`/speccode:exploring` 探索需求,或直接 `/speccode:creating-worktree`)。
+9. **state 迁移(检测到 `state/features/` 时)**:展示迁移预览(逐文件 v2→v3 转换说明;`worktrees` 多于一条的文件将跳过并报告「请先按 v2 流程收尾」),经用户确认后运行 `echo '{}' | speccode migrate-state --cwd . --json-stdin`(该 verb 收 `--json-stdin` 但不消费 payload,stdin `{}` 即可——通道一致性同其他写 verb),随后跑 `reconcile` 验证 migrated 结果;拒绝 → `state/features/` 保持 v2 原样(v2 流程继续可用;config 此时已为 v3,双格式运行——v2 state 文件按 v2 语义原样读写)。
+10. **squash 探测**:init 完成 config 写入后运行 `speccode repo-merge-config --cwd .`;`squashOnly:false` → 打印警告「建议在仓库设置启用 squash-only 合并」+ 设置指引(不阻断);`config:null`(glab/none/失败)→ 静默跳过。
+11. 打印 config 摘要 + 下一步指引(`/speccode:exploring` 探索需求,或直接 `/speccode:creating-worktree`)。
 
 ## 幂等流程(二次 init)
 
@@ -52,8 +53,8 @@ description: "初始化/更新 speccode 开发环境:探测远端、主干、宿
    - `version` 为 1(或无 version)时,`display` / `spec_tools` / `untracked_permanent` 三字段标记为「移除」列入 diff;
    - 若用户接受升级(`version: 3`),遗留字段(v1 三字段与 v2 的 `worktree_prefix`)MUST 被移除,不存在混合态;
    - 若用户拒绝对 config 的任何修改 → 保持原版本原样,整体不写入。
-5. `state/` 目录 MUST 不动(不读、不改、不删);唯一例外:检测到 v2 遗留 `state/features/` 时,按「全新流程」第 8 步的「state 迁移」提供一次性迁移(经用户确认,拒绝 → `state/features/` 保持 v2 原样)。
-6. 用 `write-config --json-stdin` 写回;随后同全新流程第 9 步跑 `repo-merge-config` squash 探测,打印摘要。
+5. `state/` 目录 MUST 不动(不读、不改、不删);唯一例外:检测到 v2 遗留 `state/features/` 时,按「全新流程」第 9 步的「state 迁移」提供一次性迁移(经用户确认,拒绝 → `state/features/` 保持 v2 原样)。
+6. 用 `write-config --json-stdin` 写回;随后同全新流程第 10 步跑 `repo-merge-config` squash 探测,打印摘要。
 
 ## 约束
 - 全程不修改 `.gitignore`,不删除任何本地文件。
