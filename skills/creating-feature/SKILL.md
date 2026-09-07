@@ -1,8 +1,8 @@
 ---
-description: "opt-in(大需求):从 trunk 切出集成分支并推送,登记父实体 state;普通需求直接用 creating-worktree"
+description: "Opt-in for large requirements: cut an integration branch from trunk and push it, register the parent state; use creating-worktree for normal changes (集成分支) Interact in the user's language; ask when it cannot be determined."
 ---
 
-创建大需求的集成分支与父实体。**opt-in 命令**:仅当 exploring 形态确认判定为大需求(整体上线)时使用;普通需求直接 `/speccode:creating-worktree`。全程中文交互。
+创建大需求的集成分支与父实体。**opt-in 命令**:仅当 exploring 形态确认判定为大需求(整体上线)时使用;普通需求直接 `/speccode:creating-worktree`。
 
 ## 前置
 

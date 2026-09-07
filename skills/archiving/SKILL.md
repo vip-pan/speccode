@@ -1,8 +1,8 @@
 ---
-description: "归档本次需求变更:speccode/changes/<slug>/ 移入 speccode/archive/<YYYY-MM-DD>-<slug>/,落盘即提交"
+description: "Archive the finished change: move speccode/changes/<slug>/ into speccode/archive/<YYYY-MM-DD>-<slug>/, committing on save Interact in the user's language; ask when it cannot be determined."
 ---
 
-把已完成的需求变更归档。全程中文交互。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**(syncing 之后、finishing-worktree 之前)。
+把已完成的需求变更归档。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**(syncing 之后、finishing-worktree 之前)。
 
 ## 前置
 

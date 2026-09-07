@@ -1,8 +1,8 @@
 ---
-description: "把批准的设计转化为细粒度实现计划(每任务 2-5 分钟步,精确文件路径/完整代码/验证步骤),落 plan/ 并提交"
+description: "Turn an approved design into a fine-grained implementation plan (2-5 minute steps, exact file paths / full code / verification), saved to plan/ and committed (实现计划) Interact in the user's language; ask when it cannot be determined."
 ---
 
-编写一份面向「零上下文工程师」的实现计划:他们需要的一切——每个任务动哪些文件、代码、测试、怎么验证——都写进去。拆成一口大小的任务。DRY、YAGNI、TDD、频繁提交。全程中文交互。
+编写一份面向「零上下文工程师」的实现计划:他们需要的一切——每个任务动哪些文件、代码、测试、怎么验证——都写进去。拆成一口大小的任务。DRY、YAGNI、TDD、频繁提交。
 
 **开始时宣布:**"我在用 writing-plans 编写实现计划。"
 

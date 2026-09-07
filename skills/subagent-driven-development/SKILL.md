@@ -1,5 +1,5 @@
 ---
-description: "为每个任务派发全新子代理实现 + 双重审查 + 整支终审;ledger 恢复;工作区 .speccode/sdd/<plan>/"
+description: "Dispatch a fresh subagent per task with dual reviews plus a final whole-plan review; ledger-based recovery; workspace .speccode/sdd/<plan>/ Interact in the user's language; ask when it cannot be determined."
 ---
 
 # Subagent 驱动开发(Subagent-Driven Development)

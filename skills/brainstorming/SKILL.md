@@ -1,8 +1,8 @@
 ---
-description: "苏格拉底式设计精化:一次一问、多方案权衡、分段呈现确认;设计落 brainstorm/ 并回写 propose/,落盘即提交"
+description: "Socratic design refinement: one question at a time, weigh options, present the design in sections for approval; writes to brainstorm/, syncs back to propose/, commits on save (脑暴设计) Interact in the user's language; ask when it cannot be determined."
 ---
 
-把想法通过自然协作对话打磨成完整设计。先理解项目现状,再一次一个问题地精化;理解清楚后分段呈现设计并获得用户批准。全程中文交互。
+把想法通过自然协作对话打磨成完整设计。先理解项目现状,再一次一个问题地精化;理解清楚后分段呈现设计并获得用户批准。
 
 <HARD-GATE>
 在呈现设计并获得用户批准之前,禁止调用任何实现类命令、写任何代码、搭建任何脚手架、或采取任何实现动作。对任何项目都一样,无论看起来多简单。

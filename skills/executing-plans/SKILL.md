@@ -1,5 +1,5 @@
 ---
-description: "在当前会话分批执行实现计划,带人工检查点;子代理可用时优先 subagent-driven-development"
+description: "Execute an implementation plan in batches within this session, with human checkpoints; prefer subagent-driven-development when subagents are available Interact in the user's language; ask when it cannot be determined."
 ---
 
 # Executing Plans(执行计划)

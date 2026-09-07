@@ -1,5 +1,5 @@
 ---
-description: "初始化/更新 speccode 开发环境:探测远端、主干、宿主身份、代码智能工具,配置 worktree 目录与 hooks,写 .speccode/config.json(config v3)"
+description: "Initialize or update the speccode environment: detect remote, trunk, host identity and code-intel tools, configure the worktree dir, hooks and working language, write .speccode/config.json (config v3) (初始化) Interact in the user's language; ask when it cannot be determined."
 ---
 
 初始化或更新 speccode 配置。全程用中文与用户交互。

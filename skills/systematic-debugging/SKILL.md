@@ -1,5 +1,5 @@
 ---
-description: "遇到任何 bug、测试失败或异常行为时使用,提出修复之前必须先完成根因调查;3 次修复失败则质疑架构"
+description: "For any bug, test failure or anomalous behavior: finish root-cause investigation before proposing a fix; after 3 failed fixes, question the architecture Interact in the user's language; ask when it cannot be determined."
 ---
 
 # 系统化调试(Systematic Debugging)

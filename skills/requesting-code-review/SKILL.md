@@ -1,5 +1,5 @@
 ---
-description: "完成任务、实现重大功能或合并前,派发 code reviewer 子代理验证工作符合需求;BASE 用调用方记录的 commit"
+description: "After finishing work or major features, and before merging: dispatch a code-reviewer subagent to verify the work; BASE is the caller-recorded commit Interact in the user's language; ask when it cannot be determined."
 ---
 
 # 请求代码审查(Requesting Code Review)

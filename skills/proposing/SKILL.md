@@ -1,8 +1,8 @@
 ---
-description: "把探索结论落地为 proposal/design/specs/tasks 四类文档(speccode/changes/<slug>/propose/),落盘即提交"
+description: "Land exploration conclusions as proposal/design/specs/tasks documents (speccode/changes/<slug>/propose/), committing on save (提案文档) Interact in the user's language; ask when it cannot be determined."
 ---
 
-根据 exploring 的结论,通过提问完善粗略想法、探索需求漏洞,把需求落地为结构化文档。全程中文交互。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**(`git rev-parse --abbrev-ref HEAD` 校验,且当前 worktree 必须能归属到某个 active 分支)。
+根据 exploring 的结论,通过提问完善粗略想法、探索需求漏洞,把需求落地为结构化文档。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**(`git rev-parse --abbrev-ref HEAD` 校验,且当前 worktree 必须能归属到某个 active 分支)。
 
 ## 前置
 

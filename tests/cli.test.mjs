@@ -1218,6 +1218,14 @@ test('skills 宿主中立守卫:无宿主专属 token、无 speccode.mjs 调用�
   }
 });
 
+test('skills 交互语言守卫:无「全程中文交互」硬指令', () => {
+  const skillsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills');
+  for (const name of readdirSync(skillsDir).sort()) {
+    const md = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8');
+    assert.ok(!md.includes('全程中文交互'), `skills/${name}/SKILL.md 不得残留「全程中文交互」硬指令`);
+  }
+});
+
 test('bin/speccode wrapper 可执行且与 node 直调输出一致', () => {
   const repo = makeRepo();
   const wrapper = join(__dirname, '..', 'bin', 'speccode');

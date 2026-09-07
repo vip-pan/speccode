@@ -1,5 +1,5 @@
 ---
-description: "实现任何功能或 bugfix 时使用,先写测试再写实现代码;没看过测试失败就不算 TDD"
+description: "For any feature or bugfix: write the test first and watch it fail before writing implementation — no red, no TDD Interact in the user's language; ask when it cannot be determined."
 ---
 
 # 测试驱动开发(Test-Driven Development,TDD)

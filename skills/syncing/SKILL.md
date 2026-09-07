@@ -1,8 +1,8 @@
 ---
-description: "把 changes/<slug>/ 的 delta specs 智能合并进 speccode/spec/ 主规格(brainstorm 优先吸收),幂等,落盘即提交"
+description: "Intelligently merge delta specs from changes/<slug>/ into the main specs in speccode/spec/ (brainstorm content absorbed first), idempotent, committing on save Interact in the user's language; ask when it cannot be determined."
 ---
 
-把本次变更的增量规格合并进主规格。这是 **agent 驱动的智能合并**——你直接读 delta 并编辑主规格(允许部分更新,如只加一个 scenario)。全程中文交互。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**。
+把本次变更的增量规格合并进主规格。这是 **agent 驱动的智能合并**——你直接读 delta 并编辑主规格(允许部分更新,如只加一个 scenario)。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**。
 
 ## 前置
 

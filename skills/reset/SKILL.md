@@ -1,5 +1,5 @@
 ---
-description: "重置 speccode 开发环境:清 state 与 worktree,按字段询问是否清理 config(要求无任何 active 分支)"
+description: "Reset the speccode environment: clear state and worktrees, ask per-field whether to clear config (requires no active branches) Interact in the user's language; ask when it cannot be determined."
 ---
 
 重置 speccode 环境。全程中文。不接受 `--force`。

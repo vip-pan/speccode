@@ -1,5 +1,5 @@
 ---
-description: "探索需求:学习/探索/提问澄清,结论留在会话上下文,不写文档;完成后引导建分支"
+description: "Explore a requirement: learn, probe and clarify with questions; conclusions stay in session context without writing documents; guides branch creation at the end (探索需求) Interact in the user's language; ask when it cannot be determined."
 ---
 
 进入探索模式。深入思考,自由可视化,跟随对话的方向。**应在 trunk 分支上运行**(校验见「前置」:不符仅警告,MUST NOT 硬阻断)。

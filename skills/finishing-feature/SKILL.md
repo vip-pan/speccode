@@ -1,8 +1,8 @@
 ---
-description: "opt-in 大需求终局:集成分支 → trunk 单 PR(children 全 completed 门禁,阻塞等合并),删父实体 state 后切回 trunk"
+description: "Large-requirement finale: single PR from the integration branch to trunk (gate: all children completed; blocks waiting for the merge), removes the parent state, returns to trunk Interact in the user's language; ask when it cannot be determined."
 ---
 
-大需求终局:集成分支 → trunk 单 PR。**opt-in 命令**,仅父实体(kind:integration)使用。全程中文交互。支持 `--resume`。
+大需求终局:集成分支 → trunk 单 PR。**opt-in 命令**,仅父实体(kind:integration)使用。支持 `--resume`。
 
 ## 前置
 

@@ -1,5 +1,5 @@
 ---
-description: "只读总览:所有 active 分支的进度与 pending_operation,父实体按 children 实时派生子分支状态,附 config 摘要"
+description: "Read-only overview: progress and pending_operation of every active branch, child branch states derived live for parents, plus a config summary (状态总览) Interact in the user's language; ask when it cannot be determined."
 ---
 
 显示 speccode 当前全局状态。纯只读(除对账自愈外无副作用)。

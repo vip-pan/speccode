@@ -1,8 +1,8 @@
 ---
-description: "完成开发分支并按 merge_target 路由合并(集成分支本地 squash / trunk 走 PR,测试门禁;支持 --resume)"
+description: "Finish a development branch and merge by merge_target (local squash into the integration branch / PR to trunk, test gate; supports --resume) (完成分支) Interact in the user's language; ask when it cannot be determined."
 ---
 
-完成一个开发分支并按 `merge_target` 路由合并。全程中文交互。支持 `--resume`。
+完成一个开发分支并按 `merge_target` 路由合并。支持 `--resume`。
 
 ## 前置
 
