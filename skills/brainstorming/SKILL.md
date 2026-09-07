@@ -8,6 +8,14 @@ description: "Socratic design refinement: one question at a time, weigh options,
 在呈现设计并获得用户批准之前,禁止调用任何实现类命令、写任何代码、搭建任何脚手架、或采取任何实现动作。对任何项目都一样,无论看起来多简单。
 </HARD-GATE>
 
+## 语言守护
+
+本命令即将产出工件(文档/PR/commit)。先做语言核对:
+
+1. 经 `speccode read-config --cwd .` 读取 config;未登记 `language` 字段 → 工件跟随当前交互语言,跳过本守护。
+2. 已登记且与当前会话交互语言不一致 → 向用户提问一次(本会话内不重复提问):按 config.language 产工件,或确认更换工作语言。
+3. 用户确认更换 → 提醒用户运行 `/speccode:init` 重置 config.language,本命令 MUST NOT 直接改写 config;用户选择保持 → 按 config.language 产工件。
+
 ## 反模式:「这太简单了不需要设计」
 
 每个项目都走这个流程——todo 列表、单函数工具、配置变更,全都是。「简单」项目最容易因未检验的假设浪费工作。设计可以很短(真正简单的项目几句话就够),但 MUST 呈现并获得批准。

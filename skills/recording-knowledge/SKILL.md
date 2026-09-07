@@ -4,6 +4,14 @@ description: "Record knowledge directly into the knowledge set: write hand-writt
 
 把用户/agent 提供的知识直接记录进 `speccode/knowledge/`(hand-written 段),经人工闸门落盘。**应在 state 登记的 `chore/knowledge-*` worktree 分支上运行**(trunk 上运行时由本命令引导建分支,见 §3)。
 
+## 语言守护
+
+本命令即将产出工件(文档/PR/commit)。先做语言核对:
+
+1. 经 `speccode read-config --cwd .` 读取 config;未登记 `language` 字段 → 工件跟随当前交互语言,跳过本守护。
+2. 已登记且与当前会话交互语言不一致 → 向用户提问一次(本会话内不重复提问):按 config.language 产工件,或确认更换工作语言。
+3. 用户确认更换 → 提醒用户运行 `/speccode:init` 重置 config.language,本命令 MUST NOT 直接改写 config;用户选择保持 → 按 config.language 产工件。
+
 ## 前置
 
 1. `read-config` 加载 config;为 null → 提示先 `/speccode:init` 并退出。

@@ -6,6 +6,14 @@ description: "Turn an approved design into a fine-grained implementation plan (2
 
 **开始时宣布:**"我在用 writing-plans 编写实现计划。"
 
+## 语言守护
+
+本命令即将产出工件(文档/PR/commit)。先做语言核对:
+
+1. 经 `speccode read-config --cwd .` 读取 config;未登记 `language` 字段 → 工件跟随当前交互语言,跳过本守护。
+2. 已登记且与当前会话交互语言不一致 → 向用户提问一次(本会话内不重复提问):按 config.language 产工件,或确认更换工作语言。
+3. 用户确认更换 → 提醒用户运行 `/speccode:init` 重置 config.language,本命令 MUST NOT 直接改写 config;用户选择保持 → 按 config.language 产工件。
+
 ## 前置
 
 1. **trunk 防护**:`git rev-parse --abbrev-ref HEAD` 必须为非 trunk 的 `<type>/<slug>` 形态分支;否则退出并提示「请在开发分支上运行本命令」(防止直提 trunk)。(`read-config` 先跑,为 null → 提示先 `/speccode:init` 并退出)。
