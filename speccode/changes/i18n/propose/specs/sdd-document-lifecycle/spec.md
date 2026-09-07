@@ -2,7 +2,7 @@
 
 ### Requirement: 工件语言与语言守护
 
-speccode 产出的工件(proposal/design/specs/tasks/plan/knowledge 文档、PR 标题与正文、簿记 commit subject)MUST 使用 `config.language` 所指语言书写;`config.language` 缺失时 MUST 跟随交互语言。产工件命令(proposing、brainstorming、writing-plans、syncing、archiving、distilling-knowledge、recording-knowledge、applying、finishing-worktree)在落工件前 SHALL 检测会话交互语言与 `config.language`(已登记时)是否一致:不一致 MUST 向用户提问(每会话至多一次);用户确认更换语言后 MUST 提醒其经 init 重置 config.language;命令自身 MUST NOT 直接改写 config.language。
+speccode 产出的工件(proposal/design/specs/tasks/plan/knowledge 文档、PR 标题与正文、簿记 commit subject)MUST 使用 `config.language` 所指语言书写;`config.language` 缺失时 MUST 跟随交互语言。产工件命令(proposing、brainstorming、writing-plans、syncing、archiving、distilling-knowledge、recording-knowledge、applying、finishing-worktree、finishing-feature)在落工件前 SHALL 检测会话交互语言与 `config.language`(已登记时)是否一致:不一致 MUST 向用户提问(每会话至多一次);用户确认更换语言后 MUST 提醒其经 init 重置 config.language;命令自身 MUST NOT 直接改写 config.language。
 
 #### Scenario: 工件跟随 config.language
 - **WHEN** config.language 为 ja 且用户以日语交互执行 proposing

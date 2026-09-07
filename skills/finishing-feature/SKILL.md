@@ -4,6 +4,14 @@ description: "Large-requirement finale: single PR from the integration branch to
 
 大需求终局:集成分支 → trunk 单 PR。**opt-in 命令**,仅父实体(kind:integration)使用。支持 `--resume`。
 
+## 语言守护
+
+本命令即将产出工件(文档/PR/commit)。先做语言核对:
+
+1. 经 `speccode read-config --cwd .` 读取 config;未登记 `language` 字段 → 工件跟随当前交互语言,跳过本守护。
+2. 已登记且与当前会话交互语言不一致 → 向用户提问一次(本会话内不重复提问):按 config.language 产工件,或确认更换工作语言。
+3. 用户确认更换 → 提醒用户运行 `/speccode:init` 重置 config.language,本命令 MUST NOT 直接改写 config;用户选择保持 → 按 config.language 产工件。
+
 ## 前置
 
 1. `read-config`;为 null → 提示 init。

@@ -45,5 +45,5 @@
 
 已在 plan(2026-09-07-i18n-plan.md)落定:
 
-- 守护命令清单终稿:proposing / brainstorming / writing-plans / syncing / archiving / distilling-knowledge / recording-knowledge / applying / finishing-worktree(9 个)
-- description 中文关键词:仅 8 个发现关键命令附注(init / exploring / proposing / creating-worktree / creating-feature / status / finishing-worktree / writing-plans)
+- 守护命令清单终稿:proposing / brainstorming / writing-plans / syncing / archiving / distilling-knowledge / recording-knowledge / applying / finishing-worktree / finishing-feature(10 个)
+- description 中文关键词:10 个发现关键命令附注(init / exploring / proposing / creating-worktree / creating-feature / status / finishing-worktree / writing-plans / applying / brainstorming)
