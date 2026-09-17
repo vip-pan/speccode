@@ -11,8 +11,8 @@
 
 ## 3. 文档与发布
 
-- [ ] `references/host-mapping/zcode.md`:manifest schema 核销(官方文档 + 全样本 + 本机 marketplace 安装实证;0.0.0 现象与修复)、`skillInstructions` 移除说明(映射语义由本文工具映射段承载);`references/host-mapping/README.md` 总览表 ZCode 行同步
-- [ ] `CHANGELOG.md` 0.7.2 小节增补 manifest 对齐条目
+- [x] `references/host-mapping/zcode.md`:manifest schema 核销(官方文档 + 全样本 + 本机 marketplace 安装实证;0.0.0 现象与修复)、`skillInstructions` 移除说明(映射语义由本文工具映射段承载);`references/host-mapping/README.md` 总览表 ZCode 行同步
+- [x] `CHANGELOG.md` 0.7.2 小节增补 manifest 对齐条目
 
 ## 4. 质量门禁(必经)
 
