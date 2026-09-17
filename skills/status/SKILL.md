@@ -1,4 +1,5 @@
 ---
+name: status
 description: "Read-only overview: progress and pending_operation of every active branch, child branch states derived live for parents, plus a config summary (状态总览) Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: receiving-code-review
 description: "Use when receiving code-review feedback: verify before implementing; demand technical rigor and verification, not performative agreement or blind implementation Interact in the user's language; ask when it cannot be determined."
 ---
 

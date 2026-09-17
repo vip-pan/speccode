@@ -1,4 +1,5 @@
 ---
+name: verification-before-completion
 description: "Before claiming work done/fixed/passing: run verification commands and confirm their output before committing or opening a PR — evidence always precedes assertion Interact in the user's language; ask when it cannot be determined."
 ---
 

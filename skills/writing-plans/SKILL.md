@@ -1,4 +1,5 @@
 ---
+name: writing-plans
 description: "Turn an approved design into a fine-grained implementation plan (2-5 minute steps, exact file paths / full code / verification), saved to plan/ and committed (实现计划) Interact in the user's language; ask when it cannot be determined."
 ---
 

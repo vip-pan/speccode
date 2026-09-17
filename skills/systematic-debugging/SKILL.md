@@ -1,4 +1,5 @@
 ---
+name: systematic-debugging
 description: "For any bug, test failure or anomalous behavior: finish root-cause investigation before proposing a fix; after 3 failed fixes, question the architecture Interact in the user's language; ask when it cannot be determined."
 ---
 

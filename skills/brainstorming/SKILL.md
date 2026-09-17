@@ -1,4 +1,5 @@
 ---
+name: brainstorming
 description: "Socratic design refinement: one question at a time, weigh options, present the design in sections for approval; writes to brainstorm/, syncs back to propose/, commits on save (脑暴设计) Interact in the user's language; ask when it cannot be determined."
 ---
 

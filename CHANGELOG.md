@@ -8,6 +8,16 @@
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-09-17
+
+> EN: all 24 skills regain a `name` frontmatter key whose value equals the directory name — ZCode drops skills whose frontmatter lacks `name` (the whole plugin was unusable there), while the name==dirname invariant keeps every host that ignores, uses, or misreads the field on the same invocation path, so the 0.5.1 VS Code Unknown-command bug cannot recur; a CI guard test pins the invariant.
+
+### Fixed
+- **ZCode 整包不可用修复**:ZCode 官方规范要求 SKILL.md frontmatter 必含 `name`(缺失即丢弃该 skill),0.6.0 收敛为仅 `description` 后 24 个 skill 在 ZCode 全部无法加载。现全部加回 `name: <目录名>`(值与目录名逐字一致、不加引号,置于 `description` 之前)。0.5.1 移除 `name` 的病根实为「name ≠ 调用名」(当时是展示型标题,VS Code 扩展拼出 `/speccode:SpecCode: …` 报 Unknown command);`name` == 目录名后,忽略、使用、误读该字段的三类宿主收敛到同一调用路径,该类问题结构性不复发。新增守卫测试 `tests/skill-frontmatter.test.mjs`(name==dirname、description ≤1024、无 `category`/`tags` 残留)。
+
+### Changed
+- 规格 `plugin-packaging`「skill frontmatter 契约」反转:从「MUST NOT 含 name」改为「MUST 含 name 且 name == 目录名」(delta 经 syncing 应用);`references/host-mapping/zcode.md` 的「SKILL.md frontmatter 要求」按官方文档核销为已验证(五识别键、1024 上限),manifest schema/安装命令仍待验证(官方样本含 `version` 字段、无 `skillInstructions` 键,已记线索)。
+
 ## [0.7.1] - 2026-09-07
 
 > EN: speccode goes multi-language — `config.language` (BCP-47 free tag, init asks with conversation-derived recommendation, missing = follow interaction language with zero migration), interaction mirrors the user's language (the「全程中文交互」hard rule retires with a variant-aware guard), artifacts follow the configured team language with guards in ten artifact-producing commands, the facade (plugin.json / marketplace.json / all 24 descriptions) turns English, and the lib is language-neutral (knowledge index heading parameterized).
@@ -275,7 +285,8 @@ v2 全量迭代:四层拓扑收敛为三层、SDD 方法论与文档生命周期
 - 「文档剥离四步走」与 finish 阶段 `commit --amend` 折叠:保证 trunk 上功能提交为单一语义 commit,display reset 不误删文档。
 - GitHub / GitLab remote 探测,自动选择 `gh` / `glab` CLI,无 CLI 时降级为打印等效命令。
 
-[Unreleased]: https://github.com/vip-pan/speccode/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/vip-pan/speccode/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/vip-pan/speccode/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/vip-pan/speccode/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/vip-pan/speccode/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/vip-pan/speccode/compare/v0.5.1...v0.6.0

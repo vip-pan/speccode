@@ -1,4 +1,5 @@
 ---
+name: creating-feature
 description: "Opt-in for large requirements: cut an integration branch from trunk and push it, register the parent state; use creating-worktree for normal changes (集成分支) Interact in the user's language; ask when it cannot be determined."
 ---
 

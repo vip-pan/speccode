@@ -1,4 +1,5 @@
 ---
+name: archiving
 description: "Archive the finished change: move speccode/changes/<slug>/ into speccode/archive/<YYYY-MM-DD>-<slug>/, committing on save Interact in the user's language; ask when it cannot be determined."
 ---
 

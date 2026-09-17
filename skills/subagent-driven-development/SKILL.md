@@ -1,4 +1,5 @@
 ---
+name: subagent-driven-development
 description: "Dispatch a fresh subagent per task with dual reviews plus a final whole-plan review; ledger-based recovery; workspace .speccode/sdd/<plan>/ Interact in the user's language; ask when it cannot be determined."
 ---
 

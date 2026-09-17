@@ -1,4 +1,5 @@
 ---
+name: syncing
 description: "Intelligently merge delta specs from changes/<slug>/ into the main specs in speccode/spec/ (brainstorm content absorbed first), idempotent, committing on save Interact in the user's language; ask when it cannot be determined."
 ---
 

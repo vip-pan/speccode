@@ -1,4 +1,5 @@
 ---
+name: distilling-knowledge
 description: "Distill the knowledge set from spec/ and archive/: re-distill every distilled block, landing into speccode/knowledge/ via the human gate Interact in the user's language; ask when it cannot be determined."
 ---
 

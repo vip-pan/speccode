@@ -1,4 +1,5 @@
 ---
+name: dispatching-parallel-agents
 description: "Dispatch parallel subagents by problem domain when facing 2+ independent tasks with no shared state and no ordering dependencies Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: proposing
 description: "Land exploration conclusions as proposal/design/specs/tasks documents (speccode/changes/<slug>/propose/), committing on save (提案文档) Interact in the user's language; ask when it cannot be determined."
 ---
 

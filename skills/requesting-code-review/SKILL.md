@@ -1,4 +1,5 @@
 ---
+name: requesting-code-review
 description: "After finishing work or major features, and before merging: dispatch a code-reviewer subagent to verify the work; BASE is the caller-recorded commit Interact in the user's language; ask when it cannot be determined."
 ---
 

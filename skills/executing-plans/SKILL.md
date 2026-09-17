@@ -1,4 +1,5 @@
 ---
+name: executing-plans
 description: "Execute an implementation plan in batches within this session, with human checkpoints; prefer subagent-driven-development when subagents are available Interact in the user's language; ask when it cannot be determined."
 ---
 
