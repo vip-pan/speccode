@@ -1,4 +1,5 @@
 ---
+name: creating-worktree
 description: "Cut a development branch (git worktree) from trunk or an integration branch and register its state — the single entry for normal changes (创建开发分支) Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: finishing-worktree
 description: "Finish a development branch and merge by merge_target (local squash into the integration branch / PR to trunk, test gate; supports --resume) (完成分支) Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: recording-knowledge
 description: "Record knowledge directly into the knowledge set: write hand-written blocks into speccode/knowledge/ through the human gate Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: applying
 description: "Tier 1 manual execution entry: implement tasks.md checklist items one by one (no plan), tick back-fill and bookkeeping commits, followed by mandatory code review (手动执行) Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: test-driven-development
 description: "For any feature or bugfix: write the test first and watch it fail before writing implementation — no red, no TDD Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: init
 description: "Initialize or update the speccode environment: detect remote, trunk, host identity and code-intel tools, configure the worktree dir, hooks and working language, write .speccode/config.json (config v3) (初始化) Interact in the user's language; ask when it cannot be determined."
 ---
 

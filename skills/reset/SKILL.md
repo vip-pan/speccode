@@ -1,4 +1,5 @@
 ---
+name: reset
 description: "Reset the speccode environment: clear state and worktrees, ask per-field whether to clear config (requires no active branches) Interact in the user's language; ask when it cannot be determined."
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: exploring
 description: "Explore a requirement: learn, probe and clarify with questions; conclusions stay in session context without writing documents; guides branch creation at the end (探索需求) Interact in the user's language; ask when it cannot be determined."
 ---
 

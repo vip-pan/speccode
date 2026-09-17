@@ -1,4 +1,5 @@
 ---
+name: finishing-feature
 description: "Large-requirement finale: single PR from the integration branch to trunk (gate: all children completed; blocks waiting for the merge), removes the parent state, returns to trunk Interact in the user's language; ask when it cannot be determined."
 ---
 
