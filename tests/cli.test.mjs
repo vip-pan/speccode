@@ -1316,17 +1316,19 @@ test('install-shim.sh: unwritable dest fails loudly with manual command', () => 
   rmSync(blocker, { recursive: true, force: true });
 });
 
-test('host-adapters: manifests parse, skills point at shared dir, zcode marked 待验证', () => {
+test('host-adapters: manifests parse, skills point at shared dir', () => {
   for (const f of ['.codex-plugin/plugin.json', '.kimi-plugin/plugin.json', '.zcode-plugin/plugin.json']) {
     const m = JSON.parse(readFileSync(join(__dirname, '..', f), 'utf8'));
     assert.equal(m.name, 'speccode', `${f} name 必须为 speccode`);
+  }
+  // codex/kimi 沿用 ./skills/ 写法;ZCode 按官方插件形态用目录名(深度契约见 tests/zcode-adapter.test.mjs)
+  for (const f of ['.codex-plugin/plugin.json', '.kimi-plugin/plugin.json']) {
+    const m = JSON.parse(readFileSync(join(__dirname, '..', f), 'utf8'));
     assert.match(String(m.skills), /^\.\/skills\/?$/, `${f} skills 必须精确指向 ./skills/`);
   }
   // spec 场景「六宿主入口齐备」:五个非 CC 入口都必须在仓库根存在
   assert.ok(existsSync(join(__dirname, '..', '.opencode', 'INSTALL.md')), '.opencode/INSTALL.md 必须存在');
   assert.ok(existsSync(join(__dirname, '..', '.pi', 'extensions', 'speccode.ts')), '.pi/extensions/speccode.ts 必须存在');
-  const zc = readFileSync(join(__dirname, '..', '.zcode-plugin', 'plugin.json'), 'utf8');
-  assert.ok(zc.includes('待验证'), 'zcode manifest 必须显式标注待验证');
 });
 
 test('host-mapping docs: five hosts with three sections each, not referenced by skills', () => {
