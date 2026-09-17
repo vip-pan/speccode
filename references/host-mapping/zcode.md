@@ -1,6 +1,8 @@
 # ZCode 宿主映射
 
 > **待验证总标注**:ZCode 的 manifest schema、安装命令、工具名均未经真机验证。本文件按用户确认的「Kimi Code 同款」假设编写,发布前 MUST 对照 ZCode 官方文档逐项核对(见 `.zcode-plugin/plugin.json` 的 `_note`)。
+>
+> **已核销(2026-09-17,来源:官方 zcode-guide 插件文档)**:SKILL.md frontmatter 要求——`name` 必填(frontmatter 存在而 `name` 缺失时该 skill 被整个丢弃;完全无 frontmatter 时 `name` 回落目录名但 description 为空,难以触发);识别键仅 `name`/`description`/`when_to_use`/`license`/`metadata` 五枚;`description` 超 1024 字符同样丢弃;调用 = `name` 或 `plugin:skill` 限定名。speccode 全部 skill 已按 `name` == 目录名 落字段(守卫测试 `tests/skill-frontmatter.test.mjs` 钉死)。manifest 侧线索:官方样本 `.zcode-plugin/plugin.json` 含 `version` 字段、无 `skillInstructions` 键,本仓 adapter 差异待核。
 
 ## 安装
 

@@ -7,7 +7,7 @@ speccode 的多宿主支持:每个非 Claude Code 宿主一份三段式映射文
 | Claude Code | `.claude-plugin/`(marketplace) | prose 原生(无需映射) | ✅ 主宿主,持续 dogfood |
 | Codex | `.codex-plugin/plugin.json` | 本目录 codex.md | ⚠️ 安装命令待验证;multi_agent 机制来自实测调研 |
 | Kimi Code | `.kimi-plugin/plugin.json` + `skillInstructions` | manifest 内嵌 + 本目录 kimi-code.md | ⚠️ 范本经 superpowers 实测;本仓装法待验证 |
-| ZCode | `.zcode-plugin/plugin.json` + `skillInstructions` | manifest 内嵌 + 本目录 zcode.md | ❌ 待验证(按 Kimi 同款假设,用户确认) |
+| ZCode | `.zcode-plugin/plugin.json` + `skillInstructions` | manifest 内嵌 + 本目录 zcode.md | ⚠️ SKILL.md frontmatter 要求已核销(官方文档,2026-09-17);manifest schema/安装命令/工具名仍待验证 |
 | OpenCode | `.opencode/INSTALL.md` | 本目录 opencode.md | ⚠️ 注入方式待验证 |
 | Pi | `.pi/extensions/speccode.ts` | 本目录 pi.md | ❌ 待验证(扩展 API 假设) |
 
