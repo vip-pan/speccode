@@ -1,6 +1,6 @@
 {
   "name": "speccode",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Multi-requirement parallel development, in-repo spec hosting, standardized PR flow, and SDD methodology (explore / document / plan / subagent execution / review) — a process orchestration plugin.",
   "author": { "name": "speccode" },
   "license": "MIT",

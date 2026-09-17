@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-09-17
+
+> EN: docs-only patch — the ZCode host-mapping notes drop their last historical "researched in the mold of Kimi Code" comparison wording; with the adapter verified against the official ZCode plugin shape, the notes state facts directly and point at the page-top verification block.
+
 ### Changed
 - 文档清理:`references/host-mapping/zcode.md` 宿主注意段移除「按类 Kimi Code 形态调研」历史对比措辞(ZCode 已核销为官方插件形态,直陈事实并指向页首验证状态块;全仓唯一活跃残留)。
 
@@ -289,7 +293,8 @@ v2 全量迭代:四层拓扑收敛为三层、SDD 方法论与文档生命周期
 - 「文档剥离四步走」与 finish 阶段 `commit --amend` 折叠:保证 trunk 上功能提交为单一语义 commit,display reset 不误删文档。
 - GitHub / GitLab remote 探测,自动选择 `gh` / `glab` CLI,无 CLI 时降级为打印等效命令。
 
-[Unreleased]: https://github.com/vip-pan/speccode/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/vip-pan/speccode/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/vip-pan/speccode/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/vip-pan/speccode/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/vip-pan/speccode/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/vip-pan/speccode/compare/v0.6.0...v0.7.0
