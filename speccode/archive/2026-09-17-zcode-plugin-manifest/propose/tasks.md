@@ -20,6 +20,6 @@
 
 ## 5. 收尾(review 通过后)
 
-- [ ] syncing:`specs/host-adapters/spec.md` 的 MODIFIED delta 并入主规格
-- [ ] archiving:归档为 `speccode/archive/<日期>-zcode-plugin-manifest`
-- [ ] push(PRB #59 自动带上本变更)
+- [x] syncing:`specs/host-adapters/spec.md` 的 MODIFIED delta 并入主规格
+- [x] archiving:归档为 `speccode/archive/<日期>-zcode-plugin-manifest`
+- [x] push(PRB #59 自动带上本变更)
