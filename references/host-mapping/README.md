@@ -1,6 +1,6 @@
 # 宿主映射文档总览
 
-speccode 的多宿主支持:每个非 Claude Code 宿主一份三段式映射文档(安装 / 工具映射 / 宿主注意)。skill 正文宿主中立(host-neutral-prose 契约),不引用本目录;宿主绑定经各 adapter 的 manifest `skillInstructions` 内嵌摘要 + 本目录详细文档承载。
+speccode 的多宿主支持:每个非 Claude Code 宿主一份三段式映射文档(安装 / 工具映射 / 宿主注意)。skill 正文宿主中立(host-neutral-prose 契约),不引用本目录;宿主绑定经本目录详细文档承载(Kimi Code 另经 manifest `skillInstructions` 内嵌摘要)。
 
 | 宿主 | adapter 入口 | 映射载体 | 验证状态 |
 |---|---|---|---|

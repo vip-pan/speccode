@@ -275,7 +275,7 @@ Claude Code is the primary host; five more hosts install from this same reposito
 | Claude Code | marketplace | native | primary, dogfooded |
 | Codex | `.codex-plugin/plugin.json` | `references/host-mapping/codex.md` | install unverified |
 | Kimi Code | `.kimi-plugin/plugin.json` | manifest `skillInstructions` + mapping doc | install unverified |
-| ZCode | `.zcode-plugin/plugin.json` | manifest `skillInstructions` + mapping doc | unverified (Kimi-shaped assumption) |
+| ZCode | `.zcode-plugin/plugin.json` (official six-key shape) | `references/host-mapping/zcode.md` | manifest schema / install route / skill frontmatter verified (2026-09-17); tool names unverified |
 | OpenCode | `.opencode/INSTALL.md` | `references/host-mapping/opencode.md` | unverified |
 | Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | unverified (extension API assumed) |
 

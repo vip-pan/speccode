@@ -274,7 +274,7 @@ Claude Code 是主宿主;另有五个宿主从同一仓库安装(薄 per-host ad
 | Claude Code | marketplace | prose 原生 | 主宿主,持续 dogfood |
 | Codex | `.codex-plugin/plugin.json` | `references/host-mapping/codex.md` | 安装待验证 |
 | Kimi Code | `.kimi-plugin/plugin.json` | manifest `skillInstructions` + 映射文档 | 安装待验证 |
-| ZCode | `.zcode-plugin/plugin.json` | manifest `skillInstructions` + 映射文档 | 待验证(按 Kimi 同款假设) |
+| ZCode | `.zcode-plugin/plugin.json`(官方六键形态) | `references/host-mapping/zcode.md` | manifest schema/安装通路/skill frontmatter 已验证(2026-09-17);工具名待验证 |
 | OpenCode | `.opencode/INSTALL.md` | `references/host-mapping/opencode.md` | 待验证 |
 | Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | 待验证 |
 

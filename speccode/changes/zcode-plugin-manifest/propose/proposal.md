@@ -25,5 +25,5 @@ tier: 1
 ## Impact
 
 - 代码:`.zcode-plugin/plugin.json`(重写)、`tests/zcode-adapter.test.mjs`(新增)、`speccode/spec/host-adapters/spec.md`(经 syncing 应用 delta)、`references/host-mapping/zcode.md`、`references/host-mapping/README.md`、`CHANGELOG.md`(0.7.2 小节增补)
-- 行为:ZCode 插件列表版本号从 0.0.0 恢复真实版本;更新检测(version 比对)恢复可用;未被识别的死字段清除,工具映射语义无损(zcode.md 承载)
+- 行为:ZCode 插件列表版本号从 0.0.0 恢复真实版本(本机实证);更新检测按 version 比对推断受益,机制未实证;未被识别的死字段清除,工具映射语义无损(zcode.md 承载)
 - 后续(不在本变更):Kimi 侧 `.kimi-plugin` 的 `skillInstructions` 属其宿主字段,不动
