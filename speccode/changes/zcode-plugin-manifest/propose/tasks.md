@@ -16,7 +16,7 @@
 
 ## 4. 质量门禁(必经)
 
-- [ ] requesting-code-review(增量,BASE = 归档提交 `c39d95c`),反馈经 receiving-code-review 核实处理
+- [x] requesting-code-review(增量,BASE = 归档提交 `c39d95c`),反馈经 receiving-code-review 核实处理
 
 ## 5. 收尾(review 通过后)
 
