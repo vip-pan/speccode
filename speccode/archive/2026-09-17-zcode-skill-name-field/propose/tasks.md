@@ -22,6 +22,6 @@
 
 ## 5. 收尾(review 通过后)
 
-- [ ] `/speccode:syncing`:把 `specs/plugin-packaging/spec.md` 的 MODIFIED delta 合并入 `speccode/spec/plugin-packaging/spec.md`
-- [ ] `/speccode:archiving`:归档 changes 目录
+- [x] `/speccode:syncing`:把 `specs/plugin-packaging/spec.md` 的 MODIFIED delta 合并入 `speccode/spec/plugin-packaging/spec.md`
+- [x] `/speccode:archiving`:归档 changes 目录
 - [ ] `/speccode:finishing-worktree`:PR → main
