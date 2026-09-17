@@ -7,9 +7,9 @@
 
 ## 2. 质量门禁(必经)
 
-- [ ] requesting-code-review(BASE = propose commit),反馈经 receiving-code-review 核实处理
+- [x] requesting-code-review(BASE = propose commit),反馈经 receiving-code-review 核实处理
 
 ## 3. 收尾(review 通过后)
 
-- [ ] archiving:归档为 `speccode/archive/<日期>-zcode-docs-kimi-wording`(无 delta,跳过 syncing)
+- [x] archiving:归档为 `speccode/archive/<日期>-zcode-docs-kimi-wording`(无 delta,跳过 syncing)
 - [ ] finishing-worktree:push + PR → main
