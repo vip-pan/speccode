@@ -17,6 +17,22 @@
 
 **其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主还需把引擎 shim 装进 PATH:`bash scripts/install-shim.sh`。
 
+## 前置依赖
+
+- **Node.js ≥ 24** —— 引擎运行于 Node(纯 ESM、零第三方依赖)
+- `git`
+- `gh` CLI(GitHub)或 `glab` CLI(GitLab)—— 可选;未安装时 `pr_tool` 自动降级为 `none`,命令会打印等价命令供你手动执行
+- **Windows 不支持** —— 仅 macOS / Linux
+
+## Quickstart (5 分钟最小闭环)
+
+1. 先[安装](#安装)插件。
+2. 在你的项目里运行 `/speccode:init` 初始化配置。
+3. 运行 `/speccode:creating-worktree` 切出首个开发分支(git worktree),基线测试转绿。
+4. 运行 `/speccode:status` 查看全貌。
+
+从需求到 PR 的完整路径见[基础工作流](#基础工作流)。
+
 ## 为什么用 speccode
 
 - ✅ **多需求并行** —— 双层拓扑:开发分支(`<type>/<slug>`,git worktree)从 trunk 一步直达;对账算法自动归属每个 worktree,多需求并行施工互不干扰。
@@ -54,22 +70,6 @@ $ /speccode:requesting-code-review
 $ /speccode:finishing-worktree
 ✓ 测试门禁通过,PR 已开往 trunk
 ```
-
-## 前置依赖
-
-- **Node.js ≥ 24** —— 引擎运行于 Node(纯 ESM、零第三方依赖)
-- `git`
-- `gh` CLI(GitHub)或 `glab` CLI(GitLab)—— 可选;未安装时 `pr_tool` 自动降级为 `none`,命令会打印等价命令供你手动执行
-- **Windows 不支持** —— 仅 macOS / Linux
-
-## Quickstart (5 分钟最小闭环)
-
-1. 先[安装](#安装)插件。
-2. 在你的项目里运行 `/speccode:init` 初始化配置。
-3. 运行 `/speccode:creating-worktree` 切出首个开发分支(git worktree),基线测试转绿。
-4. 运行 `/speccode:status` 查看全貌。
-
-从需求到 PR 的完整路径见[基础工作流](#基础工作流)。
 
 ## 命令速览
 

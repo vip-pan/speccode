@@ -17,6 +17,22 @@ Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, command
 
 **Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts also need the engine shim on PATH: `bash scripts/install-shim.sh`.
 
+## Prerequisites
+
+- **Node.js ≥ 24** — the engine runs on Node (pure ESM, zero third-party deps)
+- `git`
+- `gh` CLI (GitHub) or `glab` CLI (GitLab) — optional; when absent, `pr_tool` auto-degrades to `none` and commands print the equivalent command for you to run manually
+- **Windows is not supported** — macOS / Linux only
+
+## Quickstart (5-Minute Minimal Loop)
+
+1. [Install](#install) the plugin.
+2. Run `/speccode:init` in your project to initialize configuration.
+3. Run `/speccode:creating-worktree` to cut your first development branch (a git worktree) and get baseline tests green.
+4. Run `/speccode:status` to see the whole picture.
+
+For the full path from requirement to PR, see [The Basic Workflow](#the-basic-workflow).
+
 ## Why speccode
 
 - ✅ **Parallel multi-requirement development** — a two-layer topology: development branches (`<type>/<slug>` git worktrees) cut straight from trunk in one step; a reconciliation algorithm automatically assigns every worktree, so multiple requirements proceed in parallel without interfering with each other.
@@ -54,22 +70,6 @@ $ /speccode:requesting-code-review
 $ /speccode:finishing-worktree
 ✓ test gate passed, PR opened → trunk
 ```
-
-## Prerequisites
-
-- **Node.js ≥ 24** — the engine runs on Node (pure ESM, zero third-party deps)
-- `git`
-- `gh` CLI (GitHub) or `glab` CLI (GitLab) — optional; when absent, `pr_tool` auto-degrades to `none` and commands print the equivalent command for you to run manually
-- **Windows is not supported** — macOS / Linux only
-
-## Quickstart (5-Minute Minimal Loop)
-
-1. [Install](#install) the plugin.
-2. Run `/speccode:init` in your project to initialize configuration.
-3. Run `/speccode:creating-worktree` to cut your first development branch (a git worktree) and get baseline tests green.
-4. Run `/speccode:status` to see the whole picture.
-
-For the full path from requirement to PR, see [The Basic Workflow](#the-basic-workflow).
 
 ## Commands at a Glance
 
