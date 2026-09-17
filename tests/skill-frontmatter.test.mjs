@@ -49,6 +49,8 @@ test('every SKILL.md frontmatter carries name equal to its directory name', () =
 
 test('every SKILL.md frontmatter carries a description within the 1024-char host limit', () => {
   assert.ok(skills.length > 0);
+  // ZCode 文档口径为「1024 characters」——此处按字符(UTF-16 码元)计数忠实原意。
+  // 若宿主实际按 UTF-8 字节解读,中文关键词尾部约 3x:当前最长 ~294 字符(≈330 字节),余量充足。
   for (const name of skills) {
     const fm = frontmatterOf(name);
     assert.ok(fm, `${name}: SKILL.md must open with --- frontmatter`);
@@ -60,12 +62,25 @@ test('every SKILL.md frontmatter carries a description within the 1024-char host
   }
 });
 
-test('no skill frontmatter carries commands-era nonstandard keys', () => {
+test('frontmatter key set is exactly {name, description}', () => {
   assert.ok(skills.length > 0);
   for (const name of skills) {
     const fm = frontmatterOf(name);
     assert.ok(fm, `${name}: SKILL.md must open with --- frontmatter`);
-    assert.equal(fm.category, undefined, `${name}: category must not appear`);
-    assert.equal(fm.tags, undefined, `${name}: tags must not appear`);
+    assert.deepEqual(
+      Object.keys(fm).sort(),
+      ['description', 'name'],
+      `${name}: only name and description are allowed — category/tags/when_to_use 等其余键一律拒绝`,
+    );
+  }
+});
+
+test('name line is unquoted, slug-charset, and placed before description', () => {
+  assert.ok(skills.length > 0);
+  for (const name of skills) {
+    const lines = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8').split('\n');
+    assert.equal(lines[0], '---', `${name}: frontmatter must open with ---`);
+    assert.match(lines[1], /^name: [a-z0-9-]+$/, `${name}: line 2 must be unquoted name:<slug>`);
+    assert.ok(lines[2].startsWith('description:'), `${name}: description must directly follow name`);
   }
 });
