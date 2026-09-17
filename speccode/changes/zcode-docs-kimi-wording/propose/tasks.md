@@ -2,8 +2,8 @@
 
 ## 1. 实现
 
-- [ ] `references/host-mapping/zcode.md` 宿主注意段:移除「探索期按类 Kimi Code 形态调研」对比从句,直陈事实并指向页首验证状态块
-- [ ] `CHANGELOG.md` Unreleased/Changed 增补本清理条目
+- [x] `references/host-mapping/zcode.md` 宿主注意段:移除「探索期按类 Kimi Code 形态调研」对比从句,直陈事实并指向页首验证状态块
+- [x] `CHANGELOG.md` Unreleased/Changed 增补本清理条目
 
 ## 2. 质量门禁(必经)
 
