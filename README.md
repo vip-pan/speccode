@@ -64,6 +64,7 @@ For the full path from requirement to PR, see [The Basic Workflow](#the-basic-wo
 ```console
 $ /speccode:init                      # probe remote/trunk/code intelligence, write .speccode/config.json
 ✓ config ready: trunk=main, remote=origin, pr_tool=gh
+✓ language: en confirmed
 $ /speccode:creating-worktree
 ✓ feature/demo-api checked out in its own worktree, baseline tests all pass
 $ /speccode:proposing
@@ -112,7 +113,7 @@ See [design doc §3](./docs/DESIGN.md) for the full topology and key points.
 |---|---|---|---|---|---|
 | Two-layer branch topology + reconciliation (parallel worktrees) | ✅ | — | — | — | — |
 | In-repo spec document hosting (tracked on all branches) | ✅ | — | partial | partial | — |
-| Multi-host install (6 coding agents) | ✅ (CC verified; others per-host status in host-mapping) | ✅ | ✅ (cross-agent CLI) | — (npx installer) | — |
+| Multi-host install (6 coding agents) | ✅ (CC + ZCode verified; others per-host status in host-mapping) | ✅ | ✅ (cross-agent CLI) | — (npx installer) | — |
 | SDD methodology (explore / document / plan / execute / review) | ✅ (self-contained port) | ✅ (source) | — | ✅ (own system) | — |
 | Lifecycle hooks + cross-session memory | ✅ | — | — | — | — |
 | Standardized PR/MR flow | ✅ | — | — | — | — |

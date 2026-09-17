@@ -64,6 +64,7 @@
 ```console
 $ /speccode:init                      # 探测远端/主干/代码智能工具,写 .speccode/config.json
 ✓ config 就绪: trunk=main, remote=origin, pr_tool=gh
+✓ language: en confirmed
 $ /speccode:creating-worktree
 ✓ feature/demo-api 已切出到独立 worktree,基线测试全通过
 $ /speccode:proposing
@@ -112,7 +113,7 @@ origin/trunk ── 集成分支 ──┬── feature/s1 ── finishing-wor
 |---|---|---|---|---|---|
 | 双层分支拓扑 + 对账(多 worktree 并行) | ✅ | — | — | — | — |
 | spec 文档仓内托管(全分支 tracked) | ✅ | — | 部分 | 部分 | — |
-| 多宿主安装(6 个 coding agent) | ✅(CC 已验证;其余宿主状态见 host-mapping) | ✅ | ✅(跨 agent CLI) | —(npx 安装器) | — |
+| 多宿主安装(6 个 coding agent) | ✅(CC + ZCode 已验证;其余宿主状态见 host-mapping) | ✅ | ✅(跨 agent CLI) | —(npx 安装器) | — |
 | SDD 方法论(探索/文档/计划/执行/评审) | ✅(自包含移植) | ✅(来源) | — | ✅(自有体系) | — |
 | 生命周期 hooks + 跨会话 memory | ✅ | — | — | — | — |
 | PR/MR 流程标准化 | ✅ | — | — | — | — |
