@@ -1,6 +1,6 @@
 # speccode
 
-**面向 coding-agent CLI 的整套 SDD(规格驱动开发)与自动化开发体系**——Claude Code 为经过持续 dogfood 的主宿主,并提供 Codex、Kimi Code、ZCode、OpenCode、Pi 适配(各宿主安装状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))——多需求并行开发、spec 文档仓内托管、PR 流程标准化,由全套 `/speccode:*` 命令固化为默认路径。本仓库 dogfood 全部成果:规格主档、每次变更的归档、自动化仓库自身开发的开发工作流 skills,全部仓内托管。
+**面向 coding-agent CLI 的整套 SDD(规格驱动开发)与自动化开发体系。** speccode 把多需求并行开发、spec 文档仓内托管、PR 流程标准化固化为默认路径——全套 `/speccode:*` 命令。Claude Code 为经过持续 dogfood 的主宿主,并为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供适配(各宿主安装状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))。本仓库 dogfood 全部成果:规格主档、每次变更的归档、自动化仓库自身开发的开发工作流 skills,全部仓内托管。
 
 [English](README.md) | [简体中文](README_CN.md)
 
@@ -16,6 +16,27 @@
 依赖 [Node.js ≥ 24](#前置依赖) 与 `git`。安装后命令以 `/speccode:` 前缀出现,如 `/speccode:init`、`/speccode:status`、`/speccode:finishing-worktree`。
 
 **其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主还需把引擎 shim 装进 PATH:`bash scripts/install-shim.sh`。
+
+## 前置依赖
+
+- **Node.js ≥ 24** —— 引擎运行于 Node(纯 ESM、零第三方依赖)
+- `git`
+- `gh` CLI(GitHub)或 `glab` CLI(GitLab)—— 可选;未安装时 `pr_tool` 自动降级为 `none`,命令会打印等价命令供你手动执行
+- **Windows 不支持** —— 仅 macOS / Linux
+
+## Quickstart (5 分钟最小闭环)
+
+1. 先[安装](#安装)插件。
+2. 在你的项目里运行 `/speccode:init` 初始化配置。
+3. 运行 `/speccode:creating-worktree` 切出首个开发分支(git worktree),基线测试转绿。
+4. 运行 `/speccode:status` 查看全貌。
+
+从需求到 PR 的完整路径见[基础工作流](#基础工作流)。
+
+## 你的项目里会多出什么
+
+- `speccode/` —— spec 文档(`changes → spec → archive`)。**git tracked**:存在于所有分支,随 PR 链路上 trunk。
+- `.speccode/` —— 运行时状态:配置、分支状态、会话记忆。**按设计不跟踪**——永不提交,speccode 也不会替你写进 `.gitignore`。这正是下方 `git clean` 警告存在的原因。
 
 ## 为什么用 speccode
 
@@ -43,6 +64,7 @@
 ```console
 $ /speccode:init                      # 探测远端/主干/代码智能工具,写 .speccode/config.json
 ✓ config 就绪: trunk=main, remote=origin, pr_tool=gh
+✓ language: en confirmed
 $ /speccode:creating-worktree
 ✓ feature/demo-api 已切出到独立 worktree,基线测试全通过
 $ /speccode:proposing
@@ -54,22 +76,6 @@ $ /speccode:requesting-code-review
 $ /speccode:finishing-worktree
 ✓ 测试门禁通过,PR 已开往 trunk
 ```
-
-## 前置依赖
-
-- **Node.js ≥ 24** —— 引擎运行于 Node(纯 ESM、零第三方依赖)
-- `git`
-- `gh` CLI(GitHub)或 `glab` CLI(GitLab)—— 可选;未安装时 `pr_tool` 自动降级为 `none`,命令会打印等价命令供你手动执行
-- **Windows 不支持** —— 仅 macOS / Linux
-
-## Quickstart (5 分钟最小闭环)
-
-1. 先[安装](#安装)插件。
-2. 在你的项目里运行 `/speccode:init` 初始化配置。
-3. 运行 `/speccode:creating-worktree` 切出首个开发分支(git worktree),基线测试转绿。
-4. 运行 `/speccode:status` 查看全貌。
-
-从需求到 PR 的完整路径见[基础工作流](#基础工作流)。
 
 ## 命令速览
 
@@ -107,7 +113,7 @@ origin/trunk ── 集成分支 ──┬── feature/s1 ── finishing-wor
 |---|---|---|---|---|---|
 | 双层分支拓扑 + 对账(多 worktree 并行) | ✅ | — | — | — | — |
 | spec 文档仓内托管(全分支 tracked) | ✅ | — | 部分 | 部分 | — |
-| 多宿主安装(6 个 coding agent) | ✅(CC 已验证;其余宿主状态见 host-mapping) | ✅ | ✅(跨 agent CLI) | —(npx 安装器) | — |
+| 多宿主安装(6 个 coding agent) | ✅(CC + ZCode 已验证;其余宿主状态见 host-mapping) | ✅ | ✅(跨 agent CLI) | —(npx 安装器) | — |
 | SDD 方法论(探索/文档/计划/执行/评审) | ✅(自包含移植) | ✅(来源) | — | ✅(自有体系) | — |
 | 生命周期 hooks + 跨会话 memory | ✅ | — | — | — | — |
 | PR/MR 流程标准化 | ✅ | — | — | — | — |

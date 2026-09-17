@@ -1,6 +1,6 @@
 # speccode
 
-**An end-to-end SDD (Spec-Driven Development) and automated development system for coding-agent CLIs** — Claude Code as the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)) — parallel multi-requirement development, in-repo spec document hosting, and a standardized PR flow, crystallized into a default path by the full `/speccode:*` command set. This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
+**An end-to-end SDD (Spec-Driven Development) and automated development system for coding-agent CLIs.** speccode turns multi-requirement parallel development, in-repo spec document hosting, and a standardized PR flow into a default path — the full `/speccode:*` command set. Claude Code is the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)). This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
 
 [English](README.md) | [简体中文](README_CN.md)
 
@@ -16,6 +16,27 @@
 Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, commands appear under the `/speccode:` prefix, e.g. `/speccode:init`, `/speccode:status`, `/speccode:finishing-worktree`.
 
 **Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts also need the engine shim on PATH: `bash scripts/install-shim.sh`.
+
+## Prerequisites
+
+- **Node.js ≥ 24** — the engine runs on Node (pure ESM, zero third-party deps)
+- `git`
+- `gh` CLI (GitHub) or `glab` CLI (GitLab) — optional; when absent, `pr_tool` auto-degrades to `none` and commands print the equivalent command for you to run manually
+- **Windows is not supported** — macOS / Linux only
+
+## Quickstart (5-Minute Minimal Loop)
+
+1. [Install](#install) the plugin.
+2. Run `/speccode:init` in your project to initialize configuration.
+3. Run `/speccode:creating-worktree` to cut your first development branch (a git worktree) and get baseline tests green.
+4. Run `/speccode:status` to see the whole picture.
+
+For the full path from requirement to PR, see [The Basic Workflow](#the-basic-workflow).
+
+## What Lands in Your Repo
+
+- `speccode/` — spec documents (`changes → spec → archive`). **Git-tracked**: they live on every branch and ride the PR chain up to trunk.
+- `.speccode/` — runtime state: config, branch states, session memory. **Untracked by design** — never committed, and speccode never adds it to your `.gitignore`. That's why the `git clean` warning below matters.
 
 ## Why speccode
 
@@ -43,6 +64,7 @@ Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, command
 ```console
 $ /speccode:init                      # probe remote/trunk/code intelligence, write .speccode/config.json
 ✓ config ready: trunk=main, remote=origin, pr_tool=gh
+✓ language: en confirmed
 $ /speccode:creating-worktree
 ✓ feature/demo-api checked out in its own worktree, baseline tests all pass
 $ /speccode:proposing
@@ -54,22 +76,6 @@ $ /speccode:requesting-code-review
 $ /speccode:finishing-worktree
 ✓ test gate passed, PR opened → trunk
 ```
-
-## Prerequisites
-
-- **Node.js ≥ 24** — the engine runs on Node (pure ESM, zero third-party deps)
-- `git`
-- `gh` CLI (GitHub) or `glab` CLI (GitLab) — optional; when absent, `pr_tool` auto-degrades to `none` and commands print the equivalent command for you to run manually
-- **Windows is not supported** — macOS / Linux only
-
-## Quickstart (5-Minute Minimal Loop)
-
-1. [Install](#install) the plugin.
-2. Run `/speccode:init` in your project to initialize configuration.
-3. Run `/speccode:creating-worktree` to cut your first development branch (a git worktree) and get baseline tests green.
-4. Run `/speccode:status` to see the whole picture.
-
-For the full path from requirement to PR, see [The Basic Workflow](#the-basic-workflow).
 
 ## Commands at a Glance
 
@@ -107,7 +113,7 @@ See [design doc §3](./docs/DESIGN.md) for the full topology and key points.
 |---|---|---|---|---|---|
 | Two-layer branch topology + reconciliation (parallel worktrees) | ✅ | — | — | — | — |
 | In-repo spec document hosting (tracked on all branches) | ✅ | — | partial | partial | — |
-| Multi-host install (6 coding agents) | ✅ (CC verified; others per-host status in host-mapping) | ✅ | ✅ (cross-agent CLI) | — (npx installer) | — |
+| Multi-host install (6 coding agents) | ✅ (CC + ZCode verified; others per-host status in host-mapping) | ✅ | ✅ (cross-agent CLI) | — (npx installer) | — |
 | SDD methodology (explore / document / plan / execute / review) | ✅ (self-contained port) | ✅ (source) | — | ✅ (own system) | — |
 | Lifecycle hooks + cross-session memory | ✅ | — | — | — | — |
 | Standardized PR/MR flow | ✅ | — | — | — | — |
