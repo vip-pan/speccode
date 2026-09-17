@@ -13,8 +13,8 @@
 
 ## 3. 文档与发布
 
-- [ ] `references/host-mapping/zcode.md`:「SKILL.md frontmatter 要求」从待验证升已验证(注明来源:官方 zcode-guide 文档;五识别键、1024 上限);`references/host-mapping/README.md` 总览表 ZCode 行同步
-- [ ] `CHANGELOG.md` 新增 0.7.2 小节 + `.claude-plugin/plugin.json` version bump 0.7.2(同 commit,发布纪律)
+- [x] `references/host-mapping/zcode.md`:「SKILL.md frontmatter 要求」从待验证升已验证(注明来源:官方 zcode-guide 文档;五识别键、1024 上限);`references/host-mapping/README.md` 总览表 ZCode 行同步
+- [x] `CHANGELOG.md` 新增 0.7.2 小节 + `.claude-plugin/plugin.json` version bump 0.7.2(同 commit,发布纪律)
 
 ## 4. 质量门禁(必经)
 
