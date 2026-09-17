@@ -1,6 +1,6 @@
 # speccode
 
-**SDD (Spec-Driven Development) and an automated development system for coding-agent CLIs.** speccode turns multi-requirement parallel development, in-repo spec document hosting, and a standardized PR flow into a default path — the full `/speccode:*` command set. Claude Code is the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)). This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
+**An end-to-end SDD (Spec-Driven Development) and automated development system for coding-agent CLIs.** speccode turns multi-requirement parallel development, in-repo spec document hosting, and a standardized PR flow into a default path — the full `/speccode:*` command set. Claude Code is the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)). This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
 
 [English](README.md) | [简体中文](README_CN.md)
 
@@ -36,7 +36,7 @@ For the full path from requirement to PR, see [The Basic Workflow](#the-basic-wo
 ## What Lands in Your Repo
 
 - `speccode/` — spec documents (`changes → spec → archive`). **Git-tracked**: they live on every branch and ride the PR chain up to trunk.
-- `.speccode/` — runtime state: config, branch states, session memory. **Untracked by design** — never committed, never added to `.gitignore`. That's why the `git clean` warning below matters.
+- `.speccode/` — runtime state: config, branch states, session memory. **Untracked by design** — never committed, and speccode never adds it to your `.gitignore`. That's why the `git clean` warning below matters.
 
 ## Why speccode
 

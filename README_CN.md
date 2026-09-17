@@ -1,6 +1,6 @@
 # speccode
 
-**面向 coding-agent CLI 的整套 SDD(规格驱动开发)与自动化开发体系。** speccode 把多需求并行开发、spec 文档仓内托管、PR 流程标准化固化为默认路径——全套 `/speccode:*` 命令。Claude Code 为经过持续 dogfood 的主宿主,Codex、Kimi Code、ZCode、OpenCode、Pi 提供适配(各宿主安装状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))。本仓库 dogfood 全部成果:规格主档、每次变更的归档、自动化仓库自身开发的开发工作流 skills,全部仓内托管。
+**面向 coding-agent CLI 的整套 SDD(规格驱动开发)与自动化开发体系。** speccode 把多需求并行开发、spec 文档仓内托管、PR 流程标准化固化为默认路径——全套 `/speccode:*` 命令。Claude Code 为经过持续 dogfood 的主宿主,并为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供适配(各宿主安装状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))。本仓库 dogfood 全部成果:规格主档、每次变更的归档、自动化仓库自身开发的开发工作流 skills,全部仓内托管。
 
 [English](README.md) | [简体中文](README_CN.md)
 
@@ -36,7 +36,7 @@
 ## 你的项目里会多出什么
 
 - `speccode/` —— spec 文档(`changes → spec → archive`)。**git tracked**:存在于所有分支,随 PR 链路上 trunk。
-- `.speccode/` —— 运行时状态:配置、分支状态、会话记忆。**按设计不跟踪**——永不提交、也不进 `.gitignore`。这正是下方 `git clean` 警告存在的原因。
+- `.speccode/` —— 运行时状态:配置、分支状态、会话记忆。**按设计不跟踪**——永不提交,speccode 也不会替你写进 `.gitignore`。这正是下方 `git clean` 警告存在的原因。
 
 ## 为什么用 speccode
 
