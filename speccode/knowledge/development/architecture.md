@@ -51,7 +51,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/documentation-facade -->
-**四文件文档架构分工**:根 README(EN/CN)= marketplace 用户门面 / docs/DESIGN.md(EN/CN)= 插件设计文档 / AGENTS.md = 开发文档真源 / CLAUDE.md = Claude Code 薄壳(@AGENTS.md 引入,不复制正文)。「门面速览 + 深链」模式——根 README 只放速览与链接,完整命令表与风险表留设计文档,两处互链,避免双份维护漂移。**根 README 骨架(以实扫为准)**:定位标语(多宿主口径)→ badges → 为什么 → 体验 demo → Prerequisites → Install(前置)→ 基础工作流 → 体验示例 → Quickstart → 命令速览 → 双层拓扑 → 对比定位 → 理念 → 文档地图 → git clean 警告 → 贡献 → License(#51 重排后的实际结构,数字不作锚)。**门面多宿主诚实分级**:Claude Code = 已验证主宿主,五宿主验证状态指向 host-mapping 总览表,MUST NOT 把待验证宿主表述为已验证。**AGENTS.md 的第一读者是 agent**:写 agent 最常踩的坑,而非 AI 贡献劝退书。(出自 archive/2026-08-12-readme-docs-overhaul、2026-09-04-readme-optimization、2026-09-06-docs-multi-host)
+**四文件文档架构分工**:根 README(EN/CN)= marketplace 用户门面 / docs/DESIGN.md(EN/CN)= 插件设计文档 / AGENTS.md = 开发文档真源 / CLAUDE.md = Claude Code 薄壳(@AGENTS.md 引入,不复制正文)。「门面速览 + 深链」模式——根 README 只放速览与链接,完整命令表与风险表留设计文档,两处互链,避免双份维护漂移。**根 README 骨架(以实扫为准)**:定位标语(多宿主口径)+ badges → Install → Prerequisites → Quickstart(5 分钟最小闭环)→ What Lands in Your Repo → Why → 基础工作流 → 体验 demo(See It in Action 三件套)→ 命令速览 → 双层拓扑 → 对比定位 → 理念 → 文档地图 → git clean 警告 → 贡献 → License(#64 重排后的实际结构:Install 前置、Quickstart 提前、demo 后移到基础工作流之后;顺序不作锚,引用以实扫为准)。**门面多宿主诚实分级**:Claude Code = 已验证主宿主,五宿主验证状态指向 host-mapping 总览表,MUST NOT 把待验证宿主表述为已验证。**AGENTS.md 的第一读者是 agent**:写 agent 最常踩的坑,而非 AI 贡献劝退书。(出自 archive/2026-08-12-readme-docs-overhaul、2026-09-04-readme-optimization、2026-09-06-docs-multi-host;骨架顺序按 main@#64 实扫更新)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/knowledge-set -->

@@ -35,9 +35,9 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/session-memory -->
-**memory 走 writeTextAtomic**:memory/*.md 文本写入与 config/state 同策(临时文件 + renameSync 覆盖);写前必读(read-before-write),在现有内容上增量,不做整文件无脑覆盖;append 模式是读-改-写经 writeTextAtomic(与 O_APPEND 原子写策略的差异见架构块,两模式刻意不同)。
+**memory 写入两模式原子性刻意不同**:replace 模式经 writeTextAtomic(临时文件 + renameSync 覆盖),写前必读(read-before-write),在现有内容上增量,不做整文件无脑覆盖;append 模式是单次 O_APPEND 追加写(appendFileSync 打开即 O_APPEND,MUST NOT 读-改-写),条目边界补换行(前条无尾换行且新条无头换行时插恰好一个换行)并入同一次追加写——「append 走读-改-写」是旧印象,与现行 spec 及引擎实现相悖,勿回流。
 
-**校验收口 lib**:read/write-memory 的 branch 校验收口为 lib 纯函数 validateMemoryBranch(保留键 _knowledge、_exploring 遗留读兼容、_exploring/<topic> 经 validateSlug、回退 validateBranch),可单测——确定性逻辑下沉铁律的又一实例。memory 文件命名复用 state 的 type__slug 双下划线规则;主仓定位使同 feature 多 worktree 共享一份。**trunk 级**:知识维护摘要 MUST 含 PR url(或等效命令),MUST NOT 写 feature 级 memory。**承接零歧义**:slug=topic 命名约定(否决独立 --topic 参数——与 slug 构成双源歧义);rename 目标已存在拒绝并报告,不覆盖不合并(重复创建时骨架应增量维护,而非静默吞掉既有 memory)。**既有测试语义随契约演进**:契约变化时旧用例重构为新契约用例,不是回归而是契约演进。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-16-knowledge-trunk-bootstrap、2026-09-02-exploring-topic-split)
+**校验收口 lib**:read/write-memory 的 branch 校验收口为 lib 纯函数 validateMemoryBranch(保留键 _knowledge、_exploring 遗留读兼容、_exploring/<topic> 经 validateSlug、回退 validateBranch),可单测——确定性逻辑下沉铁律的又一实例。memory 文件命名复用 state 的 type__slug 双下划线规则;主仓定位使同 feature 多 worktree 共享一份。**trunk 级**:知识维护摘要 MUST 含 PR url(或等效命令),MUST NOT 写 feature 级 memory。**承接零歧义**:slug=topic 命名约定(否决独立 --topic 参数——与 slug 构成双源歧义);rename 目标已存在拒绝并报告,不覆盖不合并(重复创建时骨架应增量维护,而非静默吞掉既有 memory)。**既有测试语义随契约演进**:契约变化时旧用例重构为新契约用例,不是回归而是契约演进。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-16-knowledge-trunk-bootstrap、2026-09-02-exploring-topic-split;append 原子性表述按现行 session-memory spec 与引擎实现改写)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/development-flow-tiering -->
@@ -55,7 +55,7 @@
 
 **改名触点清单化**:tasks 列全触点(lib/bin/tests/skills/README×4/CHANGELOG/spec Purpose),收尾全仓 grep 校验禁区(旧名仅允许命中 archive/、CHANGELOG 历史小节);主规格 Purpose 含旧名需单独 editorial 手改(syncing 不动既有 Purpose)。一次性迁移脚本坑:全量重蒸重建语义使其不必要,且多一个要永久维护的命令。
 
-**闸门哲学**:distilling/recording 的候选 diff 经人工确认才落盘;判定为业务知识时给出「建议进 RAG」陈述,用户坚持则允许指定/新建 topic 写入,不硬拦(硬拒绝会在灰色地带误伤)。蒸馏目标 = 骨架 6 development topic ∪ development/ 下用户自建 topic;pitfalls 语义扩展为「踩坑 + 评审共识」,不单列 review topic。**命令间复用手段**:prose 引用既有命令(如知识命令引用 creating-worktree/finishing-worktree),既不内联复刻机制段(第三套实现)也不下沉 lib(命令编排属交互层);被否选项与理由记 design.md Decisions 段。(出自 archive/2026-08-14-knowledge-set、2026-08-15-knowledge-command-rename、2026-08-15-knowledge-set-refocus、2026-08-16-distill-incremental-archive、2026-09-03-knowledge-unified-entry、2026-09-07-i18n;mode 清单与 marker 语义按本需求 delta 改写)
+**闸门哲学**:distilling/recording 的候选 diff 经人工确认才落盘;判定为业务知识时给出「建议进 RAG」陈述,用户坚持则允许指定/新建 topic 写入,不硬拦(硬拒绝会在灰色地带误伤)。蒸馏目标 = 骨架 6 development topic ∪ development/ 下用户自建 topic;pitfalls 语义扩展为「踩坑 + 评审共识」,不单列 review topic。**变更元数据不蒸馏**:归档包文档的 frontmatter 字段(如 proposal.md 的 `tier:`)MUST NOT 单独成块、MUST NOT 混入蒸馏块正文,仅作 distiller 理解变更体量与权重的参考上下文。**命令间复用手段**:prose 引用既有命令(如知识命令引用 creating-worktree/finishing-worktree),既不内联复刻机制段(第三套实现)也不下沉 lib(命令编排属交互层);被否选项与理由记 design.md Decisions 段。(出自 archive/2026-08-14-knowledge-set、2026-08-15-knowledge-command-rename、2026-08-15-knowledge-set-refocus、2026-08-16-distill-incremental-archive、2026-09-03-knowledge-unified-entry、2026-09-07-i18n;mode 清单与 marker 语义按本需求 delta 改写;frontmatter 不蒸馏出自 knowledge-set spec 现行条款)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/code-intel-tool-integration -->
