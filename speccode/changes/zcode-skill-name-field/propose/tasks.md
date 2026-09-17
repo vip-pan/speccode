@@ -4,7 +4,7 @@
 
 ## 1. 守卫测试先行(红)
 
-- [ ] 新增 `tests/skill-frontmatter.test.mjs`:遍历 `skills/*/SKILL.md`,断言 frontmatter 含 `name` 且值 == 目录名、`description` 存在且 ≤1024 字符、无 `category`/`tags` 残留;先对现状跑一次确认失败(红)
+- [x] 新增 `tests/skill-frontmatter.test.mjs`:遍历 `skills/*/SKILL.md`,断言 frontmatter 含 `name` 且值 == 目录名、`description` 存在且 ≤1024 字符、无 `category`/`tags` 残留;先对现状跑一次确认失败(红)
 
 ## 2. 实现(绿)
 
