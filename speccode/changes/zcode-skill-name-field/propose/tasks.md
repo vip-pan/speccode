@@ -8,8 +8,8 @@
 
 ## 2. 实现(绿)
 
-- [ ] 24 个 `skills/<name>/SKILL.md` 的 frontmatter 各加一行 `name: <目录名>`(置于 `description` 之前,不加引号)
-- [ ] `node --test ./tests/skill-frontmatter.test.mjs` 转绿;全量 `node --test ./tests/*.test.mjs` 全绿
+- [x] 24 个 `skills/<name>/SKILL.md` 的 frontmatter 各加一行 `name: <目录名>`(置于 `description` 之前,不加引号)
+- [x] `node --test ./tests/skill-frontmatter.test.mjs` 转绿;全量 `node --test ./tests/*.test.mjs` 全绿
 
 ## 3. 文档与发布
 
