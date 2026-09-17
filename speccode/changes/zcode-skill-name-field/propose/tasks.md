@@ -18,7 +18,7 @@
 
 ## 4. 质量门禁(必经)
 
-- [ ] requesting-code-review(BASE = propose commit `53ea7ef`),审查反馈经 receiving-code-review 核实处理
+- [x] requesting-code-review(BASE = propose commit `53ea7ef`),审查反馈经 receiving-code-review 核实处理
 
 ## 5. 收尾(review 通过后)
 
