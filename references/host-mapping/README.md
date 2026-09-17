@@ -1,13 +1,13 @@
 # 宿主映射文档总览
 
-speccode 的多宿主支持:每个非 Claude Code 宿主一份三段式映射文档(安装 / 工具映射 / 宿主注意)。skill 正文宿主中立(host-neutral-prose 契约),不引用本目录;宿主绑定经各 adapter 的 manifest `skillInstructions` 内嵌摘要 + 本目录详细文档承载。
+speccode 的多宿主支持:每个非 Claude Code 宿主一份三段式映射文档(安装 / 工具映射 / 宿主注意)。skill 正文宿主中立(host-neutral-prose 契约),不引用本目录;宿主绑定经本目录详细文档承载(Kimi Code 另经 manifest `skillInstructions` 内嵌摘要)。
 
 | 宿主 | adapter 入口 | 映射载体 | 验证状态 |
 |---|---|---|---|
 | Claude Code | `.claude-plugin/`(marketplace) | prose 原生(无需映射) | ✅ 主宿主,持续 dogfood |
 | Codex | `.codex-plugin/plugin.json` | 本目录 codex.md | ⚠️ 安装命令待验证;multi_agent 机制来自实测调研 |
 | Kimi Code | `.kimi-plugin/plugin.json` + `skillInstructions` | manifest 内嵌 + 本目录 kimi-code.md | ⚠️ 范本经 superpowers 实测;本仓装法待验证 |
-| ZCode | `.zcode-plugin/plugin.json` + `skillInstructions` | manifest 内嵌 + 本目录 zcode.md | ⚠️ SKILL.md frontmatter 要求已核销(官方文档,2026-09-17);manifest schema/安装命令/工具名仍待验证 |
+| ZCode | `.zcode-plugin/plugin.json`(官方六键形态) | 本目录 zcode.md | ⚠️ manifest schema/安装通路/frontmatter 已核销(2026-09-17);仅工具名待验证 |
 | OpenCode | `.opencode/INSTALL.md` | 本目录 opencode.md | ⚠️ 注入方式待验证 |
 | Pi | `.pi/extensions/speccode.ts` | 本目录 pi.md | ❌ 待验证(扩展 API 假设) |
 

@@ -10,13 +10,14 @@
 
 ## [0.7.2] - 2026-09-17
 
-> EN: all 24 skills regain a `name` frontmatter key whose value equals the directory name — ZCode drops skills whose frontmatter lacks `name` (the whole plugin was unusable there), while the name==dirname invariant keeps every host that ignores, uses, or misreads the field on the same invocation path, so the 0.5.1 VS Code Unknown-command bug cannot recur; a CI guard test pins the invariant.
+> EN: all 24 skills regain a `name` frontmatter key whose value equals the directory name — ZCode drops skills whose frontmatter lacks `name` (the whole plugin was unusable there), while the name==dirname invariant keeps every host that ignores, uses, or misreads the field on the same invocation path, so the 0.5.1 VS Code Unknown-command bug cannot recur; the ZCode adapter manifest is realigned to the official six-key plugin shape (version restored — real installs showed 0.0.0 — with the Kimi-only `skillInstructions` field removed); CI guard tests pin both invariants.
 
 ### Fixed
-- **ZCode 整包不可用修复**:ZCode 官方规范要求 SKILL.md frontmatter 必含 `name`(缺失即丢弃该 skill),0.6.0 收敛为仅 `description` 后 24 个 skill 在 ZCode 全部无法加载。现全部加回 `name: <目录名>`(值与目录名逐字一致、不加引号,置于 `description` 之前)。0.5.1 移除 `name` 的病根实为「name ≠ 调用名」(当时是展示型标题,VS Code 扩展拼出 `/speccode:SpecCode: …` 报 Unknown command);`name` == 目录名后,忽略、使用、误读该字段的三类宿主收敛到同一调用路径,该类问题结构性不复发。新增守卫测试 `tests/skill-frontmatter.test.mjs`(name==dirname、description ≤1024、无 `category`/`tags` 残留)。
+- **ZCode 整包不可用修复**:ZCode 官方规范要求 SKILL.md frontmatter 必含 `name`(缺失即丢弃该 skill),0.6.0 收敛为仅 `description` 后 24 个 skill 在 ZCode 全部无法加载。现全部加回 `name: <目录名>`(值与目录名逐字一致、不加引号,置于 `description` 之前)。0.5.1 移除 `name` 的病根实为「name ≠ 调用名」(当时是展示型标题,VS Code 扩展拼出 `/speccode:SpecCode: …` 报 Unknown command);`name` == 目录名后,忽略、使用、误读该字段的三类宿主收敛到同一调用路径,该类问题结构性不复发。新增守卫测试 `tests/skill-frontmatter.test.mjs`(name==dirname、闭合键集、第 2 行样式、description ≤1024)。
+- **ZCode manifest 对齐官方形态**:`.zcode-plugin/plugin.json` 按「Kimi 同款」假设残留的 `homepage`/`repository`/`keywords`/`_note`/`skillInstructions`(Kimi 专属,ZCode 不识别)移除,补 `version`(官方 11 插件全样本恒含;本机实测缺失时插件列表显示 0.0.0——版本显示已实证恢复,更新检测按 version 比对推断受益但机制未实证),`skills` 改官方目录名写法 `"skills"`;`version` 与 `.claude-plugin/plugin.json` 的同步由守卫测试 `tests/zcode-adapter.test.mjs` 钉死,`cli.test.mjs` host-adapters 守卫随新契约更新。工具映射语义无损迁移至 `references/host-mapping/zcode.md`。
 
 ### Changed
-- 规格 `plugin-packaging`「skill frontmatter 契约」反转:从「MUST NOT 含 name」改为「MUST 含 name 且 name == 目录名」(delta 经 syncing 应用);`references/host-mapping/zcode.md` 的「SKILL.md frontmatter 要求」按官方文档核销为已验证(五识别键、1024 上限),manifest schema/安装命令仍待验证(官方样本含 `version` 字段、无 `skillInstructions` 键,已记线索)。
+- 规格 `plugin-packaging`「skill frontmatter 契约」反转:从「MUST NOT 含 name」改为「MUST 含 name 且 name == 目录名」;规格 `host-adapters`「六宿主 adapter 清单与形态」:ZCode 子句从「按 Kimi 同款形态」改为官方形态契约(两处 delta 经 syncing 应用)。`references/host-mapping/zcode.md`:frontmatter 要求、manifest schema、安装通路(marketplace,本机实证)三项核销为已验证,仅工具名仍待验证。
 
 ## [0.7.1] - 2026-09-07
 
