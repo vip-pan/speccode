@@ -7,6 +7,6 @@
 - [x] README.md + README_CN.md:Quickstart 后新增 `What lands in your repo` 小节(`speccode/` vs `.speccode/` 分工)
 - [x] README.md + README_CN.md:对比表「多宿主安装」行补 ZCode 已验证;控制台 transcript 的 init 输出补语言行
 - [x] `demo.tape` init fixture 补语言询问行 → `vhs docs/assets/demo.tape` 重录 `demo.gif` → 清理渲染 fixture(d/ d1-d4)
-- [ ] 双语一致性自检(同数同序)+ 守卫 grep(无版本号/测试数量字面量)+ 全量测试
+- [x] 双语一致性自检(同数同序)+ 守卫 grep(无版本号/测试数量字面量)+ 全量测试
 - code review(Tier 1 必经)
 - finishing-worktree:PR → 等待合并
