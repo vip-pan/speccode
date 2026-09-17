@@ -2,12 +2,12 @@
 
 ## 1. 守卫测试先行(红)
 
-- [ ] 新增 `tests/zcode-adapter.test.mjs`:断言 `.zcode-plugin/plugin.json` 键集恰为六官方键、`version` 与 `.claude-plugin/plugin.json` 一致、`skills` 值为 `skills`、无 `skillInstructions`;先对现状跑一次确认失败(红)
+- [x] 新增 `tests/zcode-adapter.test.mjs`:断言 `.zcode-plugin/plugin.json` 键集恰为六官方键、`version` 与 `.claude-plugin/plugin.json` 一致、`skills` 值为 `skills`、无 `skillInstructions`;先对现状跑一次确认失败(红)
 
 ## 2. 实现(绿)
 
-- [ ] 重写 `.zcode-plugin/plugin.json` 为官方六键形态(version=0.7.2,skills="skills")
-- [ ] `node --test ./tests/zcode-adapter.test.mjs` 转绿;全量 `node --test ./tests/*.test.mjs` 全绿
+- [x] 重写 `.zcode-plugin/plugin.json` 为官方六键形态(version=0.7.2,skills="skills")
+- [x] `node --test ./tests/zcode-adapter.test.mjs` 转绿;全量 `node --test ./tests/*.test.mjs` 全绿
 
 ## 3. 文档与发布
 
