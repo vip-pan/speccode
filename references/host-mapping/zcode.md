@@ -1,12 +1,16 @@
 # ZCode 宿主映射
 
-> **待验证总标注**:ZCode 的 manifest schema、安装命令、工具名均未经真机验证。本文件按用户确认的「Kimi Code 同款」假设编写,发布前 MUST 对照 ZCode 官方文档逐项核对(见 `.zcode-plugin/plugin.json` 的 `_note`)。
+> **验证状态**:manifest schema 与安装通路已核销(2026-09-17);仅**工具名**仍待验证(见工具映射表)。
 >
-> **已核销(2026-09-17,来源:官方 zcode-guide 插件文档)**:SKILL.md frontmatter 要求——`name` 必填(frontmatter 存在而 `name` 缺失时该 skill 被整个丢弃;完全无 frontmatter 时 `name` 回落目录名但 description 为空,难以触发);识别键仅 `name`/`description`/`when_to_use`/`license`/`metadata` 五枚;`description` 超 1024 字符同样丢弃;调用 = `name` 或 `plugin:skill` 限定名。speccode 全部 skill 已按 `name` == 目录名 落字段(守卫测试 `tests/skill-frontmatter.test.mjs` 钉死)。manifest 侧线索:官方样本 `.zcode-plugin/plugin.json` 含 `version` 字段、无 `skillInstructions` 键,本仓 adapter 差异待核。
+> **已核销 ①:SKILL.md frontmatter 要求(来源:官方 zcode-guide 插件文档)**——`name` 必填(frontmatter 存在而 `name` 缺失时该 skill 被整个丢弃;完全无 frontmatter 时 `name` 回落目录名但 description 为空,难以触发);识别键仅 `name`/`description`/`when_to_use`/`license`/`metadata` 五枚;`description` 超 1024 字符同样丢弃;调用 = `name` 或 `plugin:skill` 限定名。speccode 全部 skill 已按 `name` == 目录名 落字段(守卫测试 `tests/skill-frontmatter.test.mjs` 钉死)。
+>
+> **已核销 ②:manifest schema(来源:官方文档 + 11 个官方插件全样本)**——最小要求仅 `name`;组件字段 `commands`/`skills`/`hooks`/`mcpServers`/`agents`(可为目录名/数组/内联);官方键集恒为 `name`/`version`/`description`/`author`/`license`(+组件);`skillInstructions` 为 Kimi 专属,ZCode 不识别。`.zcode-plugin/plugin.json` 已对齐官方六键形态(`skills: "skills"`,`version` 与 `.claude-plugin/plugin.json` 同步 bump,守卫测试 `tests/zcode-adapter.test.mjs` 钉死);工具映射语义由本文「工具映射」段承载。兼容提示:ZCode 也识别 `.claude-plugin/`、`.codex-plugin/` 目录名。
+>
+> **已核销 ③:安装通路(本机实证)**——marketplace 安装可用:添加 marketplace `vip-pan/speccode` 后安装 plugin `speccode`,缓存落 `~/.zcode/cli/plugins/cache/speccode/speccode/<version>/`,`enabledPlugins` 登记 `speccode@speccode`。此前实测版本显示 0.0.0,即 manifest 缺 `version` 的直接后果,对齐后恢复。
 
 ## 安装
 
-1. ZCode:按 Kimi Code 同款假设,走插件安装命令指向本仓库(**待验证**:实际命令与 manifest 发现机制以官方文档为准)。
+1. ZCode:添加 marketplace `vip-pan/speccode`,安装 plugin `speccode`(marketplace 通路本机实证可用;在插件管理界面操作)。
 2. 安装引擎 shim:
 
    ```bash
@@ -26,6 +30,6 @@
 
 ## 宿主注意
 
-- `.zcode-plugin/plugin.json` 的 `skillInstructions` 与本文件同步维护;工具名核对后两处一起改。
-- ZCode 为 GLM 自研、类 Kimi Code 形态(探索期调研结论);Kimi 的映射经验大概率直接适用,但**一切以真机验证为准**。
-- 真机验证后:移除本文件与 manifest 的「待验证」标注,并把结论回写 host-detection 的宿主标记(若 ZCode 有可靠 env/config dir 标记)。
+- `.zcode-plugin/plugin.json` 已对齐官方形态,不含工具映射;工具映射的唯一载体是本文件「工具映射」段,工具名核对后只改这里。
+- ZCode 为 GLM 自研(探索期按类 Kimi Code 形态调研;manifest/安装/frontmatter 已核销,如上)。
+- 工具名核销后:移除工具映射表的「待验证」标注,并把结论回写 host-detection 的宿主标记(若 ZCode 有可靠 env/config dir 标记)。
