@@ -31,5 +31,5 @@
 ## 宿主注意
 
 - `.zcode-plugin/plugin.json` 已对齐官方形态,不含工具映射;工具映射的唯一载体是本文件「工具映射」段,工具名核对后只改这里。
-- ZCode 为 GLM 自研(探索期按类 Kimi Code 形态调研;manifest/安装/frontmatter 已核销,如上)。
+- ZCode 为 GLM 自研;manifest schema、安装通路、skill frontmatter 的核销结论见页首「验证状态」块。
 - 工具名核销后:移除工具映射表的「待验证」标注,并把结论回写 host-detection 的宿主标记(若 ZCode 有可靠 env/config dir 标记)。

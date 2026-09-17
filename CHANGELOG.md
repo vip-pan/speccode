@@ -8,6 +8,9 @@
 
 ## [Unreleased]
 
+### Changed
+- 文档清理:`references/host-mapping/zcode.md` 宿主注意段移除「按类 Kimi Code 形态调研」历史对比措辞(ZCode 已核销为官方插件形态,直陈事实并指向页首验证状态块;全仓唯一活跃残留)。
+
 ## [0.7.2] - 2026-09-17
 
 > EN: all 24 skills regain a `name` frontmatter key whose value equals the directory name — ZCode drops skills whose frontmatter lacks `name` (the whole plugin was unusable there), while the name==dirname invariant keeps every host that ignores, uses, or misreads the field on the same invocation path, so the 0.5.1 VS Code Unknown-command bug cannot recur; the ZCode adapter manifest is realigned to the official six-key plugin shape (version restored — real installs showed 0.0.0 — with the Kimi-only `skillInstructions` field removed); CI guard tests pin both invariants.
