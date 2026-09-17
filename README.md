@@ -1,6 +1,6 @@
 # speccode
 
-**An end-to-end SDD (Spec-Driven Development) and automated development system for coding-agent CLIs** — Claude Code as the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)) — parallel multi-requirement development, in-repo spec document hosting, and a standardized PR flow, crystallized into a default path by the full `/speccode:*` command set. This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
+**SDD (Spec-Driven Development) and an automated development system for coding-agent CLIs.** speccode turns multi-requirement parallel development, in-repo spec document hosting, and a standardized PR flow into a default path — the full `/speccode:*` command set. Claude Code is the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)). This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
 
 [English](README.md) | [简体中文](README_CN.md)
 
