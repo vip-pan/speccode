@@ -33,6 +33,11 @@ Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, command
 
 For the full path from requirement to PR, see [The Basic Workflow](#the-basic-workflow).
 
+## What Lands in Your Repo
+
+- `speccode/` — spec documents (`changes → spec → archive`). **Git-tracked**: they live on every branch and ride the PR chain up to trunk.
+- `.speccode/` — runtime state: config, branch states, session memory. **Untracked by design** — never committed, never added to `.gitignore`. That's why the `git clean` warning below matters.
+
 ## Why speccode
 
 - ✅ **Parallel multi-requirement development** — a two-layer topology: development branches (`<type>/<slug>` git worktrees) cut straight from trunk in one step; a reconciliation algorithm automatically assigns every worktree, so multiple requirements proceed in parallel without interfering with each other.

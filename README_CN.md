@@ -33,6 +33,11 @@
 
 从需求到 PR 的完整路径见[基础工作流](#基础工作流)。
 
+## 你的项目里会多出什么
+
+- `speccode/` —— spec 文档(`changes → spec → archive`)。**git tracked**:存在于所有分支,随 PR 链路上 trunk。
+- `.speccode/` —— 运行时状态:配置、分支状态、会话记忆。**按设计不跟踪**——永不提交、也不进 `.gitignore`。这正是下方 `git clean` 警告存在的原因。
+
 ## 为什么用 speccode
 
 - ✅ **多需求并行** —— 双层拓扑:开发分支(`<type>/<slug>`,git worktree)从 trunk 一步直达;对账算法自动归属每个 worktree,多需求并行施工互不干扰。
