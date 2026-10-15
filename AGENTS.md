@@ -64,7 +64,7 @@ speccode 编排的分支拓扑是**双层**:普通需求从 trunk 直接切 `<ty
 
 - **children 仅身份,状态派生**:父实体(`kind:"integration"`)的 `children` 只登记 `{slug}`;**任何命令 MUST NOT 写父实体的 children 状态**——唯一真源是各子分支 state,门禁与 status 渲染实时派生(children 有 slug 无子 state = 计划未开工,渲染 pending);子收尾只写自己的 state、永不写父实体。
 
-- **命名规则**:功能分支 `<type>/<slug>`,`type ∈ {feature,bugfix,refactor,chore}`,`slug` 匹配 `/^[a-z0-9-]+$/`;state 文件名用 `<type>__<slug>.json`(双下划线分隔,防撞名)。**该命名对开发分支(worktree)与集成分支同样适用**——worktree 分支不再带 `worktree-` 硬前缀(config 的 `worktree_prefix` 字段随之退役),集成分支由父实体 state(`kind:"integration"`)识别而非前缀。逻辑在 `slug.mjs`。
+- **命名规则**:功能分支 `<type>/<slug>`,`type ∈ {feature,bugfix,refactor,chore}`,`slug` 匹配 `/^[a-z0-9-]+$/`;state 文件名用 `<type>__<slug>.json`(双下划线分隔,防撞名)。**该命名对开发分支(worktree)与集成分支同样适用**——worktree 分支不带硬前缀,集成分支由父实体 state(`kind:"integration"`)识别而非前缀。逻辑在 `slug.mjs`。
 
 - **单 PR 直通 trunk(按 merge_target 路由)**:v0.1 的「先 PR→display 合并、再基于 merge commit 建 `<feature>-complete`、剥离文档 `git rm --cached` + `commit --amend`、再 PR→trunk」双 PR 流程与临时收尾分支已移除。v3 起普通需求由 finishing-worktree 按 state 的 `merge_target`(缺省 trunk)直接 PR → trunk;大需求 opt-in 集成分支,子分支本地 squash 汇入,终局 finishing-feature 一次 PR(集成分支 → trunk,children 全 completed 门禁)。阻塞等合并,超时把挂起态写进分支 state 的 `pending_operation`,`--resume` 续跑。
 

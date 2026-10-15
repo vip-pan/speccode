@@ -1070,7 +1070,7 @@ test('subagent-driven-development.md documents the tick-task completion step', (
 test('init.md writes the code_intel_tools config field (renamed from knowledge_tools)', () => {
   const md = readFileSync(join(__dirname, '..', 'skills', 'init', 'SKILL.md'), 'utf8');
   assert.ok(md.includes('"code_intel_tools": []'), 'init.md must write the empty code_intel_tools default with the new field name');
-  assert.ok(md.includes('code_intel_tools'), 'init.md must document code_intel_tools in the config v2 field set');
+  assert.ok(md.includes('code_intel_tools'), 'init.md must document code_intel_tools in the config field set');
   assert.ok(!md.includes('knowledge_tools'), 'init.md must not retain the old knowledge_tools field name');
 });
 
@@ -1276,7 +1276,7 @@ test('detect-code-intel-tools: 输出无 host 字段,恒全量探测', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('遗留 host 字段的 config 不报错且被忽略', () => {
+test('含未知键的 config 不报错且被忽略', () => {
   const repo = makeRepo();
   mkdirSync(join(repo, '.speccode'), { recursive: true });
   writeFileSync(join(repo, '.speccode', 'config.json'),
