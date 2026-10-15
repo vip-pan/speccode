@@ -504,7 +504,7 @@ git commit -m "refactor: remove migrate-state verb and v2 branches in feature-pr
 **Interfaces:**
 - Produces: `parseDistilledBlocks` 只识别 `distilled-from`/`/distilled`;`replaceDistilledBlocks`/`replaceHandBlocks` 对旧 `promoted` 标记按 hand 字节对待
 
-- [ ] **Step 1: 改测试(先红)** —— `tests/knowledge.test.mjs` 替换旧标记用例:
+- [x] **Step 1: 改测试(先红)** —— `tests/knowledge.test.mjs` 替换旧标记用例:
 
 ```js
 test('parseDistilledBlocks ignores legacy promoted markers (hand bytes)', () => {
@@ -527,24 +527,24 @@ test('replaceDistilledBlocks keeps legacy marker bytes in the hand region', () =
 
 删除用例:`parses legacy promoted markers`、`parses mixed current and legacy markers in order`、`rewrites legacy markers to the current format`、`drops legacy blocks whose source is gone`;`throws on mismatched opening/closing marker formats` 收窄为只测现行标记互错(`distilled-from` 开 + `/distilled` 之外无闭)与「`/distilled` 无开」两种。保留 `preserves legacy-format blocks unmigrated`(即上面第 2 条的既有断言,语义升格为契约)。
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `node --test tests/knowledge.test.mjs`
 Expected: FAIL(当前实现把旧标记解析为块)。
 
-- [ ] **Step 3: 实现** —— `lib/knowledge.mjs` 三个函数统一机械改法:
+- [x] **Step 3: 实现** —— `lib/knowledge.mjs` 三个函数统一机械改法:
   - 删 `LEGACY_PROMOTED_START`/`LEGACY_PROMOTED_END` 常量与 54-61 行注释,新注释:「读侧只认现行 distilled-from 标记;旧 promoted 时代的标记不再是块边界,其字节按 hand-written 对待」;
   - `const isNew = DISTILLED_START.exec(line); const m = isNew || LEGACY_PROMOTED_START.exec(line);` → `const m = DISTILLED_START.exec(line);`;
   - `open = { source: m[1].trim(), start: i, end: isNew ? DISTILLED_END : LEGACY_PROMOTED_END };` → `open = { source: m[1].trim(), start: i };`(parse 里闭行判定 `line.trim() === DISTILLED_END`);
   - replace 两处的 `const end = isNew ? DISTILLED_END : LEGACY_PROMOTED_END;` → `const end = DISTILLED_END;`;嵌套探测里的 `|| LEGACY_PROMOTED_START.exec(...)` 删;闭行判定 `line.trim() === DISTILLED_END || line.trim() === LEGACY_PROMOTED_END` → `line.trim() === DISTILLED_END`;
   - 函数头注释同步(删「current or legacy format」措辞)。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `node --test tests/knowledge.test.mjs tests/cli.test.mjs`
 Expected: PASS(含 cli 侧 read-knowledge --blocks / write-knowledge 用例,若其 fixture 含旧标记则同款改为现行标记)。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add lib/knowledge.mjs tests/knowledge.test.mjs tests/cli.test.mjs
