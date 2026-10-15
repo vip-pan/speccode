@@ -1391,3 +1391,44 @@ test('list-memory: files annotate completed via state join; topics unchanged', (
     { 'feature/done': true, 'feature/live': false, 'feature/legacy': true, '_exploring/topic': null });
   rmSync(repo, { recursive: true, force: true });
 });
+
+test('lint-state verb: reports config + state warnings, exit 0', () => {
+  const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'config.json'), { version: 3, trunk: 'main', host: 'zcode' });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__bad.json'),
+    { branch: 'feature/bad', type: 'feature', status: 'done' });
+  const { code, json } = runCli(repo, 'lint-state', '--cwd', repo);
+  assert.equal(code, 0);
+  assert.ok(json.config.warnings.some((x) => x.includes('host')), 'config 侧 host 退役提示');
+  const bad = json.states.find((s) => s.branch === 'feature/bad');
+  assert.ok(bad && bad.warnings.some((x) => x.includes('status')), 'state 侧 status 非法警告');
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('write-state gate: branch key mismatch rejected without touching disk', () => {
+  const repo = makeRepo();
+  const r = spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/a', '--json-stdin'],
+    { encoding: 'utf8',
+      input: JSON.stringify({ branch: 'feature/b', type: 'feature', status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z' }) });
+  assert.equal(r.status, 1);
+  assert.equal(JSON.parse(r.stdout).ok, false);
+  assert.ok(JSON.parse(r.stdout).error.includes('branch'));
+  assert.equal(existsSync(join(repo, '.speccode', 'state', 'branches', 'feature__a.json')), false, '拒绝时不落盘');
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('lint-state: v2 entry and corrupt JSON described without crashing', () => {
+  const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'features', 'feature__old.json'),
+    { feature_branch: 'feature/old', status: 'in_progress', worktrees: {} });
+  writeFileSync(join(repo, '.speccode', 'state', 'features', 'feature__mangled.json'), '{oops');
+  const { code, json } = runCli(repo, 'lint-state', '--cwd', repo);
+  assert.equal(code, 0, 'lint 永不因坏数据 exit 1');
+  const v2 = json.states.find((x) => x.branch === 'feature/old');
+  assert.ok(v2 && v2.warnings.length === 1 && v2.warnings[0].includes('v2'), 'v2 单条迁移提示');
+  const mangled = json.states.find((x) => x.branch === 'feature/mangled');
+  assert.ok(mangled && mangled.warnings.some((w) => w.includes('unparseable')));
+  rmSync(repo, { recursive: true, force: true });
+});

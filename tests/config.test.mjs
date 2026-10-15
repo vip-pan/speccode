@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { configPath, loadConfig, saveConfig, backupConfig, diffFields, validateLanguage } from '../lib/config.mjs';
+import { configPath, loadConfig, saveConfig, backupConfig, diffFields, validateLanguage, validateConfigShape } from '../lib/config.mjs';
 
 function tmp() { return mkdtempSync(join(tmpdir(), 'sc-cfg-')); }
 
@@ -92,4 +92,19 @@ test('backupConfig rotation leaves other files and under-window backups alone', 
   assert.ok(names.includes('unrelated.bak.2026-01-01T00-00-00.000Z'), '非 config.json.bak. 前缀绝不触碰');
   assert.equal(names.filter((f) => f.startsWith('config.json.bak.')).length, 3, '窗口内只增不删');
   rmSync(dir, { recursive: true, force: true });
+});
+
+test('validateConfigShape: clean pass + warning surface', () => {
+  assert.deepEqual(
+    validateConfigShape({ version: 3, trunk: 'main', remote: 'origin', pr_tool: 'gh', worktree_dir: '.wt', code_intel_tools: [] }),
+    []);
+  assert.deepEqual(validateConfigShape(null), []);
+  const w = validateConfigShape({
+    version: 2, trunk: 1, remote: 'origin', pr_tool: 'baz', worktree_dir: '.wt',
+    code_intel_tools: 'no', host: 'zcode', worktree_prefix: 'wt-', display: {},
+    hooks: { onPrOpened: 5 }, language: 7,
+  }).join('\n');
+  for (const needle of ['version', 'trunk', 'pr_tool', 'code_intel_tools', 'host', 'worktree_prefix', 'display', 'hooks', 'language']) {
+    assert.ok(w.includes(needle), `warning should mention ${needle}`);
+  }
 });
