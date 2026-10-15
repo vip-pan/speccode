@@ -8,7 +8,7 @@ import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSqua
 import { reconcile } from '../lib/reconcile.mjs';
 import { loadConfig, saveConfig, backupConfig, validateLanguage, validateConfigShape } from '../lib/config.mjs';
 import { readState, writeState, deleteState, listActiveFeatures, lintStateEntries, migrateStateV2toV3, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
-import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState, detectHost } from '../lib/detect.mjs';
+import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
 import { buildHookPayload, runHook } from '../lib/hooks.mjs';
 import { listMemory, readMemory, renameMemory, writeMemory, validateMemoryBranch } from '../lib/memory.mjs';
@@ -153,22 +153,12 @@ const VERBS = {
 
   // Resolve against the main repo root (same --git-common-dir invariant as the
   // other verbs) so .mcp.json / project dirs are found from subdirs and
-  // linked worktrees too.
-  'detect-code-intel-tools': ({ cwd }) => {
-    const cfg = loadConfig(speccodeDirOf(cwd));
-    return {
-      ok: true,
-      host: cfg?.host ?? null,
-      tools: detectCodeIntelTools(repoRoot(cwd), { host: cfg?.host }),
-    };
-  },
-  // Best-effort host identification; init confirms the result with the user
-  // before it lands in config.host (an explicit --host always wins). Bare
-  // --host without a value is rejected loudly, like every other malformed flag.
-  'detect-host': ({ cwd, host }) => {
-    if (host === true) return { ok: false, error: 'detect-host: --host requires a host id value' };
-    return { ok: true, ...detectHost(repoRoot(cwd), host ? { host } : {}) };
-  },
+  // linked worktrees too. Host-neutral (host-neutral-engine): full probes on
+  // every host; a legacy `host` key in config, if present, is ignored.
+  'detect-code-intel-tools': ({ cwd }) => ({
+    ok: true,
+    tools: detectCodeIntelTools(repoRoot(cwd)),
+  }),
 
   'resolve-worktree-dir': ({ cwd }) => {
     const cfg = loadConfig(speccodeDirOf(cwd));
