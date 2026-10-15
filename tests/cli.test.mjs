@@ -610,14 +610,12 @@ test('read-memory rejects an invalid branch name', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('write-memory accepts the _exploring sentinel branch', () => {
+test('write-memory rejects the legacy bare _exploring key', () => {
   const repo = makeRepo();
   const w = spawnSync('node', [BIN, 'write-memory', '--cwd', repo, '--branch', '_exploring', '--json-stdin'],
     { cwd: repo, input: JSON.stringify({ mode: 'replace', content: 'explored\n' }), encoding: 'utf8' });
-  assert.equal(w.status, 0);
-  assert.ok(JSON.parse(w.stdout.trim()).ok);
-  const r = runCli(repo, 'read-memory', '--cwd', repo, '--branch', '_exploring');
-  assert.equal(r.json.memory, 'explored\n');
+  assert.equal(w.status, 1, '无斜杠 _exploring 键已退役');
+  assert.equal(JSON.parse(w.stdout.trim()).ok, false);
   rmSync(repo, { recursive: true, force: true });
 });
 
