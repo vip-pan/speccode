@@ -346,7 +346,7 @@ git commit -m "refactor: state module is v3-only — drop v2 dual-format, migrat
 - Consumes: `listActiveFeatures`/`writeState`/`WORKTREE_STATUS`(Task 1 后的单格式版)
 - Produces: `reconcile(speccodeDir, opts)` → `{features, orphans, conflicts, advanced}`,features 只含 `state/branches/` 条目
 
-- [ ] **Step 1: 改测试(先红)** —— 把 `tests/reconcile.test.mjs` 中 `test('v3 reconcile: v2 entries pass through untouched', ...)` 整个用例替换为:
+- [x] **Step 1: 改测试(先红)** —— 把 `tests/reconcile.test.mjs` 中 `test('v3 reconcile: v2 entries pass through untouched', ...)` 整个用例替换为:
 
 ```js
 test('v3 reconcile: a state/features dir is completely invisible', () => {
@@ -365,19 +365,19 @@ test('v3 reconcile: a state/features dir is completely invisible', () => {
 
 (导入段按需补 `mkdirSync`;删除文件里对 `featuresDir` 的 import(如有)。)
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `node --test --test-name-pattern="invisible" tests/reconcile.test.mjs`
 Expected: FAIL —— 当前实现把 v2 条目并入 features。
 
-- [ ] **Step 3: 实现** —— `lib/reconcile.mjs`:头注释第 9 行改为单格式描述;删除 `const legacy = all.filter(...)` 行;`const v3 = all.filter((b) => typeof b?.branch === 'string');` 改为直接 `const features = listActiveFeatures(speccodeDir);` 并全文把 `v3` 引用改为 `features`(byBranch 构造、循环 1/3、写回循环);返回 `{ features, orphans, conflicts: [], advanced }`。
+- [x] **Step 3: 实现** —— `lib/reconcile.mjs`:头注释第 9 行改为单格式描述;删除 `const legacy = all.filter(...)` 行;`const v3 = all.filter((b) => typeof b?.branch === 'string');` 改为直接 `const features = listActiveFeatures(speccodeDir);` 并全文把 `v3` 引用改为 `features`(byBranch 构造、循环 1/3、写回循环);返回 `{ features, orphans, conflicts: [], advanced }`。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `node --test tests/reconcile.test.mjs`
 Expected: PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add lib/reconcile.mjs tests/reconcile.test.mjs
