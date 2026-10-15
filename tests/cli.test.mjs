@@ -1348,6 +1348,50 @@ test('host-mapping docs: five hosts with three sections each, not referenced by 
   }
 });
 
+test('purge-memory verb: e2e delete, idempotent, invalid branch rejected', () => {
+  const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode', 'memory'), { recursive: true });
+  writeFileSync(join(repo, '.speccode', 'memory', 'feature__x.md'), 'm');
+  const r1 = runCli(repo, 'purge-memory', '--cwd', repo, '--branch', 'feature/x');
+  assert.equal(r1.code, 0);
+  assert.deepEqual({ ok: r1.json.ok, purged: r1.json.purged }, { ok: true, purged: true });
+  assert.ok(!existsSync(join(repo, '.speccode', 'memory', 'feature__x.md')));
+  const r2 = runCli(repo, 'purge-memory', '--cwd', repo, '--branch', 'feature/x');
+  assert.equal(r2.code, 0);
+  assert.equal(r2.json.purged, false, '幂等:第二次 purged:false');
+  const bad = runCli(repo, 'purge-memory', '--cwd', repo, '--branch', 'nope');
+  assert.equal(bad.code, 1);
+  assert.equal(bad.json.ok, false);
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('list-memory: files annotate completed via state join; topics unchanged', () => {
+  const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode', 'memory'), { recursive: true });
+  writeFileSync(join(repo, '.speccode', 'memory', 'feature__done.md'), 'm');
+  writeFileSync(join(repo, '.speccode', 'memory', 'feature__live.md'), 'm');
+  writeFileSync(join(repo, '.speccode', 'memory', '_exploring__topic.md'), 'm');
+  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__done.json'),
+    { branch: 'feature/done', status: 'completed' });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__live.json'),
+    { branch: 'feature/live', status: 'in_progress' });
+  // v2 遗留条目:worktrees 全 completed → completed:true(与 reconcile 同款分流)
+  writeFileSync(join(repo, '.speccode', 'memory', 'feature__legacy.md'), 'm');
+  mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'features', 'feature__legacy.json'), {
+    feature_branch: 'feature/legacy', status: 'in_progress',
+    worktrees: { legacy: { status: 'completed' } },
+  });
+  const { code, json } = runCli(repo, 'list-memory', '--cwd', repo);
+  assert.equal(code, 0);
+  assert.deepEqual(json.topics, ['_exploring/topic'], 'topics 形状不变');
+  const byBranch = Object.fromEntries(json.files.map((f) => [f.branch, f.completed]));
+  assert.deepEqual(byBranch,
+    { 'feature/done': true, 'feature/live': false, 'feature/legacy': true, '_exploring/topic': null });
+  rmSync(repo, { recursive: true, force: true });
+});
+
 test('lint-state verb: reports config + state warnings, exit 0', () => {
   const repo = makeRepo();
   mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
@@ -1373,7 +1417,6 @@ test('write-state gate: branch key mismatch rejected without touching disk', () 
   assert.equal(existsSync(join(repo, '.speccode', 'state', 'branches', 'feature__a.json')), false, '拒绝时不落盘');
   rmSync(repo, { recursive: true, force: true });
 });
-
 
 test('lint-state: v2 entry and corrupt JSON described without crashing', () => {
   const repo = makeRepo();

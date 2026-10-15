@@ -11,7 +11,7 @@ import { readState, writeState, deleteState, listActiveFeatures, lintStateEntrie
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
 import { buildHookPayload, runHook } from '../lib/hooks.mjs';
-import { listMemory, readMemory, renameMemory, writeMemory, validateMemoryBranch } from '../lib/memory.mjs';
+import { listMemory, listMemoryKeys, purgeMemory, readMemory, renameMemory, writeMemory, validateMemoryBranch } from '../lib/memory.mjs';
 import { assertSafeRel, buildIndex, knowledgeRoot, listTopics, parseDistilledBlocks, replaceHandBlocks, replaceDistilledBlocks, writeKnowledge, archiveRoot, distilledMetaPath, readConsumedArchives, addConsumedArchives, listArchiveBundles, unconsumedArchives } from '../lib/knowledge.mjs';
 
 function readStdin() {
@@ -272,7 +272,40 @@ const VERBS = {
     return { ok: true, path };
   },
 
-  'list-memory': ({ cwd }) => ({ ok: true, topics: listMemory(speccodeDirOf(cwd)) }),
+  'list-memory': ({ cwd }) => {
+    // files + completed annotation: visibility for stale branch memories
+    // (join lives here, not in memory.mjs — the lib stays state-free).
+    const sd = speccodeDirOf(cwd);
+    const statusByBranch = new Map();
+    for (const f of listActiveFeatures(sd)) {
+      if (typeof f?.branch === 'string') {
+        statusByBranch.set(f.branch, f.status === WORKTREE_STATUS.COMPLETED);
+      } else if (typeof f?.feature_branch === 'string') {
+        // v2-legacy shape {feature_branch, worktrees:{...}}: derive from the
+        // per-worktree statuses (all completed → completed), falling back to
+        // the top-level v2 status when no worktree is registered — the same
+        // reconciliation split reconcile.mjs applies.
+        const ws = Object.values(f.worktrees ?? {});
+        statusByBranch.set(f.feature_branch,
+          ws.length > 0
+            ? ws.every((w) => w?.status === WORKTREE_STATUS.COMPLETED)
+            : f.status === WORKTREE_STATUS.COMPLETED);
+      }
+    }
+    const files = listMemoryKeys(sd).map((branch) => ({
+      branch,
+      completed: statusByBranch.has(branch) ? statusByBranch.get(branch) : null,
+    }));
+    return { ok: true, topics: listMemory(sd), files };
+  },
+
+  'purge-memory': ({ cwd, branch }) => {
+    // Flag form (no payload → no --json-stdin), mirroring delete-state.
+    if (!branch || branch === true) return { ok: false, error: 'purge-memory requires --branch <F>' };
+    if (!validateMemoryBranch(branch)) return { ok: false, error: `invalid branch name: ${branch}` };
+    const { purged, path } = purgeMemory(speccodeDirOf(cwd), branch);
+    return { ok: true, purged, path };
+  },
 
   'rename-memory': ({ cwd, branch, to, 'json-stdin': jsonStdin }) => {
     if (!jsonStdin) return { ok: false, error: 'rename-memory requires --json-stdin (pipe JSON via stdin)' };
