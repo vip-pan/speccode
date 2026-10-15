@@ -32,7 +32,7 @@
 - Consumes: `readJson`/`writeJsonAtomic`(atomic.mjs)、`branchToStateName`/`stateNameToBranch`/`TYPES`(slug.mjs)
 - Produces: `WORKTREE_STATUS`、`branchesDir`、`readState`、`writeState`、`deleteState`、`listActiveFeatures`、`lintStateEntries`、`validateStateShape`(导出面收窄:删除 `normalizeState`、`featuresDir`、`migrateStateV2toV3`)
 
-- [ ] **Step 1: 重写测试为新契约(先红)**
+- [x] **Step 1: 重写测试为新契约(先红)**
 
 `tests/state.test.mjs` 整文件替换为:
 
@@ -177,12 +177,12 @@ test('lintStateEntries: unparseable JSON is described, never a crash', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `node --test tests/state.test.mjs`
 Expected: FAIL —— import 报 `normalizeState`/`migrateStateV2toV3` 不存在(尚未删除时为旧用例失败/新契约用例失败)。
 
-- [ ] **Step 3: 重写 lib/state.mjs**
+- [x] **Step 3: 重写 lib/state.mjs**
 
 删除:`LEGACY_COMMAND_NAMES`、`normalizeState`、`featuresDir`、`readStateAt` 的归一化与回退、`writeState` 的 v2Path 分流与 `feature_branch` 门禁绕过、`deleteState`/`listActiveFeatures`/`lintStateEntries` 的双目录、`validateStateShape` 的 v2 提前返回与 worktree null 容忍、`migrateStateV2toV3`。新文件全文:
 
@@ -324,12 +324,12 @@ export function lintStateEntries(speccodeDir) {
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `node --test tests/state.test.mjs`
 Expected: PASS(全部用例)。注:此时 `tests/cli.test.mjs`/`tests/reconcile.test.mjs` 仍引用旧面,本任务只看 state 文件绿。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add lib/state.mjs tests/state.test.mjs
