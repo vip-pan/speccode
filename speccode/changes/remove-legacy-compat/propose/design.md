@@ -24,7 +24,7 @@ speccode 经 v0.1(四层拓扑)→ v2(三层)→ v3(双层)三次演进,每次�
 3. **knowledge 读侧单格式**:旧 `promoted-from` 标记不再解析,按普通正文字节保留在 hand 区(不删除用户字节);目标项目如需迁移,重蒸时人工清理。写侧「拒旧 source」校验保留(它拒绝而非兼容,是闸门不是兼容面)。
 4. **`validateStateShape` 收紧 worktree 为 string-only**:`worktree: null` 例外只为迁移产物存在,迁移器删除后例外条款一并删除。
 5. **Purpose 经显式 delta 段变更**:`speccode-config-management` 主规格 Purpose 含「v2→v3 迁移」字样,与 REMOVED requirement 直接矛盾。syncing 的 Purpose 保护(「主规格已有 Purpose → 不动」)意图是防 delta 意外覆盖,非禁止有出处的修订;本 delta 显式携带 `## MODIFIED Purpose` 段,syncing 按「delta 覆盖」语义执行该修订并在摘要中明示。
-6. **DESIGN §11 整节删除并重编号**:「Migrating from 0.1」是 v0.1→v0.2 升级指引(含 `waiting_display_pr` 手动收尾),随归一化拆除一并退役;§12-14 上移为 §11-13,R 表注与 AGENTS「设计文档 §1-14」等交叉引用同步修正,中英两版结构保持一一对应。
+6. **DESIGN §11 重组为「Installation & Updates」,维持 §1-14**:旧 §11 是杂烩——v0.1→v0.2 迁移内容(命令对照表、迁移步骤、`waiting_display_pr` 指引)删除;但其中混排的当前内容(Upgrade actions 插件更新指引、多宿主安装入口表——plugin-packaging spec 要求项)保留并重组为新 §11「Installation & Updates」。节号维持 §1-14 不变(DESIGN:9 的既有「Section 11 multi-host table」引用因此保持正确),顺手修复 CN 版 NPM_TOKEN 句子重复。中英两版结构一一对应。
 
 ## Risks
 

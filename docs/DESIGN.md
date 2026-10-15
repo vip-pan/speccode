@@ -30,7 +30,7 @@ speccode is a workflow orchestration plugin for coding-agent CLIs — Claude Cod
 8. [Memory](#8-memory)
 9. [Code Intelligence Tools](#9-code-intelligence-tools)
 10. [Risks & Mitigations (R1–R13)](#10-risks--mitigations-r1r13)
-11. [Migrating from 0.1](#11-migrating-from-01)
+11. [Installation & Updates](#11-installation--updates)
 12. [Philosophy](#12-philosophy)
 13. [Open Issues](#13-open-issues)
 14. [⚠ Important Warning](#14-⚠-important-warning)
@@ -163,7 +163,7 @@ Conventions:
 
 - **Commit on save**: proposing / brainstorming / writing-plans / applying (per-item bookkeeping commits) / syncing / archiving / distilling-knowledge / recording-knowledge each commit immediately after producing their documents, so document history and code history stay on the same branch, moving together.
 - **Multi-round rebuilds of the same feature don't collide**: once changes/<slug>/ is archived the directory is freed, and the same slug can start a new round via proposing again; when rebuilding without archiving first, proposing asks "continue / archive first / cancel".
-- **Knowledge set: a current-state snapshot, keyed by capability**: each topic file under `knowledge/` mixes two kinds of content. `distilling-knowledge` distills `spec/` (full read — the freshness anchor) and `archive/` (**incrementally**, tracked in `knowledge/_distilled.meta.json` purely as read-cost control) into **distilled blocks** wrapped in `<!-- distilled-from: cap/<slug> --> ... <!-- /distilled -->` markers: the key is a capability slug, unique per file, upserted on every run — later knowledge overrides earlier, retired knowledge is deleted through the gate with a reason (no tombstones; history lives in `archive/` and the CHANGELOG), and every existing block is freshness-audited against the current specs on each run. `recording-knowledge` writes and tidies the free-form **hand-written** prose outside those markers (replace-hand mode: the whole hand region is rebuilt on each write while distilled blocks survive byte-for-byte; tidy actions — merge/delete — carry reasons and answer to the present user, not to the specs). Both writes emit the canonical layout: hand-written first, distilled blocks after. The set curates SDD process knowledge only (`development/*`; pitfalls also covers recurring review findings and team review consensus). Business knowledge is left to external RAG systems: `recording-knowledge` runs a fit check before writing (a recommendation, not a hard block), and `distilling-knowledge` sunsets distilled blocks of out-of-scope topics through the same human gate while preserving hand-written content byte-for-byte. Legacy `promoted-from`/`/promoted` markers and legacy provenance-valued sources are still parsed on read; existing files migrate to capability keys through the gate on their first distill.
+- **Knowledge set: a current-state snapshot, keyed by capability**: each topic file under `knowledge/` mixes two kinds of content. `distilling-knowledge` distills `spec/` (full read — the freshness anchor) and `archive/` (**incrementally**, tracked in `knowledge/_distilled.meta.json` purely as read-cost control) into **distilled blocks** wrapped in `<!-- distilled-from: cap/<slug> --> ... <!-- /distilled -->` markers: the key is a capability slug, unique per file, upserted on every run — later knowledge overrides earlier, retired knowledge is deleted through the gate with a reason (no tombstones; history lives in `archive/` and the CHANGELOG), and every existing block is freshness-audited against the current specs on each run. `recording-knowledge` writes and tidies the free-form **hand-written** prose outside those markers (replace-hand mode: the whole hand region is rebuilt on each write while distilled blocks survive byte-for-byte; tidy actions — merge/delete — carry reasons and answer to the present user, not to the specs). Both writes emit the canonical layout: hand-written first, distilled blocks after. The set curates SDD process knowledge only (`development/*`; pitfalls also covers recurring review findings and team review consensus). Business knowledge is left to external RAG systems: `recording-knowledge` runs a fit check before writing (a recommendation, not a hard block), and `distilling-knowledge` sunsets distilled blocks of out-of-scope topics through the same human gate while preserving hand-written content byte-for-byte. Legacy `promoted-from`-era markers are not parsed as block boundaries — their bytes are ordinary hand-written text, kept verbatim and surfaced for manual cleanup through the distill gate.
 
 > Plugin-side helper resources: `references/` contains visual-companion (the visual companion for brainstorming, see `references/visual-companion.md`), review prompts, and debugging methodology; all tracked with the plugin source.
 
@@ -173,16 +173,16 @@ Conventions:
 .speccode/
 ├── config.json                          # static config (config v3), written wholesale by init / reset; creating-worktree can write back worktree_dir
 ├── config.json.bak.<timestamp>          # explicit backup before init-idempotent / reset flows rewrite config (backup-config verb)
-├── state/branches/<type>__<slug>.json   # dynamic state, isolated per branch (v2 legacy lives in state/features/, dual-format compatible)
+├── state/branches/<type>__<slug>.json   # dynamic state, isolated per branch
 ├── memory/                              # feature-level memory + per-topic _exploring__<topic>.md / _knowledge.md (self-ignored via .gitignore)
 └── sdd/                                 # SDD execution artifacts: task briefs / review packages / ledger (self-ignored via .gitignore)
 ```
 
-- **`config.json`**: the global static config; the config v3 field set: `version` (=3), `initialized_at`, `trunk`, `remote`, `pr_tool`, `worktree_dir`, `code_intel_tools`; `hooks` only exists when the user configured it (v2's `worktree_prefix` retired with the two-layer topology, and `host` retired with host-neutral-engine — idempotent init removes both via the field diff). Wholesale writes happen only in `/speccode:init` (fresh or idempotent) and `/speccode:reset`; additionally, `/speccode:creating-worktree` asks for a directory when config lacks `worktree_dir`, then writes the field back into config via `write-config` (read current config → add field → write back wholesale). **Backups are not an automatic behavior of `write-config`**: `config.json.bak.<timestamp>` is produced by the init-idempotent flow and the reset flow explicitly calling `backup-config` before rewriting; creating-worktree's single-field write-back creates no backup. Backups rotate: each new backup keeps only the newest 5 `config.json.bak.*` siblings (`BACKUP_KEEP` constant; prefix-scoped, nothing else is ever touched).
-- **`state/branches/`**: one file per active branch (`<type>__<slug>.json`, double underscore separating type and slug), recording that branch's status (`pending | in_progress | pr_open | completed`) and any suspended `pending_operation` (for `--resume`); parent entities (`kind:"integration"`) additionally hold the children list (child slugs only, identity only) — child-branch statuses are derived in real time and never stored on the parent. v2-legacy `state/features/` files are read and written with v2 semantics as-is (dual-format compatibility; init can migrate them explicitly). Branches each write their own files in parallel, no locks needed.
+- **`config.json`**: the global static config; the config v3 field set: `version` (=3), `initialized_at`, `trunk`, `remote`, `pr_tool`, `worktree_dir`, `code_intel_tools`; `hooks` only exists when the user configured it (fields outside this set are plain unknown keys: tolerated on read, never consumed). Wholesale writes happen only in `/speccode:init` (fresh or idempotent) and `/speccode:reset`; additionally, `/speccode:creating-worktree` asks for a directory when config lacks `worktree_dir`, then writes the field back into config via `write-config` (read current config → add field → write back wholesale). **Backups are not an automatic behavior of `write-config`**: `config.json.bak.<timestamp>` is produced by the init-idempotent flow and the reset flow explicitly calling `backup-config` before rewriting; creating-worktree's single-field write-back creates no backup. Backups rotate: each new backup keeps only the newest 5 `config.json.bak.*` siblings (`BACKUP_KEEP` constant; prefix-scoped, nothing else is ever touched).
+- **`state/branches/`**: one file per active branch (`<type>__<slug>.json`, double underscore separating type and slug), recording that branch's status (`pending | in_progress | pr_open | completed`) and any suspended `pending_operation` (for `--resume`); parent entities (`kind:"integration"`) additionally hold the children list (child slugs only, identity only) — child-branch statuses are derived in real time and never stored on the parent. Branches each write their own files in parallel, no locks needed.
 - **`memory/`**: feature-level session memory (see Section 8); the plugin writes its own `.gitignore` (content `*`) so it stays invisible to `git status` and is spared by `git clean -fd`.
 - **`sdd/`**: SDD execution artifacts, belonging to the **current worktree root** (not the main repo root), cleaned up together with `git worktree remove`; self-ignored as well.
-- Every write to `config.json` and `state/branches/*.json` (v2-legacy `state/features/*.json` same policy) uses the atomic "write a temp file + rename over" strategy to avoid half-written states when a process is interrupted; memory text writes use the same strategy.
+- Every write to `config.json` and `state/branches/*.json` uses the atomic "write a temp file + rename over" strategy to avoid half-written states when a process is interrupted; memory text writes use the same strategy.
 
 ## 7. Hooks
 
@@ -237,9 +237,9 @@ Usage convention: `/speccode:exploring`, `/speccode:proposing`, and `/speccode:b
 
 ## 10. Risks & Mitigations (R1–R13)
 
-> The numbering follows the original v0.1 risk table: R1 / R7 / R10 were retired together with the v0.1 four-layer topology (milestone branch layer + temporary wrap-up branches), see the Section 11 migration; the rest are kept and updated to the new command names.
+> The numbering follows the historical risk table: R1 / R7 / R10 were retired together with the v0.1 four-layer topology (milestone branch layer + temporary wrap-up branches), see [CHANGELOG.md](../CHANGELOG.md); the rest are kept and updated to the new command names.
 
-- **R2 — ancestry checks can misjudge when cherry-picks cross features** → as of v3, reconciliation uses **path identification** (inside worktree_dir + state registration) and no longer performs ancestry checks, so this misjudgment surface is gone; the v2-era mitigation was the `worktree_overrides` field explicitly specifying worktree ownership as an "advanced-user fallback" — that field is now retired (read-compatible, ignored).
+- **R2 — ancestry checks can misjudge when cherry-picks cross features** → reconciliation uses **path identification** (inside worktree_dir + state registration) and performs no ancestry checks, so this misjudgment surface is gone.
 - **R3 — during init's field-by-field idempotent flow, the user may accidentally change fields like trunk** → Mitigation: every changed field MUST show the `[old value] → [new value]` diff when confirming, and is only written after the user chooses "use the new value".
 - **R4 — `.speccode/` is not in `.gitignore`, so `git clean -fdx` can wipe the config** → Mitigation: explicitly warned about in the init prompt and in this README; no forced protection at the command level (consistent with the principle that "the plugin doesn't modify `.gitignore` or override the user's git mechanisms"). See Section 14's Important Warning.
 - **R5 — the blocking wait for a PR merge times out after 30 minutes by default, which may not be enough for long PR reviews** → Mitigation: the timeout is a soft limit; the suspended state goes into `pending_operation` and `--resume` lets you continue later, so the command never deadlocks permanently.
@@ -250,7 +250,7 @@ Usage convention: `/speccode:exploring`, `/speccode:proposing`, and `/speccode:b
 - **R12 — concurrent memory writes are last-writer-wins** → multiple worktrees of the same feature share one memory file, and when two sessions "write on exit" at the same time, the later write overwrites the earlier one. Mitigation: read before write (read-before-write: increment on top of the existing content rather than replacing the whole file); confirm with the user before large overwriting rewrites.
 - **R13 — trunk document churn** → spec documents are tracked on every branch, so multiple features landing in parallel keep changing `speccode/` on trunk and widen the merge-conflict surface. Mitigation: `syncing` only does **incremental, idempotent merges** (rerunning leaves no dirty changes); `archiving` **moves** whole directories rather than deleting, keeping review diffs clean and history traceable; documents ride the same PR as the code to trunk and are visible during review.
 
-## 11. Migrating from 0.1
+## 11. Installation & Updates
 
 The complete change log for every version lives in [CHANGELOG.md](../CHANGELOG.md) at the repo root.
 
@@ -268,7 +268,7 @@ Note: GitHub Releases / tags are just release markers for humans and **trigger n
 
 ### Multi-host install entries
 
-Claude Code is the primary host; five more hosts install from this same repository (thin per-host adapters pointing at the shared `skills/`). Entries marked 待验证 have not been verified on real machines — see `references/host-mapping/README.md` for the overview table and per-host mapping docs.
+Claude Code is the primary host; five more hosts install from this same repository (thin per-host adapters pointing at the shared `skills/`). Entries marked unverified have not been verified on real machines — see `references/host-mapping/README.md` for the overview table and per-host mapping docs.
 
 | Host | Entry | Mapping | Status |
 |---|---|---|---|
@@ -279,27 +279,7 @@ Claude Code is the primary host; five more hosts install from this same reposito
 | OpenCode | `.opencode/INSTALL.md` | `references/host-mapping/opencode.md` | unverified |
 | Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | unverified (extension API assumed) |
 
-Non-Claude-Code hosts also need the engine on PATH: `npm i -g speccode` (npm bin mechanism, machine-wide, every host; the `v*` tag CI publishes to npm) or `bash scripts/install-shim.sh` from a checkout — one channel per machine. Publishing is tag-triggered CI and needs the one-time repo secret `NPM_TOKEN`. Publishing is tag-triggered CI and needs the one-time repo secret `NPM_TOKEN`.
-
-### Command mapping
-
-| v0.1 | v0.2 |
-|---|---|
-| `/speccode:start` | `/speccode:creating-feature` |
-| `/speccode:develop-start` | `/speccode:creating-worktree` |
-| `/speccode:develop-complete` | `/speccode:finishing-worktree` |
-| `/speccode:finish` | `/speccode:finishing-feature` |
-| `/speccode:display-merge-trunk` | **retired** (display layer removed) |
-| `/speccode:display-rebase-trunk` | **retired** |
-| `/speccode:display-reset-to-trunk` | **retired** |
-
-Migration steps:
-
-1. **Re-init config to upgrade to 0.2**: simply run `/speccode:init`; the idempotent flow diffs field by field. The three old-config fields `display` / `spec_tools` / `untracked_permanent` (when `version` is 1 or missing) are marked "removed"; after accepting the upgrade, `version: 2` is written and no mixed state exists. The old values are explicitly backed up via `backup-config` as `config.json.bak.<timestamp>` before rewriting.
-2. **Leftover display branches**: v0.2 no longer uses the display layer. Repos with no active features can delete their display branches outright; in v0.2 spec documents are tracked on every branch, so a dedicated "milestone branch" for hosting them is no longer needed.
-3. **Leftover `waiting_display_pr` suspended states**: features whose v0.1 finish phase got stuck on a display PR have a `pending_operation` in state that v0.2 cannot resume automatically. Follow the manual guidance in the `/speccode:finishing-feature` command document: ① check whether the display PR at the time was merged; ② if merged, `git checkout <trunk> && git pull` and manually create the `<feature> → <trunk>` PR; ③ clear that feature's `pending_operation` with `write-state` and rerun `/speccode:finishing-feature`. If a v0.1 `<feature>-complete` temporary branch still lingers, delete it manually after confirming the trunk PR is merged.
-4. **Muscle memory and scripts for old command names**: renames have no aliases; any script / document / habit referencing v0.1 command names must be updated per the table above. Old `pending_operation.command` values left in state (`develop-complete` / `finish`) are normalized to the new names automatically by the engine on the read path — **no manual handling needed**.
-5. **`.speccode/memory/` and `.speccode/sdd/`**: these two directories didn't exist in the v0.1 era, so **no action is needed** on upgrade; each command creates them on demand (each directory self-ignores via its own `.gitignore`).
+Non-Claude-Code hosts also need the engine on PATH: `npm i -g speccode` (npm bin mechanism, machine-wide, every host; the `v*` tag CI publishes to npm) or `bash scripts/install-shim.sh` from a checkout — one channel per machine. Publishing is tag-triggered CI and needs the one-time repo secret `NPM_TOKEN`.
 
 ## 12. Philosophy
 
@@ -319,7 +299,7 @@ speccode's methodology commands inherit five working philosophies:
 
 The `.speccode/` directory is **not tracked by git and will not be added to `.gitignore`** in user projects — this is an explicit design decision of the plugin (speccode decouples from git's native mechanisms; all tracking management goes through explicit commands, and the plugin never edits `.gitignore` on the user's behalf).
 
-**What this means**: if you run `git clean -fdx` in this repo, `.speccode/config.json`, `state/` (`branches/` and legacy `features/`), `memory/`, and `sdd/` are all treated as "untracked/ignored files" and deleted along with them — you lose the current speccode config, the progress state of every active branch, and all session memory (corresponding to risk R4).
+**What this means**: if you run `git clean -fdx` in this repo, `.speccode/config.json`, `state/` (`branches/`), `memory/`, and `sdd/` are all treated as "untracked/ignored files" and deleted along with them — you lose the current speccode config, the progress state of every active branch, and all session memory (corresponding to risk R4).
 
 `git clean -fd` (without `-x`) is gentler: `memory/` and `sdd/` are judged ignored because of the plugin's self-written `.gitignore` (content `*`), so `-fd` spares both; but `config.json`, `state/`, and `config.json.bak.*` are still ordinary untracked files, and **`-fd` deletes them too**.
 

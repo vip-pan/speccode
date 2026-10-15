@@ -629,7 +629,7 @@ git commit -m "docs(skills): drop v1/v2 upgrade and migration steps from init/st
   - 185 行原子写段删 `(v2-legacy state/features/*.json same policy)`;
   - 240 行风险表注 `see the Section 11 migration` 删引用;
   - 242 行 R2 `that field is now retired (read-compatible, ignored)` → `that field is retired (not read)`;
-  - 253-300 行:删除 §11「Migrating from 0.1」整节(v0.1→v0.2 对照表 + migration steps + waiting_display_pr 指引);§12/§13/§14 重编号为 §11/§12/§13;TOC(33 行区)同步删条目并改编号;322 行 git clean 段 `(branches/ and legacy features/)` → `(branches/)`;
+  - 253-300 行:§11「Migrating from 0.1」重组——迁移内容(命令对照表、迁移步骤、waiting_display_pr 指引)删除,保留混排的当前内容(Upgrade actions + 多宿主安装入口表)重组为 §11「Installation & Updates」;节号维持 §1-14;322 行 git clean 段 `(branches/ and legacy features/)` → `(branches/)`;
   - CN 版逐段对应(285/299 行等)。
 - [ ] **Step 3: 交叉引用核对** —— `rg -n '§1-14|Section 11|#11-migrating|迁移对照' AGENTS.md docs/ README.md README_CN.md speccode/spec/`,残余引用一并修正(AGENTS「设计文档 §1-14」→「§1-13」;plugin-packaging 主规格的迁移对照表要求由 syncing 的 delta 处理,此处不动 spec)。
 - [ ] **Step 4: 验证 + 提交**

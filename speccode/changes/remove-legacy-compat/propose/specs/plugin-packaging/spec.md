@@ -19,7 +19,7 @@
 仓库 SHALL 维护三层文档,职责如下:
 
 - 根 `README.md`(英文,`marketplace 用户门面`)与根 `README_CN.md`(简体中文,结构一致):两版 SHALL 各含——一句话定位(多宿主口径:Claude Code 主宿主 + 五宿主适配,成熟度如实分级)+ badges(含 license、平台、stars;含**动态版本徽章**:经 shields.io `dynamic/json` 从 raw `.claude-plugin/plugin.json` 读取 `$.version`,MUST NOT 硬编码版本字面量;含 **CI 状态徽章**链接 `.github/workflows/test.yml`)+ 痛点(Why)+ 体验 demo(**「GIF + 文字 transcript + caption」三件套**:GIF 经 VHS 脚本录制,`docs/assets/demo.tape` 源与生成 `demo.gif` 一并入库;caption SHALL 诚实标注会话为压缩重放;GIF 与 caption MUST NOT 出现版本号或测试数量字面量;两版 SHALL 引用同一 GIF 资产)+ Quickstart 最小闭环(Claude Code 主链路 + **多宿主安装指引段**:指向 `references/host-mapping/README.md` 的宿主/入口/验证状态表与 `scripts/install-shim.sh`)+ 命令速览 + 双层分支拓扑图 + 对比定位(含多宿主安装口径行)+ 理念 + 文档地图(含 host-mapping 条目)+ 贡献方式 + License 节;marketplace 描述与插件列表 MUST 保留;两版 SHALL 在文档前部互相提供语言切换链接;中文版为英文版的全量翻译,结构一一对应。
-- `docs/DESIGN.md`(英文)与 `docs/DESIGN_CN.md`(简体中文,`插件设计文档`):两版 SHALL 含 24 命令表 / 双层分支拓扑图 / R1-R13 风险 / **多宿主安装入口表**(见 host-adapters);两版节号编号 SHALL 一致(§1-13);两版 SHALL 在 §1 之后含 **Table of Contents**(锚点列表,覆盖 §1-13);两版 SHALL 在文档前部声明「用户门面见根 README」指针且指向**对应语言**的根 README;依赖要求 SHALL 前置到文档前部;两版 SHALL 在文档前部互相提供语言切换链接;§1 定位句 SHALL 采用与根 README 一致的多宿主口径。
+- `docs/DESIGN.md`(英文)与 `docs/DESIGN_CN.md`(简体中文,`插件设计文档`):两版 SHALL 含 24 命令表 / 双层分支拓扑图 / R1-R13 风险 / **多宿主安装入口表**(见 host-adapters);两版节号编号 SHALL 一致(§1-14);两版 SHALL 在 §1 之后含 **Table of Contents**(锚点列表,覆盖 §1-14);两版 SHALL 在文档前部声明「用户门面见根 README」指针且指向**对应语言**的根 README;依赖要求 SHALL 前置到文档前部;两版 SHALL 在文档前部互相提供语言切换链接;§1 定位句 SHALL 采用与根 README 一致的多宿主口径。
 - `AGENTS.md`(开发文档,真源):SHALL 说明根 README 与 `docs/DESIGN.md` 的分工(含中英文映射);SHALL 含发布纪律指针(plugin.json version bump 必须同步 CHANGELOG.md);SHALL 含「多语言维护」说明——两版文档 SHALL 结构对齐(段/节为锚),任何内容改动 MUST 同步全部语言版本;SHALL NOT 硬编码测试用例数量。
 - `CLAUDE.md`(Claude Code 专属薄壳):SHALL 仅含对 `AGENTS.md` 的引入(`@AGENTS.md`)与 Claude Code 专属补充;SHALL NOT 复制 `AGENTS.md` 正文(防双头漂移)。
 
@@ -41,7 +41,7 @@
 
 #### Scenario: 设计文档两版指针与 ToC
 - **WHEN** 检查 docs/DESIGN.md 与 docs/DESIGN_CN.md
-- **THEN** 两版文档前部存在指向对应语言根 README 的门面指针;节号编号一致(§1-13);含 Table of Contents(§1-13 锚点列表);§1 定位句与根 README 口径一致
+- **THEN** 两版文档前部存在指向对应语言根 README 的门面指针;节号编号一致(§1-14);含 Table of Contents(§1-14 锚点列表);§1 定位句与根 README 口径一致
 
 #### Scenario: AGENTS.md 承载开发文档且 CLAUDE.md 为薄壳
 - **WHEN** 检查 AGENTS.md 与 CLAUDE.md
