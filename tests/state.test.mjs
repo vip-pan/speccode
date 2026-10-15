@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeJsonAtomic } from '../lib/atomic.mjs';
 import {
-  WORKTREE_STATUS, branchesDir, featuresDir, readState, writeState, deleteState, listActiveFeatures, normalizeState, migrateStateV2toV3,
+  WORKTREE_STATUS, branchesDir, featuresDir, readState, writeState, deleteState, listActiveFeatures, normalizeState, migrateStateV2toV3, validateStateShape,
 } from '../lib/state.mjs';
 
 function tmp() { return mkdtempSync(join(tmpdir(), 'speccode-state-')); }
@@ -237,5 +237,42 @@ test('migrateStateV2toV3 converts clean features, skips multi-worktree and malfo
   assert.equal(clean.worktree, null);
   assert.equal(existsSync(join(sc, 'state', 'features', 'feature__clean.json')), false);
   assert.equal(existsSync(join(sc, 'state', 'features', 'feature__busy.json')), true);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('validateStateShape: warning surface, clean pass, v2 hint', () => {
+  const ok = { branch: 'feature/a', type: 'feature', worktree: null, merge_target: 'main',
+    status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'main' };
+  assert.deepEqual(validateStateShape(ok), []);
+  const bad = { branch: 'feature/a', type: 'epic', worktree: 3, merge_target: 'main',
+    status: 'done', created_at: 'yesterday', initial_branch: 'main', surprise: 1 };
+  const w = validateStateShape(bad).join('\n');
+  for (const needle of ['type', 'status', 'created_at', 'worktree', 'surprise']) {
+    assert.ok(w.includes(needle), `warning should mention ${needle}`);
+  }
+  const parent = { branch: 'feature/p', kind: 'integration', children: 'x', status: 'in_progress',
+    created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'main', worktree: '/w' };
+  const pw = validateStateShape(parent).join('\n');
+  assert.ok(pw.includes('children'));
+  assert.ok(pw.includes('worktree'));
+  const v2 = validateStateShape({ feature_branch: 'feature/old', worktrees: {} });
+  assert.equal(v2.length, 1);
+  assert.ok(v2[0].includes('v2'));
+});
+
+test('writeState gate: rejects present-but-wrong fields, tolerates note and v2 payloads', () => {
+  const root = tmp();
+  const sc = join(root, '.speccode');
+  const good = { branch: 'feature/a', type: 'feature', worktree: null, merge_target: 'main',
+    status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'main', note: 'x' };
+  writeState(sc, 'feature/a', good);
+  assert.equal(readState(sc, 'feature/a').note, 'x', '未知键 note 放行');
+  assert.throws(() => writeState(sc, 'feature/a', { ...good, branch: 'feature/b' }), /branch/i);
+  assert.throws(() => writeState(sc, 'feature/a', { ...good, status: 'done' }), /status/i);
+  assert.throws(() => writeState(sc, 'feature/a', { ...good, type: 'epic' }), /type/i);
+  assert.throws(() => writeState(sc, 'feature/a', { ...good, created_at: 'nope' }), /created_at/i);
+  assert.throws(() => writeState(sc, 'feature/p', { ...good, kind: 'integration', children: 'x' }), /children/i);
+  writeState(sc, 'feature/old', { feature_branch: 'feature/old', status: 'in_progress', worktrees: {} });
+  assert.equal(readState(sc, 'feature/old').feature_branch, 'feature/old', 'v2 payload 直通');
   rmSync(root, { recursive: true, force: true });
 });

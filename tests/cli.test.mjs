@@ -1345,3 +1345,29 @@ test('host-mapping docs: five hosts with three sections each, not referenced by 
     assert.ok(!md.includes('host-mapping'), `${rel} 不得引用宿主映射文档(host-neutral-prose)`);
   }
 });
+
+test('lint-state verb: reports config + state warnings, exit 0', () => {
+  const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'config.json'), { version: 3, trunk: 'main', host: 'zcode' });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__bad.json'),
+    { branch: 'feature/bad', type: 'feature', status: 'done' });
+  const { code, json } = runCli(repo, 'lint-state', '--cwd', repo);
+  assert.equal(code, 0);
+  assert.ok(json.config.warnings.some((x) => x.includes('host')), 'config 侧 host 退役提示');
+  const bad = json.states.find((s) => s.branch === 'feature/bad');
+  assert.ok(bad && bad.warnings.some((x) => x.includes('status')), 'state 侧 status 非法警告');
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('write-state gate: branch key mismatch rejected without touching disk', () => {
+  const repo = makeRepo();
+  const r = spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/a', '--json-stdin'],
+    { encoding: 'utf8',
+      input: JSON.stringify({ branch: 'feature/b', type: 'feature', status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z' }) });
+  assert.equal(r.status, 1);
+  assert.equal(JSON.parse(r.stdout).ok, false);
+  assert.ok(JSON.parse(r.stdout).error.includes('branch'));
+  assert.equal(existsSync(join(repo, '.speccode', 'state', 'branches', 'feature__a.json')), false, '拒绝时不落盘');
+  rmSync(repo, { recursive: true, force: true });
+});

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { configPath, loadConfig, saveConfig, backupConfig, diffFields, validateLanguage } from '../lib/config.mjs';
+import { configPath, loadConfig, saveConfig, backupConfig, diffFields, validateLanguage, validateConfigShape } from '../lib/config.mjs';
 
 function tmp() { return mkdtempSync(join(tmpdir(), 'sc-cfg-')); }
 
@@ -64,4 +64,19 @@ test('validateLanguage rejects malformed values', () => {
   assert.equal(validateLanguage(42), null);
   assert.equal(validateLanguage(null), null);
   assert.equal(validateLanguage(undefined), null);
+});
+
+test('validateConfigShape: clean pass + warning surface', () => {
+  assert.deepEqual(
+    validateConfigShape({ version: 3, trunk: 'main', remote: 'origin', pr_tool: 'gh', worktree_dir: '.wt', code_intel_tools: [] }),
+    []);
+  assert.deepEqual(validateConfigShape(null), []);
+  const w = validateConfigShape({
+    version: 2, trunk: 1, remote: 'origin', pr_tool: 'baz', worktree_dir: '.wt',
+    code_intel_tools: 'no', host: 'zcode', worktree_prefix: 'wt-', display: {},
+    hooks: { onPrOpened: 5 }, language: 7,
+  }).join('\n');
+  for (const needle of ['version', 'trunk', 'pr_tool', 'code_intel_tools', 'host', 'worktree_prefix', 'display', 'hooks', 'language']) {
+    assert.ok(w.includes(needle), `warning should mention ${needle}`);
+  }
 });

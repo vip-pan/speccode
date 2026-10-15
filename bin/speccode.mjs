@@ -6,8 +6,8 @@ import { isatty } from 'node:tty';
 import { git } from '../lib/git.mjs';
 import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSquashOnly } from '../lib/prtool.mjs';
 import { reconcile } from '../lib/reconcile.mjs';
-import { loadConfig, saveConfig, backupConfig, validateLanguage } from '../lib/config.mjs';
-import { readState, writeState, deleteState, migrateStateV2toV3, WORKTREE_STATUS } from '../lib/state.mjs';
+import { loadConfig, saveConfig, backupConfig, validateLanguage, validateConfigShape } from '../lib/config.mjs';
+import { readState, writeState, deleteState, listActiveFeatures, migrateStateV2toV3, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState, detectHost } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
 import { buildHookPayload, runHook } from '../lib/hooks.mjs';
@@ -116,6 +116,18 @@ const VERBS = {
   'delete-state': ({ cwd, branch }) => {
     deleteState(speccodeDirOf(cwd), branch);
     return { ok: true };
+  },
+
+  // Read-only shape lint over config + every state entry (both dirs). Reports
+  // drift; fixing stays with the user-confirmed flows (idempotent init diff,
+  // reset) — lint never mutates anything.
+  'lint-state': ({ cwd }) => {
+    const sd = speccodeDirOf(cwd);
+    const states = listActiveFeatures(sd).map((f) => ({
+      branch: f?.branch ?? f?.feature_branch ?? null,
+      warnings: validateStateShape(f),
+    }));
+    return { ok: true, config: { warnings: validateConfigShape(loadConfig(sd)) }, states };
   },
 
   'migrate-state': ({ cwd }) => ({ ok: true, ...migrateStateV2toV3(speccodeDirOf(cwd)) }),
