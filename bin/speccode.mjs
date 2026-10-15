@@ -7,11 +7,11 @@ import { git } from '../lib/git.mjs';
 import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSquashOnly } from '../lib/prtool.mjs';
 import { reconcile } from '../lib/reconcile.mjs';
 import { loadConfig, saveConfig, backupConfig, validateLanguage } from '../lib/config.mjs';
-import { readState, writeState, deleteState, migrateStateV2toV3, WORKTREE_STATUS } from '../lib/state.mjs';
+import { readState, writeState, deleteState, listActiveFeatures, migrateStateV2toV3, WORKTREE_STATUS } from '../lib/state.mjs';
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState, detectHost } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
 import { buildHookPayload, runHook } from '../lib/hooks.mjs';
-import { listMemory, readMemory, renameMemory, writeMemory, validateMemoryBranch } from '../lib/memory.mjs';
+import { listMemory, listMemoryKeys, purgeMemory, readMemory, renameMemory, writeMemory, validateMemoryBranch } from '../lib/memory.mjs';
 import { assertSafeRel, buildIndex, knowledgeRoot, listTopics, parseDistilledBlocks, replaceHandBlocks, replaceDistilledBlocks, writeKnowledge, archiveRoot, distilledMetaPath, readConsumedArchives, addConsumedArchives, listArchiveBundles, unconsumedArchives } from '../lib/knowledge.mjs';
 
 function readStdin() {
@@ -269,7 +269,27 @@ const VERBS = {
     return { ok: true, path };
   },
 
-  'list-memory': ({ cwd }) => ({ ok: true, topics: listMemory(speccodeDirOf(cwd)) }),
+  'list-memory': ({ cwd }) => {
+    // files + completed annotation: visibility for stale branch memories
+    // (join lives here, not in memory.mjs — the lib stays state-free).
+    const sd = speccodeDirOf(cwd);
+    const statusByBranch = new Map(listActiveFeatures(sd).map((f) => [f.branch, f.status]));
+    const files = listMemoryKeys(sd).map((branch) => ({
+      branch,
+      completed: statusByBranch.has(branch)
+        ? statusByBranch.get(branch) === WORKTREE_STATUS.COMPLETED
+        : null,
+    }));
+    return { ok: true, topics: listMemory(sd), files };
+  },
+
+  'purge-memory': ({ cwd, branch }) => {
+    // Flag form (no payload → no --json-stdin), mirroring delete-state.
+    if (!branch || branch === true) return { ok: false, error: 'purge-memory requires --branch <F>' };
+    if (!validateMemoryBranch(branch)) return { ok: false, error: `invalid branch name: ${branch}` };
+    const { purged, path } = purgeMemory(speccodeDirOf(cwd), branch);
+    return { ok: true, purged, path };
+  },
 
   'rename-memory': ({ cwd, branch, to, 'json-stdin': jsonStdin }) => {
     if (!jsonStdin) return { ok: false, error: 'rename-memory requires --json-stdin (pipe JSON via stdin)' };

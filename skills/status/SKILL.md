@@ -10,8 +10,9 @@ description: "Read-only overview: progress and pending_operation of every active
 1. `read-config` 加载 config;为 null → 提示先 `/speccode:init` 并退出。
 2. 开头跑对账,汇总 `.speccode/state/branches/` 下所有 active 分支:普通分支渲染状态与 `pending_operation`;父实体(`kind:"integration"`)以树状渲染 `children`——各子分支的 status **实时读取对应子分支 state 派生**,children 有 slug 但无子 state 的渲染为 `pending`(计划未开工)。v2 遗留(`state/features/`)条目按原样列出并标注「v2 待迁移」。(对账 verb:`speccode reconcile --cwd . --advance-pr`,顺便自愈状态漂移、查询 PR 状态并推进已合并的 pr_open。)
 3. 报告 `orphans` / `conflicts`(若有),提示如何处理。
-4. 末尾打印 config 摘要:`trunk / pr_tool`。
-5. 若无 active 分支:打印"当前无 active 分支",仅显示 config 摘要。
+4. 运行 `speccode list-memory --cwd .`,若 `files` 中 `completed:true` 的条目非空,报告一行:「已完成分支的 memory 文件 N 个滞留(如 <branch>),确认不再需要后可经 `speccode purge-memory --cwd . --branch <branch>` 逐条清理」——仅提示,不主动清理。
+5. 末尾打印 config 摘要:`trunk / pr_tool`。
+6. 若无 active 分支:打印"当前无 active 分支",仅显示 config 摘要。
 
 ## 输出示例(供格式参考)
 

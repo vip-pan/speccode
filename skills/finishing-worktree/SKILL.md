@@ -65,5 +65,5 @@ description: "Finish a development branch and merge by merge_target (local squas
 
 1. `feature-progress --branch <所属父分支或本分支>` 取进度。
 2. onWorktreeFinished 钩子(有 PR 带 pr_number)。
-3. 状态报告:`<分支> 进度 X/Y done`;大需求场景按父实体 children 派生渲染;建议后续(finishing-feature / finishing-worktree 下一子分支)。
+3. 状态报告:`<分支> 进度 X/Y done`;大需求场景按父实体 children 派生渲染;建议后续(finishing-feature / finishing-worktree 下一子分支)。MERGED 路径在报告后附一句可选提示:「本分支 memory 已留存,确认不再需要可经 `speccode purge-memory --cwd . --branch <branch>` 清理」——仅提示,不主动清理。
 4. 写记忆(经用户确认或内置判据)。
