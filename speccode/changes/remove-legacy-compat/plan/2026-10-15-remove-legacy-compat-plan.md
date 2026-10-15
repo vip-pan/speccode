@@ -441,7 +441,7 @@ git commit -m "refactor: drop retired config field warnings and version gate"
 **Interfaces:**
 - Produces: verb 表删除 `migrate-state`;`feature-progress` 返回恒 `{ok,total:1,completed,worktree}`;`list-memory` 的 completed 派生只看 v3 state
 
-- [ ] **Step 1: 改测试(先红)** —— `tests/cli.test.mjs`:
+- [x] **Step 1: 改测试(先红)** —— `tests/cli.test.mjs`:
   1. 删除用例 `migrate-state converts a v2 file end to end`,替换为:
 
 ```js
@@ -459,12 +459,12 @@ test('migrate-state verb no longer exists', () => {
   3. 用例 `list-memory ...`(v2 派生段,~1370 行区):删除 `feature/legacy` 的 memory 文件与 `state/features/` fixture 及期望里的 `'feature/legacy': true`。
   4. 用例 `遗留 host 字段的 config 不报错且被忽略` 保留(语义变为「未知键容忍」,测试名与断言不变仍成立)。
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `node --test --test-name-pattern="migrate-state|worktree_prefix|list-memory" tests/cli.test.mjs`
 Expected: FAIL(migrate-state 仍存在/分流仍在)。
 
-- [ ] **Step 3: 实现** —— `bin/speccode.mjs`:
+- [x] **Step 3: 实现** —— `bin/speccode.mjs`:
   - import 行去掉 `migrateStateV2toV3`;
   - 删除 `'migrate-state': ({ cwd }) => {...}` 整个 verb 项;
   - `feature-progress` 删除 v2 分支,收口为:
@@ -483,12 +483,12 @@ Expected: FAIL(migrate-state 仍存在/分流仍在)。
   - `list-memory` 的 statusByBranch 构造删 `else if (typeof f?.feature_branch === 'string')` 整段;
   - `detect-code-intel-tools` 注释 `a legacy \`host\` key in config, if present, is ignored` 改为 `unknown extra config keys are ignored`。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `node --test tests/cli.test.mjs`
 Expected: PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add bin/speccode.mjs tests/cli.test.mjs
