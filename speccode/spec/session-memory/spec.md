@@ -8,7 +8,7 @@ feature 级跨会话记忆:主仓 `.speccode/memory/` 下按 feature 维度隔�
 
 ### Requirement: memory 文件位置与命名
 
-每个 feature 的记忆文件 SHALL 为**主仓** `.speccode/memory/<type>__<slug>.md`,文件名 MUST 复用 state 文件的 `<type>__<slug>` 双下划线规则;MUST 保持 untracked(与 `.speccode/` 其他运行时数据一致);主仓定位使同一 feature 的多个 worktree 共享同一份 memory。trunk 级例外:探索记忆按 topic 分文件,键形式 `_exploring/<topic>`,文件名经 `branchToStateName` 编码为 `.speccode/memory/_exploring__<topic>.md`(`topic` MUST 匹配 `[a-z0-9-]`);`.speccode/memory/_knowledge.md`(knowledge 命令的 trunk 级维护摘要)保持无斜杠键直通。无斜杠遗留键 `_exploring`(对应 `.speccode/memory/_exploring.md`)MUST 保持读兼容,新写入 MUST NOT 再使用。分期需求的各期探索 SHALL 使用共同 topic 前缀约定(如 `<主题>-p1`、`<主题>-p2`);跨期进度与设计结论 MUST 以 state、git history 与 spec 主规格为真源,MUST NOT 记入 memory。
+每个 feature 的记忆文件 SHALL 为**主仓** `.speccode/memory/<type>__<slug>.md`,文件名 MUST 复用 state 文件的 `<type>__<slug>` 双下划线规则;MUST 保持 untracked(与 `.speccode/` 其他运行时数据一致);主仓定位使同一 feature 的多个 worktree 共享一份 memory。trunk 级例外:探索记忆按 topic 分文件,键形式 `_exploring/<topic>`,文件名经 `branchToStateName` 编码为 `.speccode/memory/_exploring__<topic>.md`(`topic` MUST 匹配 `[a-z0-9-]`);`.speccode/memory/_knowledge.md`(knowledge 命令的 trunk 级维护摘要)保持无斜杠键直通。分期需求的各期探索 SHALL 使用共同 topic 前缀约定(如 `<主题>-p1`、`<主题>-p2`);跨期进度与设计结论 MUST 以 state、git history 与 spec 主规格为真源,MUST NOT 记入 memory。
 
 #### Scenario: 命名复用双下划线规则
 - **WHEN** feature 分支为 `feature/payment-api`
@@ -30,9 +30,10 @@ feature 级跨会话记忆:主仓 `.speccode/memory/` 下按 feature 维度隔�
 - **WHEN** 大需求 `mkt-req` 分三期探索,每期各自探索结论无 feature 归属
 - **THEN** 三期结论 MUST 分别位于 `_exploring__mkt-req-p1.md`、`_exploring__mkt-req-p2.md`、`_exploring__mkt-req-p3.md`(命名约定),各期承接时互不携带他期内容
 
-#### Scenario: 遗留 _exploring.md 读兼容
-- **WHEN** 对 `--branch _exploring` 执行 read-memory 且 `.speccode/memory/_exploring.md` 存在
-- **THEN** MUST 返回其内容,不报错;write-memory 对该键 MUST 仍可执行(兼容存量),但命令 prose MUST NOT 再向其写入新探索结论
+#### Scenario: 无斜杠 _exploring 键不可用
+
+- **WHEN** 对 `--branch _exploring` 执行 read-memory 或 write-memory
+- **THEN** verb MUST 返回 `{ok:false, error}`(非法分支键);探索结论 MUST 经 `_exploring/<topic>` topic 键读写
 
 #### Scenario: _knowledge.md 例外
 - **WHEN** knowledge 命令(distilling/recording)从 trunk 完成维护并创建 PR
@@ -60,7 +61,7 @@ memory 写入按模式分两种原子策略:replace 模式 MUST 采用「写临�
 
 ### Requirement: read-memory / write-memory verb
 
-引擎 SHALL 暴露 `read-memory --branch <F>`(文件不存在时返回 `{memory: null}`)与 `write-memory --branch <F> --json-stdin`(stdin payload 为 `{mode: "replace" | "append", content: "..."}`)两个 verb。branch 校验 MUST 收口为 lib 函数 `validateMemoryBranch`:接受保留键 `_exploring`(遗留读兼容)与 `_knowledge`、topic 键 `_exploring/<topic>`(topic MUST 经 `validateSlug` 校验)、以及经 `validateBranch` 校验的功能分支;非法时返回 `{ok:false, error}`。
+引擎 SHALL 暴露 `read-memory --branch <F>`(文件不存在时返回 `{memory: null}`)与 `write-memory --branch <F> --json-stdin`(stdin payload 为 `{mode: "replace" | "append", content: "..."}`)两个 verb。branch 校验 MUST 收口为 lib 函数 `validateMemoryBranch`:接受保留键 `_knowledge`、topic 键 `_exploring/<topic>`(topic MUST 经 `validateSlug` 校验)、以及经 `validateBranch` 校验的功能分支;非法时返回 `{ok:false, error}`。
 
 引擎 SHALL 另暴露 `list-memory --cwd .` verb(返回既有 `_exploring` topic 键清单,无 topic 时为空数组)与 `rename-memory --branch <from> --to <to> --json-stdin` verb(将 `<from>` 的记忆文件原子 rename 为 `<to>` 的记忆文件名)。rename-memory MUST:两侧 branch 均经 `validateMemoryBranch` 校验;源文件不存在时返回 `{ok:false, error}`;目标记忆文件已存在时 MUST 拒绝并返回错误(MUST NOT 覆盖、MUST NOT 合并);rename MUST 为同目录原子操作。
 
@@ -71,38 +72,6 @@ memory 写入按模式分两种原子策略:replace 模式 MUST 采用「写临�
 #### Scenario: append 模式追加
 - **WHEN** 以 `{mode: "append", content: "..."}` 执行 write-memory
 - **THEN** 内容 MUST 追加到既有文件末尾,既有内容完整保留
-
-#### Scenario: replace 模式覆盖
-- **WHEN** 以 `{mode: "replace", content: "..."}` 执行 write-memory
-- **THEN** 文件内容 MUST 被整体替换为新内容
-
-#### Scenario: topic 键被接受
-- **WHEN** 以 `--branch _exploring/payment-rework` 执行 write-memory 或 read-memory
-- **THEN** 校验通过,读写 `.speccode/memory/_exploring__payment-rework.md`,不报 invalid branch
-
-#### Scenario: 非法 topic 被拒绝
-- **WHEN** 以 `--branch _exploring/Bad_Topic` 执行 write-memory
-- **THEN** MUST 返回 `{ok:false, error}`,不创建文件
-
-#### Scenario: _knowledge 保留键被接受
-- **WHEN** 以 `--branch _knowledge` 执行 write-memory 或 read-memory
-- **THEN** 校验通过,读写 `.speccode/memory/_knowledge.md`,不报 invalid branch
-
-#### Scenario: list-memory 列出 topic
-- **WHEN** `.speccode/memory/` 下存在 `_exploring__a.md`、`_exploring__b-p1.md` 与 `feature__c.md`
-- **THEN** `list-memory` MUST 返回 `_exploring/a` 与 `_exploring/b-p1`,MUST NOT 包含 feature 级文件
-
-#### Scenario: rename 承接探索记忆
-- **WHEN** 对 `--branch _exploring/payment-rework --to feature/payment-rework` 执行 rename-memory
-- **THEN** `.speccode/memory/_exploring__payment-rework.md` MUST 被重命名为 `.speccode/memory/feature__payment-rework.md`,内容不变,源文件 MUST NOT 残留
-
-#### Scenario: rename 目标已存在时拒绝
-- **WHEN** 目标记忆文件 `.speccode/memory/feature__payment-rework.md` 已存在,执行 rename-memory
-- **THEN** MUST 返回 `{ok:false, error}`,目标与源文件内容 MUST 均保持不变
-
-#### Scenario: rename 源不存在时拒绝
-- **WHEN** 源 topic 无记忆文件,执行 rename-memory
-- **THEN** MUST 返回 `{ok:false, error}`,不创建任何文件
 
 ### Requirement: 命令读写时机
 
@@ -150,7 +119,7 @@ memory 写入按模式分两种原子策略:replace 模式 MUST 采用「写临�
 
 ### Requirement: 已完成 memory 的可见性与清理
 
-`list-memory` verb 输出 SHALL 在既有 `topics` 之外新增 `files` 数组:每个元素为 `{branch, completed}`,枚举 memory 目录全部 `.md` 文件(`<type>__<slug>.md` 还原为 `<type>/<slug>` 键,`_exploring__<t>.md` 还原为 `_exploring/<t>` 键,含 `_knowledge`);`completed` SHALL 经 state 登记连接派生,三态语义:state 存在且 status 为 `completed` → `true`;state 存在但非 `completed` → `false`;无 state 对应(如 `_exploring/*`、`_knowledge`、state 已被清理的历史键)→ `null`。v2 遗留条目(`state/features/` 的 `{feature_branch, worktrees}` 形态)MUST 同样参与派生(键取 `feature_branch`,completed = 全部 worktrees completed;无 worktree 登记时回落顶层 status)。MUST NOT 修改既有 `topics` 字段的形状与取值。引擎 SHALL 提供 `purge-memory --branch <F>` verb:经 `validateMemoryBranch` 校验分支键后删除对应 memory 文件并返回 `{ok:true, purged:true, path}`;文件不存在时返回 `{ok:true, purged:false}` 不报错(幂等);MUST NOT 提供批量/全量删除形态。
+`list-memory` verb 输出 SHALL 在既有 `topics` 之外新增 `files` 数组:每个元素为 `{branch, completed}`,枚举 memory 目录全部 `.md` 文件(`<type>__<slug>.md` 还原为 `<type>/<slug>` 键,`_exploring__<t>.md` 还原为 `_exploring/<t>` 键,含 `_knowledge`);`completed` SHALL 经 state 登记连接派生,三态语义:state 存在且 status 为 `completed` → `true`;state 存在但非 `completed` → `false`;无 state 对应(如 `_exploring/*`、`_knowledge`、state 已被清理的历史键)→ `null`。MUST NOT 修改既有 `topics` 字段的形状与取值。引擎 SHALL 提供 `purge-memory --branch <F>` verb:经 `validateMemoryBranch` 校验分支键后删除对应 memory 文件并返回 `{ok:true, purged:true, path}`;文件不存在时返回 `{ok:true, purged:false}` 不报错(幂等);MUST NOT 提供批量/全量删除形态。
 
 #### Scenario: list-memory 标注已完成分支
 
