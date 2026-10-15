@@ -600,10 +600,10 @@ git commit -m "refactor: retire bare _exploring memory key — topics only"
 **Interfaces:**
 - Consumes: Task 4 后的 verb 表(无 migrate-state)
 
-- [ ] **Step 1: skills/init/SKILL.md** —— 删除「全新流程」第 8 步(state 迁移)整段;删除幂等流程中「旧 config 含 v2 遗留的 `worktree_prefix` → diff 标记移除」「旧 config 含历史遗留的 `host` 字段 → diff 标记移除」「v1/v2 → v3 迁移」「`state/` 目录唯一例外:检测到 v2 遗留 `state/features/`」四段;第 35 行「不得包含任何 v1 遗留字段、v2 的 worktree_prefix,以及已退役的 host 字段」改为「不得包含字段集之外的引擎消费字段」;其余步骤重新编号保持连贯。
-- [ ] **Step 2: skills/status/SKILL.md** —— 删除「v2 遗留(`state/features/`)条目按原样列出并标注『v2 待迁移』」句与示例行 `○ feature/legacy (from master) in_progress(v2 待迁移)`。
-- [ ] **Step 3: skills/reset/SKILL.md** —— 删除「若 config 仍含 v1 遗留字段(`display`/`spec_tools`/`untracked_permanent`)→ 一并询问是否移除」整条。
-- [ ] **Step 4: 验证 + 提交**
+- [x] **Step 1: skills/init/SKILL.md** —— 删除「全新流程」第 8 步(state 迁移)整段;删除幂等流程中「旧 config 含 v2 遗留的 `worktree_prefix` → diff 标记移除」「旧 config 含历史遗留的 `host` 字段 → diff 标记移除」「v1/v2 → v3 迁移」「`state/` 目录唯一例外:检测到 v2 遗留 `state/features/`」四段;第 35 行「不得包含任何 v1 遗留字段、v2 的 worktree_prefix,以及已退役的 host 字段」改为「不得包含字段集之外的引擎消费字段」;其余步骤重新编号保持连贯。
+- [x] **Step 2: skills/status/SKILL.md** —— 删除「v2 遗留(`state/features/`)条目按原样列出并标注『v2 待迁移』」句与示例行 `○ feature/legacy (from master) in_progress(v2 待迁移)`。
+- [x] **Step 3: skills/reset/SKILL.md** —— 删除「若 config 仍含 v1 遗留字段(`display`/`spec_tools`/`untracked_permanent`)→ 一并询问是否移除」整条。
+- [x] **Step 4: 验证 + 提交**
 
 Run: `node --test ./tests/*.test.mjs`
 Expected: PASS(skill-frontmatter 等守卫不回归)。
