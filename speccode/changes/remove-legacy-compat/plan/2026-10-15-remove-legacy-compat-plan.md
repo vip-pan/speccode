@@ -647,18 +647,18 @@ git commit -m "docs: remove legacy compat narrative and 0.1 migration section fr
 **Files:**
 - Delete: 主仓 `.speccode/memory/_exploring.md`(运行时 untracked 文件,不进 git)
 
-- [ ] **Step 1: 删主仓存量遗留 memory** —— `rm /Users/game-netease/workspaces/plugin/speccode-development/.speccode/memory/_exploring.md`(存在才删;该键已不可读)。
-- [ ] **Step 2: 全量测试**
+- [x] **Step 1: 删主仓存量遗留 memory** —— `rm /Users/game-netease/workspaces/plugin/speccode-development/.speccode/memory/_exploring.md`(存在才删;该键已不可读)。
+- [x] **Step 2: 全量测试**
 
 Run: `node --test ./tests/*.test.mjs`
 Expected: 全 PASS,数量以输出为准(基线 323,删除兼容用例后应净减少)。
 
-- [ ] **Step 3: 残留审计**
+- [x] **Step 3: 残留审计**
 
 Run: `rg -n -i 'v1|v2|legacy|遗留|promoted|state/features|migrate-state|worktree_prefix|waiting_display_pr|develop-complete' lib/ bin/ tests/ skills/ hooks/ references/ AGENTS.md CLAUDE.md docs/DESIGN.md docs/DESIGN_CN.md README.md README_CN.md support/ .codex-plugin/ .kimi-plugin/ .zcode-plugin/ .opencode/ .pi/`
 Expected: 仅白名单命中——Node `v24`、`validateSlug('v2')` 类无关字面量、CHANGELOG.md(不在扫描列表)、receiving-code-review 的「向后兼容需要这段遗留代码」示例教学文本(评审方法论的通用示例,非本项目兼容面;逐条确认)。
 
-- [ ] **Step 4: 提交(如有零星修正)**
+- [x] **Step 4: 提交(如有零星修正)**
 
 ```bash
 git add -A && git commit -m "chore: sweep residual legacy references"
