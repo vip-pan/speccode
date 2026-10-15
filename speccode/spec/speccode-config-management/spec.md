@@ -84,7 +84,7 @@
 - **THEN** `config.json` MUST 保持写入前的完整旧内容(由 `mv` 原子性保证),不留半写状态
 
 ### Requirement: 备份机制
-`/speccode:init` 与 `/speccode:reset` 在覆盖 `config.json` 前 MUST 生成 `config.json.bak.<timestamp>` 备份。
+`/speccode:init` 与 `/speccode:reset` 在覆盖 `config.json` 前 MUST 生成 `config.json.bak.<timestamp>` 备份;`backupConfig` 在生成新备份后 SHALL 执行轮转:同目录下同前缀 `config.json.bak.*` 仅保留最新 `BACKUP_KEEP`(=5,单源常量)份,更旧者删除;轮转按文件名内时间戳排序,与生成时序一致;轮转删除 MUST 仅匹配 `config.json.bak.` 前缀,绝不触碰其他文件。
 
 #### Scenario: init 二次执行触发备份
 - **WHEN** `.speccode/config.json` 已存在且用户再次执行 `/speccode:init`
@@ -93,6 +93,14 @@
 #### Scenario: reset 触发备份
 - **WHEN** 用户执行 `/speccode:reset`
 - **THEN** 当前 config MUST 被备份为 `config.json.bak.<timestamp>`,再清空用户选择清理的字段
+
+#### Scenario: 超过保留窗口的备份被轮转
+- **WHEN** 目录中已存在 5 份 `config.json.bak.*` 且再次调用 `backupConfig`
+- **THEN** 新备份写入后目录内恰有 6→5 份该前缀文件,最旧一份被删除,其余文件不受影响
+
+#### Scenario: 不足窗口时零删除
+- **WHEN** 目录中 `config.json.bak.*` 少于等于 5 份时调用 `backupConfig`
+- **THEN** 仅新增一份备份,不删除任何既有文件
 
 ### Requirement: init 字段级幂等
 `/speccode:init` 二次执行时 MUST 按字段逐个询问 `[旧值]→[新值]` diff,而非整体覆盖。`state/` 目录在二次 init 时 MUST 不被清空。

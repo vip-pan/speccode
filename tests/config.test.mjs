@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, existsSync, readdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { configPath, loadConfig, saveConfig, backupConfig, diffFields, validateLanguage } from '../lib/config.mjs';
@@ -64,4 +64,32 @@ test('validateLanguage rejects malformed values', () => {
   assert.equal(validateLanguage(42), null);
   assert.equal(validateLanguage(null), null);
   assert.equal(validateLanguage(undefined), null);
+});
+
+test('backupConfig rotates: keeps only the newest 5 config.json.bak.* files', () => {
+  const dir = tmp();
+  saveConfig(dir, { version: 3, trunk: 'main' });
+  for (let i = 1; i <= 5; i += 1) {
+    writeFileSync(`${configPath(dir)}.bak.2026-01-0${i}T00-00-00.000Z`, 'old');
+  }
+  const created = backupConfig(dir);
+  assert.ok(created, 'new backup created');
+  const baks = readdirSync(dir).filter((f) => f.startsWith('config.json.bak.')).sort();
+  assert.equal(baks.length, 5, '6 份 → 仅保留最新 5 份');
+  assert.ok(!baks.includes('config.json.bak.2026-01-01T00-00-00.000Z'), '最旧一份被轮转删除');
+  assert.ok(baks.includes('config.json.bak.2026-01-02T00-00-00.000Z'), '次新全部保留');
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('backupConfig rotation leaves other files and under-window backups alone', () => {
+  const dir = tmp();
+  saveConfig(dir, { version: 3, trunk: 'main' });
+  writeFileSync(`${configPath(dir)}.bak.2026-01-01T00-00-00.000Z`, 'old');
+  writeFileSync(`${configPath(dir)}.bak.2026-01-02T00-00-00.000Z`, 'old');
+  writeFileSync(join(dir, 'unrelated.bak.2026-01-01T00-00-00.000Z'), 'keep');
+  backupConfig(dir);
+  const names = readdirSync(dir);
+  assert.ok(names.includes('unrelated.bak.2026-01-01T00-00-00.000Z'), '非 config.json.bak. 前缀绝不触碰');
+  assert.equal(names.filter((f) => f.startsWith('config.json.bak.')).length, 3, '窗口内只增不删');
+  rmSync(dir, { recursive: true, force: true });
 });

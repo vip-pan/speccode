@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, existsSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { listMemory, memoryDir, memoryPath, readMemory, renameMemory, writeMemory, validateMemoryBranch } from '../lib/memory.mjs';
+import { listMemory, memoryDir, memoryPath, purgeMemory, readMemory, renameMemory, writeMemory, validateMemoryBranch } from '../lib/memory.mjs';
 
 function tmp() { return mkdtempSync(join(tmpdir(), 'speccode-mem-')); }
 
@@ -159,5 +159,18 @@ test('renameMemory validates both branch keys', () => {
   const dir = tmp();
   writeMemory(dir, '_exploring/a', 'x\n', 'replace');
   assert.throws(() => renameMemory(dir, '_exploring/a', 'feature/Bad_Slug'), /invalid branch/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('purgeMemory: deletes once, idempotent on missing, invalid branch throws', () => {
+  const dir = tmp();
+  writeMemory(dir, 'feature/x', 'hello', 'replace');
+  const r1 = purgeMemory(dir, 'feature/x');
+  assert.equal(r1.purged, true);
+  assert.equal(r1.path, memoryPath(dir, 'feature/x'));
+  assert.ok(!existsSync(memoryPath(dir, 'feature/x')), '文件已删除');
+  const r2 = purgeMemory(dir, 'feature/x');
+  assert.equal(r2.purged, false, '幂等:缺失不报错');
+  assert.throws(() => purgeMemory(dir, 'Bad/Key'), /invalid/i);
   rmSync(dir, { recursive: true, force: true });
 });
