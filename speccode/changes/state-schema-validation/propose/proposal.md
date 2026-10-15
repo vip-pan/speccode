@@ -15,6 +15,7 @@ tier: 1
 - 新增只读 verb `lint-state`:输出 `{config:{warnings}, states:[{file,branch,warnings}]}`(扫 `state/branches/` + `state/features/`)。
 - `writeState` 增加门禁(抛错):v3 形状 payload 的 `branch` 与登记键不一致、`status` 非法枚举、`type` 非法(普通形状)、`created_at` 非 ISO、父实体 `children` 非数组时拒绝写入;未知顶层键与可选键(completed_at/pr_number/note/pending_operation)不拒绝(宽容);v2 形状 payload 原样放行(legacy 流程)。
 - `skills/status`:入口跑 `lint-state`,有警告即报告(不阻断)。
+- `migrateStateV2toV3` 补写 `merge_target`(取 config.trunk,verb 层传入;缺省 main)——迁移产物满足「merge_target 恒写」契约,不再制造永久 lint 噪音;坏 JSON 文件由 lint 容错描述(`unparseable JSON` 警告),绝不 crash。
 
 ## Capabilities
 

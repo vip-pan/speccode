@@ -1371,3 +1371,19 @@ test('write-state gate: branch key mismatch rejected without touching disk', () 
   assert.equal(existsSync(join(repo, '.speccode', 'state', 'branches', 'feature__a.json')), false, '拒绝时不落盘');
   rmSync(repo, { recursive: true, force: true });
 });
+
+
+test('lint-state: v2 entry and corrupt JSON described without crashing', () => {
+  const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'features', 'feature__old.json'),
+    { feature_branch: 'feature/old', status: 'in_progress', worktrees: {} });
+  writeFileSync(join(repo, '.speccode', 'state', 'features', 'feature__mangled.json'), '{oops');
+  const { code, json } = runCli(repo, 'lint-state', '--cwd', repo);
+  assert.equal(code, 0, 'lint 永不因坏数据 exit 1');
+  const v2 = json.states.find((x) => x.branch === 'feature/old');
+  assert.ok(v2 && v2.warnings.length === 1 && v2.warnings[0].includes('v2'), 'v2 单条迁移提示');
+  const mangled = json.states.find((x) => x.branch === 'feature/mangled');
+  assert.ok(mangled && mangled.warnings.some((w) => w.includes('unparseable')));
+  rmSync(repo, { recursive: true, force: true });
+});

@@ -7,7 +7,7 @@ import { git } from '../lib/git.mjs';
 import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSquashOnly } from '../lib/prtool.mjs';
 import { reconcile } from '../lib/reconcile.mjs';
 import { loadConfig, saveConfig, backupConfig, validateLanguage, validateConfigShape } from '../lib/config.mjs';
-import { readState, writeState, deleteState, listActiveFeatures, migrateStateV2toV3, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
+import { readState, writeState, deleteState, listActiveFeatures, lintStateEntries, migrateStateV2toV3, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState, detectHost } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
 import { buildHookPayload, runHook } from '../lib/hooks.mjs';
@@ -120,17 +120,18 @@ const VERBS = {
 
   // Read-only shape lint over config + every state entry (both dirs). Reports
   // drift; fixing stays with the user-confirmed flows (idempotent init diff,
-  // reset) — lint never mutates anything.
+  // reset) — lint never mutates anything. lintStateEntries is deliberately
+  // tolerant: a hand-mangled file is described, never a crash.
   'lint-state': ({ cwd }) => {
     const sd = speccodeDirOf(cwd);
-    const states = listActiveFeatures(sd).map((f) => ({
-      branch: f?.branch ?? f?.feature_branch ?? null,
-      warnings: validateStateShape(f),
-    }));
-    return { ok: true, config: { warnings: validateConfigShape(loadConfig(sd)) }, states };
+    return { ok: true, config: { warnings: validateConfigShape(loadConfig(sd)) }, states: lintStateEntries(sd) };
   },
 
-  'migrate-state': ({ cwd }) => ({ ok: true, ...migrateStateV2toV3(speccodeDirOf(cwd)) }),
+  'migrate-state': ({ cwd }) => {
+    const sd = speccodeDirOf(cwd);
+    const trunk = loadConfig(sd)?.trunk ?? 'main';
+    return { ok: true, ...migrateStateV2toV3(sd, { trunk }) };
+  },
 
   'feature-progress': ({ cwd, branch }) => {
     const st = readState(speccodeDirOf(cwd), branch);

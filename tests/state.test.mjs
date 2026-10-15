@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, existsSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeJsonAtomic } from '../lib/atomic.mjs';
 import {
   WORKTREE_STATUS, branchesDir, featuresDir, readState, writeState, deleteState, listActiveFeatures, normalizeState, migrateStateV2toV3, validateStateShape,
+  lintStateEntries,
 } from '../lib/state.mjs';
 
 function tmp() { return mkdtempSync(join(tmpdir(), 'speccode-state-')); }
@@ -188,7 +189,7 @@ test('migrateStateV2toV3 skips in-flight single-worktree features, still migrate
   assert.equal(existsSync(join(sc, 'state', 'features', 'feature__wip.json')), true);
   assert.equal(existsSync(join(sc, 'state', 'features', 'feature__donewt.json')), false);
   assert.deepEqual(readState(sc, 'feature/donewt'), {
-    branch: 'feature/donewt', type: 'feature', worktree: null,
+    branch: 'feature/donewt', type: 'feature', worktree: null, merge_target: 'main',
     status: 'in_progress', created_at: '2026-08-01T00:00:00.000Z', initial_branch: 'main',
   });
   rmSync(root, { recursive: true, force: true });
@@ -274,5 +275,26 @@ test('writeState gate: rejects present-but-wrong fields, tolerates note and v2 p
   assert.throws(() => writeState(sc, 'feature/p', { ...good, kind: 'integration', children: 'x' }), /children/i);
   writeState(sc, 'feature/old', { feature_branch: 'feature/old', status: 'in_progress', worktrees: {} });
   assert.equal(readState(sc, 'feature/old').feature_branch, 'feature/old', 'v2 payload 直通');
+  rmSync(root, { recursive: true, force: true });
+});
+
+
+test('lintStateEntries: unparseable JSON is described, never a crash; migrated entries lint clean', () => {
+  const root = tmp();
+  const sc = join(root, '.speccode');
+  mkdirSync(join(sc, 'state', 'branches'), { recursive: true });
+  writeFileSync(join(sc, 'state', 'branches', 'feature__mangled.json'), '{not json');
+  const entries = lintStateEntries(sc);
+  const mangled = entries.find((e) => e.branch === 'feature/mangled');
+  assert.ok(mangled && mangled.warnings.some((w) => w.includes('unparseable')), '坏 JSON 被描述为警告');
+  // 迁移产物零警告(merge_target 恒写后)
+  mkdirSync(join(sc, 'state', 'features'), { recursive: true });
+  writeJsonAtomic(join(sc, 'state', 'features', 'feature__old.json'), {
+    feature_branch: 'feature/old', created_at: '2026-09-01T00:00:00.000Z',
+    initial_branch: 'main', status: 'completed', worktrees: {},
+  });
+  migrateStateV2toV3(sc, { trunk: 'main' });
+  const after = lintStateEntries(sc).find((e) => e.branch === 'feature/old');
+  assert.deepEqual(after.warnings, [], '迁移条目过 lint 零警告');
   rmSync(root, { recursive: true, force: true });
 });
