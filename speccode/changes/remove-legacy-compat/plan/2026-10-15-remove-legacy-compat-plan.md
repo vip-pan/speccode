@@ -621,8 +621,8 @@ git commit -m "docs(skills): drop v1/v2 upgrade and migration steps from init/st
 **Interfaces:**
 - Consumes: Task 1-6 后的引擎事实
 
-- [ ] **Step 1: AGENTS.md** —— 四处不变量去 v2 表述:51 行「(v3;v2 遗留 `state/features/*.json` 同策)」→「`;55 行「(config + `state/branches/`(v2 遗留为 `state/features/`)+ …)」→ 删括注;59 行「(v3 `state/branches/` + v2 遗留 `state/features/` 双格式原样)」→「`state/branches/`」并删「(仅 v3 条目,v2 遗留原样跳过)」;61 行删「;v3 一分支一 state,v2 遗留 `state/features/` 的 worktree 条目沿用同一枚举」中的 v2 分句。
-- [ ] **Step 2: DESIGN.md / DESIGN_CN.md(两版同步)** ——
+- [x] **Step 1: AGENTS.md** —— 四处不变量去 v2 表述:51 行「(v3;v2 遗留 `state/features/*.json` 同策)」→「`;55 行「(config + `state/branches/`(v2 遗留为 `state/features/`)+ …)」→ 删括注;59 行「(v3 `state/branches/` + v2 遗留 `state/features/` 双格式原样)」→「`state/branches/`」并删「(仅 v3 条目,v2 遗留原样跳过)」;61 行删「;v3 一分支一 state,v2 遗留 `state/features/` 的 worktree 条目沿用同一枚举」中的 v2 分句。
+- [x] **Step 2: DESIGN.md / DESIGN_CN.md(两版同步)** ——
   - 176 行目录树注 `(v2 legacy lives in state/features/, dual-format compatible)` 删;
   - 181 行 config 段删 `(v2's worktree_prefix retired…, and host retired…— idempotent init removes both via the field diff)`;
   - 182 行 state 段删末句 `v2-legacy state/features/ files are read and written with v2 semantics as-is…`;
@@ -631,8 +631,8 @@ git commit -m "docs(skills): drop v1/v2 upgrade and migration steps from init/st
   - 242 行 R2 `that field is now retired (read-compatible, ignored)` → `that field is retired (not read)`;
   - 253-300 行:§11「Migrating from 0.1」重组——迁移内容(命令对照表、迁移步骤、waiting_display_pr 指引)删除,保留混排的当前内容(Upgrade actions + 多宿主安装入口表)重组为 §11「Installation & Updates」;节号维持 §1-14;322 行 git clean 段 `(branches/ and legacy features/)` → `(branches/)`;
   - CN 版逐段对应(285/299 行等)。
-- [ ] **Step 3: 交叉引用核对** —— `rg -n '§1-14|Section 11|#11-migrating|迁移对照' AGENTS.md docs/ README.md README_CN.md speccode/spec/`,残余引用一并修正(AGENTS「设计文档 §1-14」→「§1-13」;plugin-packaging 主规格的迁移对照表要求由 syncing 的 delta 处理,此处不动 spec)。
-- [ ] **Step 4: 验证 + 提交**
+- [x] **Step 3: 交叉引用核对** —— `rg -n '§1-14|Section 11|#11-migrating|迁移对照' AGENTS.md docs/ README.md README_CN.md speccode/spec/`,残余引用一并修正(AGENTS「设计文档 §1-14」→「§1-13」;plugin-packaging 主规格的迁移对照表要求由 syncing 的 delta 处理,此处不动 spec)。
+- [x] **Step 4: 验证 + 提交**
 
 Run: `node --test ./tests/*.test.mjs && rg -n -i 'v2|migrating from 0.1' docs/DESIGN.md docs/DESIGN_CN.md`
 Expected: 测试 PASS;rg 仅剩允许的历史叙事(R 表编号注等,逐条人工确认)。
