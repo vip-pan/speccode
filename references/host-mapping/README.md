@@ -16,6 +16,6 @@ speccode 的多宿主支持:每个非 Claude Code 宿主一份三段式映射文
 1. 按各宿主文档安装(插件根 = 本仓库根)。
 2. `bash scripts/install-shim.sh` —— 把 `speccode` 引擎 shim 装进 PATH。
 3. `speccode plugin-root --cwd .` 验证。
-4. 在目标项目 `/speccode:init`(宿主身份会被探测并经你确认写入 `config.host`)。
+4. 在目标项目 `/speccode:init`。
 
 待验证项核对完成后:MUST 移除对应「待验证」标注并把结论回写本表。
