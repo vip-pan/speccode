@@ -7,7 +7,7 @@ import { git } from '../lib/git.mjs';
 import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSquashOnly } from '../lib/prtool.mjs';
 import { reconcile } from '../lib/reconcile.mjs';
 import { loadConfig, saveConfig, backupConfig, validateLanguage, validateConfigShape } from '../lib/config.mjs';
-import { readState, writeState, deleteState, listActiveFeatures, lintStateEntries, migrateStateV2toV3, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
+import { readState, writeState, deleteState, listActiveFeatures, lintStateEntries, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
 import { buildHookPayload, runHook } from '../lib/hooks.mjs';
@@ -125,12 +125,6 @@ const VERBS = {
   'lint-state': ({ cwd }) => {
     const sd = speccodeDirOf(cwd);
     return { ok: true, config: { warnings: validateConfigShape(loadConfig(sd)) }, states: lintStateEntries(sd) };
-  },
-
-  'migrate-state': ({ cwd }) => {
-    const sd = speccodeDirOf(cwd);
-    const trunk = loadConfig(sd)?.trunk ?? 'main';
-    return { ok: true, ...migrateStateV2toV3(sd, { trunk }) };
   },
 
   'feature-progress': ({ cwd, branch }) => {
