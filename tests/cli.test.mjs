@@ -99,8 +99,9 @@ test('write-config accepts a valid language tag as-is', () => {
 test('write-state then feature-progress reflects it', () => {
   const repo = makeRepo();
   const state = JSON.stringify({
-    feature_branch: 'feature/demo', status: 'in_progress',
-    worktrees: { 'worktree-demo': { status: 'completed', completed_at: '2026-07-10T00:00:00.000Z' } },
+    branch: 'feature/demo', type: 'feature', worktree: '/wt/demo', merge_target: 'master',
+    status: 'completed', completed_at: '2026-07-10T00:00:00.000Z',
+    created_at: '2026-07-10T00:00:00.000Z', initial_branch: 'master',
   });
   const w = spawnSync('node',
     [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/demo', '--json-stdin'],
@@ -136,8 +137,9 @@ test('reconcile without --advance-pr leaves pr_open worktree untouched', () => {
   spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
     { cwd: repo, input: cfg, encoding: 'utf8' });
   const state = JSON.stringify({
-    feature_branch: 'feature/p', status: 'in_progress',
-    worktrees: { 'worktree-p': { status: 'pr_open', pr_number: 42 } },
+    branch: 'feature/p', type: 'feature', worktree: null, merge_target: 'master',
+    status: 'pr_open', pr_number: 42,
+    created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master',
   });
   spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/p', '--json-stdin'],
     { cwd: repo, input: state, encoding: 'utf8' });
@@ -147,7 +149,9 @@ test('reconcile without --advance-pr leaves pr_open worktree untouched', () => {
   assert.ok(json.ok);
   assert.deepEqual(json.advanced, []);
   const after = runCli(repo, 'feature-progress', '--cwd', repo, '--branch', 'feature/p');
-  assert.equal(after.json.worktrees['worktree-p'].status, 'pr_open');
+  assert.equal(after.json.completed, 0);
+  const onDisk = JSON.parse(readFileSync(join(repo, '.speccode', 'state', 'branches', 'feature__p.json'), 'utf8'));
+  assert.equal(onDisk.status, 'pr_open');
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -245,17 +249,17 @@ test('reconcile treats unregistered worktrees under config worktree_dir as orpha
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('reconcile ignores legacy config worktree_prefix', () => {
+test('reconcile works with unknown/old keys in config (unknown-key tolerance)', () => {
   const repo = makeRepo();
-  mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
   spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
     { cwd: repo, input: JSON.stringify({ version: 1, worktree_prefix: '' }), encoding: 'utf8' });
-  // v3 reconcile ignores the legacy worktree_prefix field entirely; HEAD on a
-  // non-worktree branch must not be bogusly self-registered as its own worktree.
+  // Unknown/old config keys are plain ignored; HEAD on a non-worktree branch
+  // must not be bogusly self-registered as its own worktree.
   const co = spawnSync('git', ['checkout', '-b', 'feature/p'], { cwd: repo, encoding: 'utf8' });
   assert.equal(co.status, 0, co.stderr);
   commitFile(repo, 'p.txt', 'p\n', 'feature p commit');
-  const state = JSON.stringify({ feature_branch: 'feature/p', status: 'in_progress', worktrees: {} });
+  const state = JSON.stringify({ branch: 'feature/p', type: 'feature', worktree: null,
+    merge_target: 'master', status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master' });
   spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/p', '--json-stdin'],
     { cwd: repo, input: state, encoding: 'utf8' });
 
@@ -264,8 +268,10 @@ test('reconcile ignores legacy config worktree_prefix', () => {
   assert.ok(json.ok);
   assert.deepEqual(json.orphans, []);
   assert.deepEqual(json.conflicts, []);
+  assert.equal(json.features.length, 1, '分支登记不丢');
   const after = runCli(repo, 'feature-progress', '--cwd', repo, '--branch', 'feature/p');
-  assert.deepEqual(after.json.worktrees, {});
+  assert.equal(after.json.total, 1);
+  assert.equal(after.json.worktree, null);
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -1158,20 +1164,12 @@ test('write-state lands in state/branches and feature-progress reads it back', (
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('migrate-state converts a v2 file end to end', () => {
+test('migrate-state verb no longer exists', () => {
   const repo = makeRepo();
-  const v2 = join(repo, '.speccode', 'state', 'features');
-  mkdirSync(v2, { recursive: true });
-  writeJsonAtomic(join(v2, 'feature__old.json'), {
-    feature_branch: 'feature/old', created_at: '2026-09-01T00:00:00.000Z',
-    initial_branch: 'main', status: 'pending', worktrees: {},
-  });
   const r = spawnSync('node', [BIN, 'migrate-state', '--cwd', repo, '--json-stdin'],
     { cwd: repo, input: '{}', encoding: 'utf8' });
-  assert.equal(r.status, 0);
-  const json = JSON.parse(r.stdout.trim());
-  assert.deepEqual(json.migrated, ['feature__old.json']);
-  assert.ok(existsSync(join(repo, '.speccode', 'state', 'branches', 'feature__old.json')));
+  assert.equal(r.status, 1, '未知 verb → exit 1');
+  assert.equal(JSON.parse(r.stdout.trim()).ok, false);
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -1371,24 +1369,24 @@ test('list-memory: files annotate completed via state join; topics unchanged', (
   writeFileSync(join(repo, '.speccode', 'memory', 'feature__done.md'), 'm');
   writeFileSync(join(repo, '.speccode', 'memory', 'feature__live.md'), 'm');
   writeFileSync(join(repo, '.speccode', 'memory', '_exploring__topic.md'), 'm');
-  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
-  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__done.json'),
-    { branch: 'feature/done', status: 'completed' });
-  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__live.json'),
-    { branch: 'feature/live', status: 'in_progress' });
-  // v2 遗留条目:worktrees 全 completed → completed:true(与 reconcile 同款分流)
+  // v2 遗留条目不再参与派生:features 目录整体隐形
   writeFileSync(join(repo, '.speccode', 'memory', 'feature__legacy.md'), 'm');
   mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
   writeJsonAtomic(join(repo, '.speccode', 'state', 'features', 'feature__legacy.json'), {
     feature_branch: 'feature/legacy', status: 'in_progress',
     worktrees: { legacy: { status: 'completed' } },
   });
+  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__done.json'),
+    { branch: 'feature/done', status: 'completed' });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__live.json'),
+    { branch: 'feature/live', status: 'in_progress' });
   const { code, json } = runCli(repo, 'list-memory', '--cwd', repo);
   assert.equal(code, 0);
   assert.deepEqual(json.topics, ['_exploring/topic'], 'topics 形状不变');
   const byBranch = Object.fromEntries(json.files.map((f) => [f.branch, f.completed]));
   assert.deepEqual(byBranch,
-    { 'feature/done': true, 'feature/live': false, 'feature/legacy': true, '_exploring/topic': null });
+    { 'feature/done': true, 'feature/live': false, 'feature/legacy': null, '_exploring/topic': null });
   rmSync(repo, { recursive: true, force: true });
 });
 
