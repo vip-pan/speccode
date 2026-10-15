@@ -560,7 +560,7 @@ git commit -m "refactor: knowledge parser reads current markers only — legacy 
 **Interfaces:**
 - Produces: `TRUNK_MEMORY_KEYS = ['_knowledge']`;`validateMemoryBranch('_exploring') === false`
 
-- [ ] **Step 1: 改测试(先红)** —— `tests/cli.test.mjs` 用例 `write-memory accepts the _exploring sentinel branch` 替换为:
+- [x] **Step 1: 改测试(先红)** —— `tests/cli.test.mjs` 用例 `write-memory accepts the _exploring sentinel branch` 替换为:
 
 ```js
 test('write-memory rejects the legacy bare _exploring key', () => {
@@ -573,19 +573,19 @@ test('write-memory rejects the legacy bare _exploring key', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `node --test --test-name-pattern="_exploring" tests/cli.test.mjs`
 Expected: FAIL(当前仍接受)。
 
-- [ ] **Step 3: 实现** —— `lib/memory.mjs`:`TRUNK_MEMORY_KEYS = ['_knowledge']`;注释里 `` `_exploring` = exploring conclusions before a feature exists`` 与「legacy bare `_exploring.md`」措辞删除/改写(探索记忆一律走 `_exploring/<topic>`)。
+- [x] **Step 3: 实现** —— `lib/memory.mjs`:`TRUNK_MEMORY_KEYS = ['_knowledge']`;注释里 `` `_exploring` = exploring conclusions before a feature exists`` 与「legacy bare `_exploring.md`」措辞删除/改写(探索记忆一律走 `_exploring/<topic>`)。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `node --test tests/memory.test.mjs tests/cli.test.mjs`
 Expected: PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add lib/memory.mjs tests/cli.test.mjs
