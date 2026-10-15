@@ -23,3 +23,5 @@
 .claude/settings.local.json
 opencode.json
 .mcp.json
+node_modules/
+package-lock.json

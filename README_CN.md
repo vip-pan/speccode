@@ -15,7 +15,7 @@
 
 依赖 [Node.js ≥ 24](#前置依赖) 与 `git`。安装后命令以 `/speccode:` 前缀出现,如 `/speccode:init`、`/speccode:status`、`/speccode:finishing-worktree`。
 
-**其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主还需把引擎 shim 装进 PATH:`bash scripts/install-shim.sh`。
+**其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主还需把引擎装进 PATH——`npm i -g speccode`(由 npm 管理与升级,全宿主通用)或从检出运行 `bash scripts/install-shim.sh`;同一台机器二选一即可。维护者:npm 发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
 
 ## 前置依赖
 

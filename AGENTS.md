@@ -14,7 +14,7 @@ speccode 是一个 **Claude Code 流程编排插件**,用一组 `/speccode:*` sl
 
 ## 常用命令
 
-Node ≥ 24,无 `package.json`(纯 ESM、零第三方依赖——仅 `node:` 内置模块,由源码 import 可见,不在此重复)。
+Node ≥ 24。根 `package.json` 仅承载 npm 分发元数据(name/version/bin/files 白名单,守卫测试与双 manifest 三方同步版本)——无 dependencies(纯 ESM、零第三方依赖不变,仅 `node:` 内置模块)、无构建步骤;`npm i -g speccode` 是 shim 之外的引擎 PATH 通道(`v*` tag CI 自动 npm publish,凭据 NPM_TOKEN)。
 
 ```bash
 # 全量测试 —— 必须用 glob 形式
@@ -54,7 +54,7 @@ speccode 编排的分支拓扑是**双层**:普通需求从 trunk 直接切 `<ty
 
 - **`.speccode/`(运行时数据)vs 插件源码**:仓库根的插件源码(`.claude-plugin/`、`skills/`、`bin/`、`lib/`、`hooks/`、`references/`、`tests/`——单仓三合一后插件根即仓库根)在本仓库被 git 跟踪。而 speccode **运行时**在目标项目产生的 `.speccode/`(config + `state/branches/`(v2 遗留为 `state/features/`)+ `memory/` + `sdd/` + `backup/`)是运行时数据,设计上保持 untracked、插件不往项目 `.gitignore` 加条目(靠命令维护,见设计文档 R4);其中 `memory/` 与 `sdd/` 由插件自写目录内 `.gitignore`(内容 `*`)自忽略。这两者别混淆。仓库根下的 `support/`、`speccode/`(dogfood 规格)、`docs/`、`.github/` 是本仓自用内容,SHALL NOT 被声明进插件组件(打包边界 = plugin.json 声明)。
 
-- **裸调与手动调试**:命令正文裸调 `speccode <verb>`(经 `bin/speccode` wrapper 依赖插件 `bin/` 进 PATH,仅 Claude Code 启用本插件时生效;其他宿主由各自 adapter 提供 PATH shim);手动终端调试用 `node bin/speccode.mjs <verb> --cwd .`。
+- **裸调与手动调试**:命令正文裸调 `speccode <verb>`(Claude Code 启用本插件时插件 `bin/` 自动进 PATH;其他宿主经 npm 全局安装或 install-shim.sh 提供 PATH);手动终端调试用 `node bin/speccode.mjs <verb> --cwd .`。
 
 - **对账算法**(`reconcile.mjs`)是核心:每个涉及 worktree 的命令(creating-worktree / finishing-worktree / finishing-feature / status 等)入口都跑它,扫 `git worktree list` ↔ `state/`(v3 `state/branches/` + v2 遗留 `state/features/` 双格式原样)。管辖识别 = **路径识别**:路径位于 `config.worktree_dir`(缺省 `.speccode/worktrees`)之下的 worktree 才归 speccode 管,分支名 / ancestry / `worktree_overrides` 一概不参与(用户手工分支零误伤);orphan = 登记非 completed 的分支在 git 缺失 / worktree_dir 下存在未登记 worktree / `merge_target` 指向分支不存在;`conflicts` 恒 `[]`(输出形状保持兼容,出现即异常);带 `--advance-pr` 时查 PR 状态把 `pr_open` → `completed`(仅 v3 条目,v2 遗留原样跳过)。
 

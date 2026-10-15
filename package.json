@@ -1,0 +1,13 @@
+{
+  "name": "speccode",
+  "version": "0.7.3",
+  "type": "module",
+  "description": "Multi-requirement parallel development, in-repo spec hosting, standardized PR flow, and SDD methodology for coding-agent CLIs — process orchestration plugin and engine.",
+  "license": "MIT",
+  "homepage": "https://github.com/vip-pan/speccode",
+  "repository": "https://github.com/vip-pan/speccode",
+  "keywords": ["workflow", "git", "worktree", "pr", "sdd", "tdd", "hooks", "memory", "coding-agent"],
+  "bin": { "speccode": "bin/speccode.mjs" },
+  "files": ["bin", "lib", "skills", "hooks", "references"],
+  "engines": { "node": ">=24" }
+}
