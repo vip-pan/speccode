@@ -15,15 +15,15 @@
 
 ## 命令层
 
-- [ ] `skills/init/SKILL.md`:删除「探测宿主」步骤(含确认/跳过分支)、config 字段说明中的 host 条目、「宿主切换注意」段;frontmatter description 去 host identity 字样
+- [x] `skills/init/SKILL.md`:删除「探测宿主」步骤(含确认/跳过分支)、config 字段说明中的 host 条目、「宿主切换注意」段;frontmatter description 去 host identity 字样
 
 ## 文档(双语同步)
 
-- [ ] `docs/DESIGN.md` + `docs/DESIGN_CN.md`:config 字段集表述去 host(移入 MUST NOT 列表);探测来源表去「claude-code host / unrecorded host only」门控限定;detect-host 相关段落删除
-- [ ] `AGENTS.md`:host 探测/记录相关表述同步(架构段、不变量段)
-- [ ] `references/host-mapping/*.md`:各宿主文档中「detect-host」「config.host」「宿主标记」表述同步;zcode.md 页首「工具名核销后回写 host-detection 宿主标记」计划项随能力退役改写
+- [x] `docs/DESIGN.md` + `docs/DESIGN_CN.md`:config 字段集表述去 host(移入 MUST NOT 列表);探测来源表去「claude-code host / unrecorded host only」门控限定;detect-host 相关段落删除
+- [x] `AGENTS.md`:host 探测/记录相关表述同步(架构段、不变量段)——实扫零命中,无需改动
+- [x] `references/host-mapping/*.md`:各宿主文档中「detect-host」「config.host」「宿主标记」表述同步;zcode.md 页首「工具名核销后回写 host-detection 宿主标记」计划项随能力退役改写
 
 ## 验收
 
-- [ ] 手动冒烟:`speccode detect-code-intel-tools --cwd .` 恒全量且输出无 host;`speccode detect-host` 返回未知 verb 错误;`speccode read-config` 对含 host 的旧 config 不报错
-- [ ] 活文档全仓 grep `detect-host\|config\.host` 清零(CHANGELOG、speccode/archive/、.speccode/ 历史性提及豁免)
+- [x] 手动冒烟:`speccode detect-code-intel-tools --cwd .` 恒全量且输出无 host;`speccode detect-host` 返回未知 verb 错误;`speccode read-config` 对含 host 的旧 config 不报错
+- [x] 活文档全仓 grep `detect-host\|config\.host` 清零(CHANGELOG、speccode/archive/、.speccode/ 的历史性提及豁免;speccode/spec/ 主规格由 syncing 按 delta 消费、speccode/knowledge/ 由独立 chore/knowledge-* 分支蒸馏刷新,均不在本分支改)
