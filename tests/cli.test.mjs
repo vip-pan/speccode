@@ -840,7 +840,7 @@ test('write-knowledge append-hand is retired (unknown mode)', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('write-knowledge replace-distilled migrates legacy markers and rebuilds only distilled blocks', () => {
+test('write-knowledge replace-distilled keeps legacy marker bytes as hand text', () => {
   const repo = makeRepo();
   const p = join(repo, 'speccode', 'knowledge', 'development', 'pitfalls.md');
   mkdirSync(dirname(p), { recursive: true });
@@ -849,7 +849,9 @@ test('write-knowledge replace-distilled migrates legacy markers and rebuilds onl
     JSON.stringify({ mode: 'replace-distilled', blocks: [{ source: 'cap/old', body: 'new body' }] }));
   assert.equal(code, 0);
   assert.equal(json.ok, true);
-  assert.equal(readFileSync(p, 'utf8'), 'hand A\nhand B\n\n<!-- distilled-from: cap/old -->\nnew body\n<!-- /distilled -->\n');
+  const out = readFileSync(p, 'utf8');
+  assert.ok(out.includes('<!-- promoted-from: cap/old -->'), '旧标记字节留在 hand 区');
+  assert.ok(out.includes('<!-- distilled-from: cap/old -->'), '新块按现行格式追加');
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -893,7 +895,7 @@ test('write-knowledge requires --json-stdin', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('read-knowledge --topic --blocks parses legacy promoted markers', () => {
+test('read-knowledge --topic --blocks ignores legacy promoted markers', () => {
   const repo = makeRepo();
   const root = join(repo, 'speccode', 'knowledge');
   mkdirSync(join(root, 'development'), { recursive: true });
@@ -901,7 +903,7 @@ test('read-knowledge --topic --blocks parses legacy promoted markers', () => {
   const { code, json } = runCli(repo, 'read-knowledge', '--cwd', repo, '--topic', 'pitfalls', '--blocks');
   assert.equal(code, 0);
   assert.equal(json.exists, true);
-  assert.deepEqual(json.blocks, [{ source: 'archive/a/', body: 'body' }]);
+  assert.deepEqual(json.blocks, [], '旧标记不是蒸馏块');
   rmSync(repo, { recursive: true, force: true });
 });
 
