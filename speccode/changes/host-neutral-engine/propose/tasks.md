@@ -2,16 +2,16 @@
 
 ## 引擎
 
-- [ ] `lib/detect.mjs`:删除 `detectHost()`、`HOST_IDS` 与 env/dir/file 三族宿主标记探测;删除 `claudeProbes` 门控(恒全量探测);宿主相关注释同步清理
-- [ ] `bin/speccode.mjs`:VERBS 表移除 `detect-host`;`detect-code-intel-tools` 不再读取/传递 `config.host`、输出删除 `host` 字段
-- [ ] 全仓引擎代码 grep `detect-host\|config\.host\|detectHost\|HOST_IDS` 清零(lib/、bin/)
+- [x] `lib/detect.mjs`:删除 `detectHost()`、`HOST_IDS` 与 env/dir/file 三族宿主标记探测;删除 `claudeProbes` 门控(恒全量探测);宿主相关注释同步清理
+- [x] `bin/speccode.mjs`:VERBS 表移除 `detect-host`;`detect-code-intel-tools` 不再读取/传递 `config.host`、输出删除 `host` 字段
+- [x] 全仓引擎代码 grep `detect-host\|config\.host\|detectHost\|HOST_IDS` 清零(lib/、bin/)
 
 ## 测试
 
-- [ ] `tests/detect.test.mjs`:删除 `detectHost` 及宿主标记用例;门控用例改为恒全量断言(任何环境下 `~/.claude` 探测均参与)
-- [ ] `tests/cli.test.mjs`:删除 `detect-host` verb 两组用例;`detect-code-intel-tools passes config.host` 用例改为输出形状断言(无 host 字段)
-- [ ] 新增用例:含 `host` 遗留字段的 config 下 `detect-code-intel-tools` / `read-config` 不报错
-- [ ] 全量测试绿:`node --test ./tests/*.test.mjs`
+- [x] `tests/detect.test.mjs`:删除 `detectHost` 及宿主标记用例;门控用例改为恒全量断言(任何环境下 `~/.claude` 探测均参与)
+- [x] `tests/cli.test.mjs`:删除 `detect-host` verb 两组用例;`detect-code-intel-tools passes config.host` 用例改为输出形状断言(无 host 字段)
+- [x] 新增用例:含 `host` 遗留字段的 config 下 `detect-code-intel-tools` / `read-config` 不报错
+- [x] 全量测试绿:`node --test ./tests/*.test.mjs`
 
 ## 命令层
 
