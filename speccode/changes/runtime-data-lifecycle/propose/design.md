@@ -20,7 +20,7 @@ memory.mjs 现有 read/write/list/rename 四函数,无任何删除路径;`listMe
 ## Decisions
 
 1. **purge-memory 用 flag 形态而非 --json-stdin**:对齐同族破坏性 verb `delete-state`(`--branch <F>` flag、无 payload);「写 verb 必须 --json-stdin」约束的是携带 JSON payload 的写 verb(rename-memory 需要校验 `{}` 通道),purge 无 payload 可携带。
-2. **completed 标注在 verb 层连接,不下沉 memory.mjs**:标注 = memory 键 ↔ state 登记的 join,纯 CLI 编排;memory.mjs 保持无 state 依赖(单测面干净)。`completed:null` 表示无 state 对应(_exploring/_knowledge)。
+2. **completed 标注在 verb 层连接,不下沉 memory.mjs**:标注 = memory 键 ↔ state 登记的 join,纯 CLI 编排;memory.mjs 保持无 state 依赖(单测面干净)。三态:state 存在且 completed → true;存在非 completed → false;无 state 对应 → null。v2 遗留条目(`{feature_branch, worktrees}`)同样参与派生(键取 `feature_branch`、completed = 全 worktrees completed,与 reconcile 的 v2/v3 分流同款)——否则最老的滞留队列(恰是 v2 时代存量)会被静默归入 null 桶漏报(review Important #1 修复)。
 3. **轮转常量 BACKUP_KEEP=5 不进 config**:避免为「运维细节」扩 config 字段集;5 份对幂等 init+reset 的备份节奏绰绰有余。被否备选:config 可调——又一个要写进字段集、双语文档与迁移说明的字段,收益配不上成本。
 4. **幂等语义**:purge 对不存在文件返回 `{ok:true, purged:false}`(与 tick-task 的 already、rename-memory 的幂等哲学一致),不报错。
 

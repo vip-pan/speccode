@@ -1370,15 +1370,22 @@ test('list-memory: files annotate completed via state join; topics unchanged', (
   writeFileSync(join(repo, '.speccode', 'memory', 'feature__live.md'), 'm');
   writeFileSync(join(repo, '.speccode', 'memory', '_exploring__topic.md'), 'm');
   mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
-  writeFileSync(join(repo, '.speccode', 'state', 'branches', 'feature__done.json'),
-    JSON.stringify({ branch: 'feature/done', status: 'completed' }));
-  writeFileSync(join(repo, '.speccode', 'state', 'branches', 'feature__live.json'),
-    JSON.stringify({ branch: 'feature/live', status: 'in_progress' }));
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__done.json'),
+    { branch: 'feature/done', status: 'completed' });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__live.json'),
+    { branch: 'feature/live', status: 'in_progress' });
+  // v2 遗留条目:worktrees 全 completed → completed:true(与 reconcile 同款分流)
+  writeFileSync(join(repo, '.speccode', 'memory', 'feature__legacy.md'), 'm');
+  mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'features', 'feature__legacy.json'), {
+    feature_branch: 'feature/legacy', status: 'in_progress',
+    worktrees: { legacy: { status: 'completed' } },
+  });
   const { code, json } = runCli(repo, 'list-memory', '--cwd', repo);
   assert.equal(code, 0);
   assert.deepEqual(json.topics, ['_exploring/topic'], 'topics 形状不变');
   const byBranch = Object.fromEntries(json.files.map((f) => [f.branch, f.completed]));
   assert.deepEqual(byBranch,
-    { 'feature/done': true, 'feature/live': false, '_exploring/topic': null });
+    { 'feature/done': true, 'feature/live': false, 'feature/legacy': true, '_exploring/topic': null });
   rmSync(repo, { recursive: true, force: true });
 });

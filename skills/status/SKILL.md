@@ -27,4 +27,5 @@ speccode — 4 active 分支
     · feature/shop-report    pending(计划未开工)
 ○ feature/legacy (from master) in_progress(v2 待迁移)
 config: trunk=master pr_tool=gh
+memory: 3 个已完成分支的 memory 滞留(如 feature/done),可经 purge-memory 清理
 ```

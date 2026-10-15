@@ -273,12 +273,25 @@ const VERBS = {
     // files + completed annotation: visibility for stale branch memories
     // (join lives here, not in memory.mjs — the lib stays state-free).
     const sd = speccodeDirOf(cwd);
-    const statusByBranch = new Map(listActiveFeatures(sd).map((f) => [f.branch, f.status]));
+    const statusByBranch = new Map();
+    for (const f of listActiveFeatures(sd)) {
+      if (typeof f?.branch === 'string') {
+        statusByBranch.set(f.branch, f.status === WORKTREE_STATUS.COMPLETED);
+      } else if (typeof f?.feature_branch === 'string') {
+        // v2-legacy shape {feature_branch, worktrees:{...}}: derive from the
+        // per-worktree statuses (all completed → completed), falling back to
+        // the top-level v2 status when no worktree is registered — the same
+        // reconciliation split reconcile.mjs applies.
+        const ws = Object.values(f.worktrees ?? {});
+        statusByBranch.set(f.feature_branch,
+          ws.length > 0
+            ? ws.every((w) => w?.status === WORKTREE_STATUS.COMPLETED)
+            : f.status === WORKTREE_STATUS.COMPLETED);
+      }
+    }
     const files = listMemoryKeys(sd).map((branch) => ({
       branch,
-      completed: statusByBranch.has(branch)
-        ? statusByBranch.get(branch) === WORKTREE_STATUS.COMPLETED
-        : null,
+      completed: statusByBranch.has(branch) ? statusByBranch.get(branch) : null,
     }));
     return { ok: true, topics: listMemory(sd), files };
   },
