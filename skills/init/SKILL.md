@@ -32,10 +32,8 @@ description: "Initialize or update the speccode environment: detect remote, trun
    - 用户跳过 → **不写入 `hooks` 字段**(缺失即无 hook)。
 7. **组装 config v3** 并通过 `echo '<json>' | speccode write-config --cwd . --json-stdin` 写入:
    - `version: 3`、`initialized_at`(ISO 8601 UTC)、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`hooks` 仅在用户配置时存在;`language` 仅在用户确认登记时存在(BCP-47 tag,非法值被 write-config 拒绝)。
-   - **不得**包含任何 v1 遗留字段、v2 的 `worktree_prefix`,以及已退役的 `host` 字段(host-neutral-engine;遗留值走幂等 diff 剥离)。
-8. **state 迁移(检测到 `state/features/` 时)**:展示迁移预览(逐文件 v2→v3 转换说明;`worktrees` 多于一条的文件将跳过并报告「请先按 v2 流程收尾」),经用户确认后运行 `echo '{}' | speccode migrate-state --cwd . --json-stdin`(该 verb 收 `--json-stdin` 但不消费 payload,stdin `{}` 即可——通道一致性同其他写 verb),随后跑 `reconcile` 验证 migrated 结果;拒绝 → `state/features/` 保持 v2 原样(v2 流程继续可用;config 此时已为 v3,双格式运行——v2 state 文件按 v2 语义原样读写)。
-9. **squash 探测**:init 完成 config 写入后运行 `speccode repo-merge-config --cwd .`;`squashOnly:false` → 打印警告「建议在仓库设置启用 squash-only 合并」+ 设置指引(不阻断);`config:null`(glab/none/失败)→ 静默跳过。
-10. 打印 config 摘要 + 下一步指引(`/speccode:exploring` 探索需求,或直接 `/speccode:creating-worktree`)。
+8. **squash 探测**:init 完成 config 写入后运行 `speccode repo-merge-config --cwd .`;`squashOnly:false` → 打印警告「建议在仓库设置启用 squash-only 合并」+ 设置指引(不阻断);`config:null`(glab/none/失败)→ 静默跳过。
+9. 打印 config 摘要 + 下一步指引(`/speccode:exploring` 探索需求,或直接 `/speccode:creating-worktree`)。
 
 ## 幂等流程(二次 init)
 
@@ -45,14 +43,9 @@ description: "Initialize or update the speccode environment: detect remote, trun
    - 值未变 → 跳过。
    - 值变化 → 向用户提问展示(给出选项) `[旧值] → [新值]`,询问"保持 / 改用新值 / 清除"。
    - 对 config 中已登记、但本次探测判定为 `integrated.value === false` 的工具,在 diff 中标记「建议移除」(项目未集成),经用户确认后才移除——绝不静默删除。
-   - 旧 config 含 v2 遗留的 `worktree_prefix` → 在 diff 中标记「移除」(v3 不再使用;既有 v1→v2 升级同款机制:经用户确认后才移除,绝不静默删除)。
-   - 旧 config 含历史遗留的 `host` 字段 → 在 diff 中标记「移除」(host-neutral-engine 退役,引擎不再感知宿主;同 `worktree_prefix` 机制,经用户确认后才移除,绝不静默删除)。
-4. **v1/v2 → v3 迁移**:若旧 config `version` 低于 3:
-   - `version` 为 1(或无 version)时,`display` / `spec_tools` / `untracked_permanent` 三字段标记为「移除」列入 diff;
-   - 若用户接受升级(`version: 3`),遗留字段(v1 三字段、v2 的 `worktree_prefix` 与历史遗留的 `host`)MUST 被移除,不存在混合态;
-   - 若用户拒绝对 config 的任何修改 → 保持原版本原样,整体不写入。
-5. `state/` 目录 MUST 不动(不读、不改、不删);唯一例外:检测到 v2 遗留 `state/features/` 时,按「全新流程」第 8 步的「state 迁移」提供一次性迁移(经用户确认,拒绝 → `state/features/` 保持 v2 原样)。
-6. 用 `write-config --json-stdin` 写回;随后同全新流程第 9 步跑 `repo-merge-config` squash 探测,打印摘要。
+   - 字段集之外的未知键(含历史版本已删除字段)不进 diff、不被消费;整体重写时自然消失。
+4. `state/` 目录 MUST 不动(不读、不改、不删)。
+5. 用 `write-config --json-stdin` 写回;随后同全新流程第 8 步跑 `repo-merge-config` squash 探测,打印摘要。
 
 ## 约束
 - 全程不修改 `.gitignore`,不删除任何本地文件。

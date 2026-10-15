@@ -15,7 +15,6 @@ description: "Reset the speccode environment: clear state and worktrees, ask per
 逐个向用户提问(给出选项)是否清理(是则清空该字段,否则保留):
 - `trunk` / `remote` / `pr_tool` / `worktree_dir` / `code_intel_tools` / `hooks`(若存在)。
 - 提示:清空 `trunk` 后 `/speccode:creating-feature` 将无法执行,需重编辑 config 或重新 init。
-- 若 config 仍含 v1 遗留字段(`display` / `spec_tools` / `untracked_permanent`)→ 一并询问是否移除(建议移除,config v2 已不再使用)。
 
 ## 执行
 
