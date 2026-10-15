@@ -99,7 +99,7 @@ test('v3 reconcile: merge_target pointing to a missing branch is an orphan', () 
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('v3 reconcile: v2 entries pass through untouched', () => {
+test('v3 reconcile: a state/features dir is completely invisible', () => {
   const repo = makeRepo();
   const sc = join(repo, '.speccode');
   mkdirSync(join(sc, 'state', 'features'), { recursive: true });
@@ -107,9 +107,8 @@ test('v3 reconcile: v2 entries pass through untouched', () => {
     feature_branch: 'feature/old', status: 'in_progress', worktrees: {},
   });
   const res = reconcile(sc, { cwd: repo, worktreeDir: join(repo, 'wts') });
-  const old = res.features.find((f) => f.feature_branch === 'feature/old');
-  assert.ok(old);
-  assert.deepEqual(old.worktrees, {});
+  assert.equal(res.features.length, 0, 'v2 目录不进 features');
+  assert.deepEqual(res.orphans, [], 'v2 目录不产生 orphan');
   rmSync(repo, { recursive: true, force: true });
 });
 
