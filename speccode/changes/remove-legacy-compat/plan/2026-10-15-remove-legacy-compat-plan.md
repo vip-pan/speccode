@@ -393,7 +393,7 @@ git commit -m "refactor: reconcile reads state/branches only — legacy passthro
 **Interfaces:**
 - Produces: `validateConfigShape(config)` 警告面收窄(无退役字段、无 version≠3 警告);`RETIRED_CONFIG_FIELDS` 导出删除
 
-- [ ] **Step 1: 改测试(先红)** —— `tests/cli.test.mjs` 两处:
+- [x] **Step 1: 改测试(先红)** —— `tests/cli.test.mjs` 两处:
   1. 用例 `lint-state verb: reports config + state warnings, exit 0`:config fixture 里删掉 `host: 'zcode'` 与对应断言 `json.config.warnings.some((x) => x.includes('host'))`,改断言坏 state 警告不变。
   2. 用例 `lint-state: v2 entry and corrupt JSON described without crashing` 整体替换为:
 
@@ -414,19 +414,19 @@ test('lint-state: features dir ignored, corrupt JSON described without crashing'
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `node --test --test-name-pattern="lint-state" tests/cli.test.mjs`
 Expected: FAIL(旧 lint 仍扫 features / 报 host 警告)。
 
-- [ ] **Step 3: 实现** —— `lib/config.mjs`:删除 `RETIRED_CONFIG_FIELDS` 导出及其循环、`config.version !== 3` 警告块;顶注释改为「config 读取容忍字段集外的未知键,不定义退役字段机制」。
+- [x] **Step 3: 实现** —— `lib/config.mjs`:删除 `RETIRED_CONFIG_FIELDS` 导出及其循环、`config.version !== 3` 警告块;顶注释改为「config 读取容忍字段集外的未知键,不定义退役字段机制」。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `node --test --test-name-pattern="lint-state|read-config" tests/cli.test.mjs`
 Expected: PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add lib/config.mjs tests/cli.test.mjs
