@@ -178,7 +178,7 @@ speccode/
 └── sdd/                                 # SDD 执行工件:task brief / review 包 / ledger(自忽略 .gitignore)
 ```
 
-- **`config.json`**:全局静态配置,config v3 字段集:`version`(=3)、`initialized_at`、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`host`(可选,init 时经用户确认;缺失 = 未记录,走全量探测)仅在确认后存在;`hooks` 仅在用户配置时存在(v2 的 `worktree_prefix` 已随双层拓扑退役,幂等 init 会经字段 diff 移除)。整体写入只发生在 `/speccode:init`(全新或幂等)与 `/speccode:reset`;此外 `/speccode:creating-worktree` 在 config 缺少 `worktree_dir` 时会询问存放目录,并经 `write-config` 把该字段回写进 config(读当前 config → 加字段 → 整体写回)。**备份不是 `write-config` 的自动行为**:`config.json.bak.<timestamp>` 由 init 幂等流程与 reset 流程在改写前显式调用 `backup-config` 生成,creating-worktree 的单字段回写不产生备份。备份有轮转:每次新备份只保留最新 5 份 `config.json.bak.*` 同前缀文件(`BACKUP_KEEP` 常量;仅触碰该前缀,绝不动其他文件)。
+- **`config.json`**:全局静态配置,config v3 字段集:`version`(=3)、`initialized_at`、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`hooks` 仅在用户配置时存在(v2 的 `worktree_prefix` 已随双层拓扑退役,`host` 已随 host-neutral-engine 退役——幂等 init 经字段 diff 一并移除)。整体写入只发生在 `/speccode:init`(全新或幂等)与 `/speccode:reset`;此外 `/speccode:creating-worktree` 在 config 缺少 `worktree_dir` 时会询问存放目录,并经 `write-config` 把该字段回写进 config(读当前 config → 加字段 → 整体写回)。**备份不是 `write-config` 的自动行为**:`config.json.bak.<timestamp>` 由 init 幂等流程与 reset 流程在改写前显式调用 `backup-config` 生成,creating-worktree 的单字段回写不产生备份。备份有轮转:每次新备份只保留最新 5 份 `config.json.bak.*` 同前缀文件(`BACKUP_KEEP` 常量;仅触碰该前缀,绝不动其他文件)。
 - **`state/branches/`**:每条 active 分支一个独立文件(`<type>__<slug>.json`,双下划线分隔 type 与 slug),记录该分支状态(`pending | in_progress | pr_open | completed`)与挂起的 `pending_operation`(供 `--resume` 续跑);父实体(`kind:"integration"`)另存 children 清单(仅子 slug,纯身份),子分支状态实时派生、不存储于父实体。v2 遗留的 `state/features/` 文件按 v2 语义原样读写(双格式兼容,init 可显式迁移)。多分支并行各写各的文件,无需加锁。
 - **`memory/`**:feature 级会话记忆(见第 8 节),插件自写 `.gitignore`(内容 `*`)使其对 `git status` 隐身、免于 `git clean -fd`。
 - **`sdd/`**:SDD 执行工件,归属**当前 worktree 根**(而非主仓根),随 `git worktree remove` 一并清理;同样自忽略。
@@ -225,8 +225,8 @@ speccode 为每个 feature 维护一份跨会话记忆:`.speccode/memory/<type>_
 
 `/speccode:init` 探测五类代码智能工具:**understand-anything / CodeGraph / Graphify / CodeMap / GitNexus**,覆盖四类来源:
 
-1. **插件**:`~/.claude/plugins/installed_plugins.json`(仅 claude-code 宿主 / 未记录宿主)
-2. **MCP**:项目 `.mcp.json`、`~/.claude.json`(含项目 local scope;仅 claude-code 宿主 / 未记录宿主)
+1. **插件**:`~/.claude/plugins/installed_plugins.json`
+2. **MCP**:项目 `.mcp.json`、`~/.claude.json`(含项目 local scope)
 3. **CLI**:`command -v <bin>`
 4. **项目目录**:如 `.ua/`、`.codegraph/` 等
 
