@@ -1260,32 +1260,33 @@ test('plugin-root verb 输出有效插件根', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('detect-host verb: explicit override wins, invalid id errors', () => {
+test('detect-host: verb 已随 host-neutral-engine 移除,按未知 verb 拒绝', () => {
   const repo = makeRepo();
-  const { code, json } = runCli(repo, 'detect-host', '--cwd', repo, '--host', 'zcode');
-  assert.equal(code, 0);
-  assert.deepEqual({ ok: json.ok, host: json.host, source: json.source },
-    { ok: true, host: 'zcode', source: 'explicit' });
-  const bad = runCli(repo, 'detect-host', '--cwd', repo, '--host', 'cursor');
-  assert.equal(bad.code, 1);
-  assert.equal(bad.json.ok, false);
+  const { code, json } = runCli(repo, 'detect-host', '--cwd', repo);
+  assert.equal(code, 1);
+  assert.equal(json.ok, false);
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('detect-host --host missing value reports usage error in English', () => {
-  const repo = makeRepo();
-  const r = spawnSync('node', [BIN, 'detect-host', '--cwd', repo, '--host'], { encoding: 'utf8' });
-  assert.equal(r.status, 1);
-  assert.equal(JSON.parse(r.stdout).error, 'detect-host: --host requires a host id value');
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('detect-code-intel-tools passes config.host to probes', () => {
+test('detect-code-intel-tools: 输出无 host 字段,恒全量探测', () => {
   const repo = makeRepo();
   const { code, json } = runCli(repo, 'detect-code-intel-tools', '--cwd', repo);
   assert.equal(code, 0);
-  assert.equal(json.host, null, 'config 缺失时 host 为 null(全量探测)');
+  assert.equal('host' in json, false, 'host 字段已随 host-neutral-engine 移除');
   assert.equal(json.tools.length, 5);
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('遗留 host 字段的 config 不报错且被忽略', () => {
+  const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode'), { recursive: true });
+  writeFileSync(join(repo, '.speccode', 'config.json'),
+    JSON.stringify({ version: 3, initialized_at: '2026-10-14T00:00:00.000Z', trunk: 'main', host: 'zcode' }));
+  const rc = runCli(repo, 'read-config', '--cwd', repo);
+  assert.equal(rc.code, 0, 'read-config 对遗留 host 字段 MUST NOT 报错');
+  const dc = runCli(repo, 'detect-code-intel-tools', '--cwd', repo);
+  assert.equal(dc.code, 0, 'detect-code-intel-tools 对遗留 host 字段 MUST NOT 报错');
+  assert.equal('host' in dc.json, false);
   rmSync(repo, { recursive: true, force: true });
 });
 
