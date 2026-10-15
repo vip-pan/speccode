@@ -1265,6 +1265,7 @@ test('detect-host: verb 已随 host-neutral-engine 移除,按未知 verb 拒绝'
   const { code, json } = runCli(repo, 'detect-host', '--cwd', repo);
   assert.equal(code, 1);
   assert.equal(json.ok, false);
+  assert.equal(json.error, 'unknown verb: detect-host');
   rmSync(repo, { recursive: true, force: true });
 });
 

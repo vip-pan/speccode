@@ -49,7 +49,7 @@ description: "Initialize or update the speccode environment: detect remote, trun
    - 旧 config 含历史遗留的 `host` 字段 → 在 diff 中标记「移除」(host-neutral-engine 退役,引擎不再感知宿主;同 `worktree_prefix` 机制,经用户确认后才移除,绝不静默删除)。
 4. **v1/v2 → v3 迁移**:若旧 config `version` 低于 3:
    - `version` 为 1(或无 version)时,`display` / `spec_tools` / `untracked_permanent` 三字段标记为「移除」列入 diff;
-   - 若用户接受升级(`version: 3`),遗留字段(v1 三字段与 v2 的 `worktree_prefix`)MUST 被移除,不存在混合态;
+   - 若用户接受升级(`version: 3`),遗留字段(v1 三字段、v2 的 `worktree_prefix` 与历史遗留的 `host`)MUST 被移除,不存在混合态;
    - 若用户拒绝对 config 的任何修改 → 保持原版本原样,整体不写入。
 5. `state/` 目录 MUST 不动(不读、不改、不删);唯一例外:检测到 v2 遗留 `state/features/` 时,按「全新流程」第 8 步的「state 迁移」提供一次性迁移(经用户确认,拒绝 → `state/features/` 保持 v2 原样)。
 6. 用 `write-config --json-stdin` 写回;随后同全新流程第 9 步跑 `repo-merge-config` squash 探测,打印摘要。
