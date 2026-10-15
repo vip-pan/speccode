@@ -15,7 +15,7 @@
 
 Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, commands appear under the `/speccode:` prefix, e.g. `/speccode:init`, `/speccode:status`, `/speccode:finishing-worktree`.
 
-**Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts also need the engine on PATH — either `npm i -g speccode` (npm manages and upgrades it for every host) or `bash scripts/install-shim.sh` from a checkout; pick one channel per machine.
+**Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts also need the engine on PATH — either `npm i -g speccode` (npm manages and upgrades it for every host) or `bash scripts/install-shim.sh` from a checkout; pick one channel per machine. Maintainers: npm publishing is tag-triggered CI and requires the repo secret `NPM_TOKEN` (one-time setup).
 
 ## Prerequisites
 

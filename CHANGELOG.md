@@ -8,6 +8,8 @@
 
 ## [Unreleased]
 
+- Added: npm 引擎分发通道——根 `package.json`(`npm i -g speccode` 全宿主引擎 PATH;`v*` tag CI 自动发布,需一次性配置仓库 secret `NPM_TOKEN`)。
+
 ## [0.7.3] - 2026-09-17
 
 > EN: docs-only patch — the ZCode host-mapping notes drop their last historical "researched in the mold of Kimi Code" comparison wording; with the adapter verified against the official ZCode plugin shape, the notes state facts directly and point at the page-top verification block.

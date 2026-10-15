@@ -279,7 +279,7 @@ Claude Code is the primary host; five more hosts install from this same reposito
 | OpenCode | `.opencode/INSTALL.md` | `references/host-mapping/opencode.md` | unverified |
 | Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | unverified (extension API assumed) |
 
-Non-Claude-Code hosts also need the engine on PATH: `npm i -g speccode` (npm bin mechanism, machine-wide, every host; the `v*` tag CI publishes to npm) or `bash scripts/install-shim.sh` from a checkout — one channel per machine.
+Non-Claude-Code hosts also need the engine on PATH: `npm i -g speccode` (npm bin mechanism, machine-wide, every host; the `v*` tag CI publishes to npm) or `bash scripts/install-shim.sh` from a checkout — one channel per machine. Publishing is tag-triggered CI and needs the one-time repo secret `NPM_TOKEN`. Publishing is tag-triggered CI and needs the one-time repo secret `NPM_TOKEN`.
 
 ### Command mapping
 

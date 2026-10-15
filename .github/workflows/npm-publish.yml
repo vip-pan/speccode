@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+      - name: Assert tag matches package.json version
+        run: test "${GITHUB_REF_NAME#v}" = "$(node -p require('./package.json').version)"
+      - run: node --test ./tests/*.test.mjs
       - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
