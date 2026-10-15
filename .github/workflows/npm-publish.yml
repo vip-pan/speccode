@@ -1,0 +1,25 @@
+name: npm publish
+
+# Engine distribution channel: `npm i -g speccode` puts the CLI on PATH for
+# every coding-agent host (managed/upgraded by npm). Triggered by the same
+# `v<version>` tag the release discipline already creates — no tag, no
+# publish; main itself never publishes. Requires the repo secret NPM_TOKEN
+# (one-time setup; a missing token fails this job only, leaving the tag and
+# GitHub Release untouched).
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

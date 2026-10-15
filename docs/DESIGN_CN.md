@@ -278,7 +278,7 @@ Claude Code 是主宿主;另有五个宿主从同一仓库安装(薄 per-host ad
 | OpenCode | `.opencode/INSTALL.md` | `references/host-mapping/opencode.md` | 待验证 |
 | Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | 待验证 |
 
-非 Claude Code 宿主还需把引擎 shim 装进 PATH:`bash scripts/install-shim.sh`。
+非 Claude Code 宿主还需把引擎装进 PATH:`npm i -g speccode`(npm bin 机制,机器级、全宿主通用;`v*` tag CI 自动发布 npm)或从检出运行 `bash scripts/install-shim.sh`——同一台机器二选一。
 
 ### 命令对照表
 

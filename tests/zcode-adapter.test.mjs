@@ -32,3 +32,20 @@ test('.zcode-plugin skills field uses the official directory-name form', () => {
   const manifest = readJson('.zcode-plugin/plugin.json');
   assert.equal(manifest.skills, 'skills', 'official plugins use the bare directory name');
 });
+
+test('version triple-sync: package.json == .claude-plugin == .zcode-plugin', () => {
+  const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
+  const cc = JSON.parse(readFileSync(join(repoRoot, '.claude-plugin', 'plugin.json'), 'utf8'));
+  const zc = JSON.parse(readFileSync(join(repoRoot, '.zcode-plugin', 'plugin.json'), 'utf8'));
+  assert.ok(pkg.version, 'package.json 必须有 version');
+  assert.equal(pkg.version, cc.version, 'package.json 与 .claude-plugin 版本必须一致');
+  assert.equal(pkg.version, zc.version, 'package.json 与 .zcode-plugin 版本必须一致');
+});
+
+test('npm metadata shape: bin points at speccode.mjs, files whitelist, zero deps', () => {
+  const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
+  assert.equal(pkg.bin?.speccode, 'bin/speccode.mjs');
+  assert.deepEqual([...pkg.files].sort(), ['bin', 'hooks', 'lib', 'references', 'skills']);
+  assert.equal(pkg.dependencies, undefined, '零第三方依赖不变量');
+  assert.equal(pkg.type, 'module');
+});
