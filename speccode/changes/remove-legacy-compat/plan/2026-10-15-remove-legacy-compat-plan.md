@@ -512,9 +512,10 @@ test('parseDistilledBlocks ignores legacy promoted markers (hand bytes)', () => 
   assert.deepEqual(parseDistilledBlocks(text), []);
 });
 
-test('replaceHandBlocks preserves legacy-format bytes as hand-region text', () => {
+test('replaceHandBlocks treats legacy markers as ordinary hand text', () => {
+  // 旧标记不是块边界:整段属 hand 区,replace-hand 重建 hand 区时被替换
   const out = replaceHandBlocks('<!-- promoted-from: old/ -->\nbody\n<!-- /promoted -->\n', 'hand\n');
-  assert.equal(out, 'hand\n\n<!-- promoted-from: old/ -->\nbody\n<!-- /promoted -->\n');
+  assert.equal(out, 'hand\n');
 });
 
 test('replaceDistilledBlocks keeps legacy marker bytes in the hand region', () => {

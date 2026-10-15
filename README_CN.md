@@ -128,7 +128,7 @@ origin/trunk ── 集成分支 ──┬── feature/s1 ── finishing-wor
 
 | 文档 | 内容 |
 |---|---|
-| [设计文档](./docs/DESIGN_CN.md) | 全套命令详表、双层拓扑、R1-R13 风险、0.1→0.2 迁移(插件设计文档) |
+| [设计文档](./docs/DESIGN_CN.md) | 全套命令详表、双层拓扑、R1-R13 风险、安装与更新(插件设计文档) |
 | [CHANGELOG](./CHANGELOG.md) | 版本发布记录(Keep a Changelog,全中文) |
 | [宿主映射](./references/host-mapping/README.md) | 六个受支持 coding agent 的安装入口、工具映射与验证状态 |
 | [AGENTS.md](./AGENTS.md) | 开发文档真源(`CLAUDE.md` 为 Claude Code 薄壳):引擎三层架构、测试约定、speccode 工作流 |

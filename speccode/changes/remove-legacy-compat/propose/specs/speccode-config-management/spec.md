@@ -62,6 +62,21 @@
 - **WHEN** AI 进程在写入 config.json 时被 kill
 - **THEN** `config.json` MUST 保持写入前的完整旧内容(由 `mv` 原子性保证),不留半写状态
 
+### Requirement: init 字段级幂等
+`/speccode:init` 二次执行时 MUST 按字段逐个询问 `[旧值]→[新值]` diff,而非整体覆盖。`state/` 目录在二次 init 时 MUST 不被清空。
+
+#### Scenario: 字段未变化
+- **WHEN** 二次 init 时某字段值与之前一致
+- **THEN** 命令 MUST 跳过该字段,不写入
+
+#### Scenario: 字段值变化
+- **WHEN** 二次 init 时 `trunk` 字段从 `"master"` 变为 `"main"`
+- **THEN** 命令 MUST 显示 diff 并询问用户确认是否更新,只有用户确认后才写入
+
+#### Scenario: 二次 init 不影响 state
+- **WHEN** 二次 init 时 `.speccode/state/branches/feature__payment.json` 存在
+- **THEN** 该文件 MUST 在 init 过程中不被读取、修改或删除
+
 ### Requirement: 对账算法
 
 每个涉及分支的命令(`/speccode:creating-worktree`、`/speccode:finishing-worktree`、`/speccode:finishing-feature`、`/speccode:status`)开头 MUST 执行「state ↔ git」对账,扫描 `git worktree list --porcelain` 与 `state/branches/*.json`,自动补齐/标记不一致项,并推进 `pr_open` 的分支。管辖识别 MUST 为路径识别:路径位于 `config.worktree_dir` 之下的 worktree 为 speccode 管辖;worktree_dir 缺失时 MUST 回退默认值 `".speccode/worktrees"`(相对路径按仓库根解析;与 `resolve-worktree-dir` 的缺省同源单常量),对账 MUST NOT 因 config 缺失而失败。分支名前缀与 ancestry 判定 MUST NOT 参与识别(v3 中 worktree↔state 为 1:1);父实体(无 worktree 的集成分支)MUST 由 state 侧识别。

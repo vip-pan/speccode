@@ -128,7 +128,7 @@ Test-driven · systematic over improvisation · reduce complexity · evidence ov
 
 | Document | Contents |
 |---|---|
-| [Design Doc](./docs/DESIGN.md) | Full command reference, two-layer topology, R1-R13 risks, 0.1 → 0.2 migration (plugin design document) |
+| [Design Doc](./docs/DESIGN.md) | Full command reference, two-layer topology, R1-R13 risks, installation & updates (plugin design document) |
 | [CHANGELOG](./CHANGELOG.md) | Release history (Keep a Changelog, all in Chinese) |
 | [Host mapping](./references/host-mapping/README.md) | Per-host install entries, tool mapping and verification status for the six supported coding agents |
 | [AGENTS.md](./AGENTS.md) | Development documentation (source of truth; `CLAUDE.md` is a thin Claude Code shell): three-layer engine architecture, testing conventions, speccode workflow |

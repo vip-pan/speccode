@@ -126,6 +126,25 @@ test('writeState gate applies to every payload shape', () => {
   rmSync(root, { recursive: true, force: true });
 });
 
+test('writeState gate applies to v2-shaped payloads too (no bypass)', () => {
+  const root = tmp();
+  const sc = join(root, '.speccode');
+  assert.throws(() => writeState(sc, 'feature/old',
+    { feature_branch: 'feature/old', status: 'done', worktrees: {} }), /status/i,
+    '旧形状 payload 上的非法枚举同样被门禁拒绝');
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('writeState passes non-object payloads through without crashing', () => {
+  const root = tmp();
+  const sc = join(root, '.speccode');
+  writeState(sc, 'feature/null', null);
+  writeState(sc, 'feature/str', 'plain');
+  assert.equal(readState(sc, 'feature/null'), null);
+  assert.equal(readState(sc, 'feature/str'), 'plain');
+  rmSync(root, { recursive: true, force: true });
+});
+
 test('lintStateEntries: unparseable JSON is described, never a crash', () => {
   const root = tmp();
   const sc = join(root, '.speccode');
