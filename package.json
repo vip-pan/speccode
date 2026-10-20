@@ -6,8 +6,8 @@
   "license": "MIT",
   "homepage": "https://github.com/vip-pan/speccode",
   "repository": "https://github.com/vip-pan/speccode",
-  "keywords": ["workflow", "git", "worktree", "pr", "sdd", "tdd", "hooks", "memory", "coding-agent"],
-  "bin": { "speccode": "bin/speccode.mjs" },
+  "keywords": ["workflow", "git", "worktree", "pr", "sdd", "tdd", "hooks", "memory", "coding-agent", "mcp"],
+  "bin": { "speccode": "bin/speccode.mjs", "speccode-mcp": "bin/speccode-mcp.mjs" },
   "files": ["bin", "lib", "skills", "hooks", "references"],
   "engines": { "node": ">=24" }
 }

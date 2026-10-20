@@ -9,6 +9,10 @@
 ## [Unreleased]
 
 - Added: npm 引擎分发通道——根 `package.json`(`npm i -g speccode` 全宿主引擎 PATH;`v*` tag CI 自动发布,需一次性配置仓库 secret `NPM_TOKEN`)。
+- Added: MCP 前端——`bin/speccode-mcp.mjs`(stdio JSON-RPC 2.0,零依赖手写协议最小面:initialize / initialized / ping / tools/list / tools/call;tools 与 verb 1:1 同名,写类 tool 以 `payload` 参数替代 stdin,verb 失败映射 `isError`);npm `bin` 增 `speccode-mcp`。
+- Added: 契约版本——`lib/contract.mjs` 的 `CONTRACT_VERSION` 与 `contract-version` verb/tool(自报 contractVersion / engineVersion / protocolVersions),MCP `initialize.instructions` 携带契约版本。
+- Changed: verb 表下沉 `lib/verbs.mjs`(导出 `VERBS` / `runVerb` / `STDIN_MODE`),`bin/speccode.mjs` 收缩为薄壳;写 verb 的 stdin 非法 JSON 统一返回 `invalid JSON on stdin`。
+- Fixed: 两个引擎前端的入口守卫改为 realpath 比对——此前 `process.argv[1].endsWith('speccode.mjs')` 在 npm bin 符号链接(名为 `speccode`)下为假,`npm i -g speccode` 后裸调静默零输出。
 
 ## [0.7.3] - 2026-09-17
 
