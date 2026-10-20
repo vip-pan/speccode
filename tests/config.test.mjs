@@ -104,7 +104,10 @@ test('validateConfigShape: clean pass + warning surface', () => {
     code_intel_tools: 'no', host: 'zcode', worktree_prefix: 'wt-', display: {},
     hooks: { onPrOpened: 5 }, language: 7,
   }).join('\n');
-  for (const needle of ['version', 'trunk', 'pr_tool', 'code_intel_tools', 'host', 'worktree_prefix', 'display', 'hooks', 'language']) {
+  for (const needle of ['trunk', 'pr_tool', 'code_intel_tools', 'hooks', 'language']) {
     assert.ok(w.includes(needle), `warning should mention ${needle}`);
+  }
+  for (const retired of ['version', 'host', 'worktree_prefix', 'display']) {
+    assert.ok(!w.includes(retired), `退役键/版本不再产出警告: ${retired}`);
   }
 });

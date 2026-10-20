@@ -99,8 +99,9 @@ test('write-config accepts a valid language tag as-is', () => {
 test('write-state then feature-progress reflects it', () => {
   const repo = makeRepo();
   const state = JSON.stringify({
-    feature_branch: 'feature/demo', status: 'in_progress',
-    worktrees: { 'worktree-demo': { status: 'completed', completed_at: '2026-07-10T00:00:00.000Z' } },
+    branch: 'feature/demo', type: 'feature', worktree: '/wt/demo', merge_target: 'master',
+    status: 'completed', completed_at: '2026-07-10T00:00:00.000Z',
+    created_at: '2026-07-10T00:00:00.000Z', initial_branch: 'master',
   });
   const w = spawnSync('node',
     [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/demo', '--json-stdin'],
@@ -136,8 +137,9 @@ test('reconcile without --advance-pr leaves pr_open worktree untouched', () => {
   spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
     { cwd: repo, input: cfg, encoding: 'utf8' });
   const state = JSON.stringify({
-    feature_branch: 'feature/p', status: 'in_progress',
-    worktrees: { 'worktree-p': { status: 'pr_open', pr_number: 42 } },
+    branch: 'feature/p', type: 'feature', worktree: null, merge_target: 'master',
+    status: 'pr_open', pr_number: 42,
+    created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master',
   });
   spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/p', '--json-stdin'],
     { cwd: repo, input: state, encoding: 'utf8' });
@@ -147,7 +149,9 @@ test('reconcile without --advance-pr leaves pr_open worktree untouched', () => {
   assert.ok(json.ok);
   assert.deepEqual(json.advanced, []);
   const after = runCli(repo, 'feature-progress', '--cwd', repo, '--branch', 'feature/p');
-  assert.equal(after.json.worktrees['worktree-p'].status, 'pr_open');
+  assert.equal(after.json.completed, 0);
+  const onDisk = JSON.parse(readFileSync(join(repo, '.speccode', 'state', 'branches', 'feature__p.json'), 'utf8'));
+  assert.equal(onDisk.status, 'pr_open');
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -245,17 +249,17 @@ test('reconcile treats unregistered worktrees under config worktree_dir as orpha
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('reconcile ignores legacy config worktree_prefix', () => {
+test('reconcile works with unknown/old keys in config (unknown-key tolerance)', () => {
   const repo = makeRepo();
-  mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
   spawnSync('node', [BIN, 'write-config', '--cwd', repo, '--json-stdin'],
     { cwd: repo, input: JSON.stringify({ version: 1, worktree_prefix: '' }), encoding: 'utf8' });
-  // v3 reconcile ignores the legacy worktree_prefix field entirely; HEAD on a
-  // non-worktree branch must not be bogusly self-registered as its own worktree.
+  // Unknown/old config keys are plain ignored; HEAD on a non-worktree branch
+  // must not be bogusly self-registered as its own worktree.
   const co = spawnSync('git', ['checkout', '-b', 'feature/p'], { cwd: repo, encoding: 'utf8' });
   assert.equal(co.status, 0, co.stderr);
   commitFile(repo, 'p.txt', 'p\n', 'feature p commit');
-  const state = JSON.stringify({ feature_branch: 'feature/p', status: 'in_progress', worktrees: {} });
+  const state = JSON.stringify({ branch: 'feature/p', type: 'feature', worktree: null,
+    merge_target: 'master', status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master' });
   spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/p', '--json-stdin'],
     { cwd: repo, input: state, encoding: 'utf8' });
 
@@ -264,8 +268,10 @@ test('reconcile ignores legacy config worktree_prefix', () => {
   assert.ok(json.ok);
   assert.deepEqual(json.orphans, []);
   assert.deepEqual(json.conflicts, []);
+  assert.equal(json.features.length, 1, '分支登记不丢');
   const after = runCli(repo, 'feature-progress', '--cwd', repo, '--branch', 'feature/p');
-  assert.deepEqual(after.json.worktrees, {});
+  assert.equal(after.json.total, 1);
+  assert.equal(after.json.worktree, null);
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -604,14 +610,12 @@ test('read-memory rejects an invalid branch name', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('write-memory accepts the _exploring sentinel branch', () => {
+test('write-memory rejects the legacy bare _exploring key', () => {
   const repo = makeRepo();
   const w = spawnSync('node', [BIN, 'write-memory', '--cwd', repo, '--branch', '_exploring', '--json-stdin'],
     { cwd: repo, input: JSON.stringify({ mode: 'replace', content: 'explored\n' }), encoding: 'utf8' });
-  assert.equal(w.status, 0);
-  assert.ok(JSON.parse(w.stdout.trim()).ok);
-  const r = runCli(repo, 'read-memory', '--cwd', repo, '--branch', '_exploring');
-  assert.equal(r.json.memory, 'explored\n');
+  assert.equal(w.status, 1, '无斜杠 _exploring 键已退役');
+  assert.equal(JSON.parse(w.stdout.trim()).ok, false);
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -834,7 +838,7 @@ test('write-knowledge append-hand is retired (unknown mode)', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('write-knowledge replace-distilled migrates legacy markers and rebuilds only distilled blocks', () => {
+test('write-knowledge replace-distilled keeps legacy marker bytes as hand text', () => {
   const repo = makeRepo();
   const p = join(repo, 'speccode', 'knowledge', 'development', 'pitfalls.md');
   mkdirSync(dirname(p), { recursive: true });
@@ -843,7 +847,9 @@ test('write-knowledge replace-distilled migrates legacy markers and rebuilds onl
     JSON.stringify({ mode: 'replace-distilled', blocks: [{ source: 'cap/old', body: 'new body' }] }));
   assert.equal(code, 0);
   assert.equal(json.ok, true);
-  assert.equal(readFileSync(p, 'utf8'), 'hand A\nhand B\n\n<!-- distilled-from: cap/old -->\nnew body\n<!-- /distilled -->\n');
+  const out = readFileSync(p, 'utf8');
+  assert.ok(out.includes('<!-- promoted-from: cap/old -->'), '旧标记字节留在 hand 区');
+  assert.ok(out.includes('<!-- distilled-from: cap/old -->'), '新块按现行格式追加');
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -887,7 +893,7 @@ test('write-knowledge requires --json-stdin', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('read-knowledge --topic --blocks parses legacy promoted markers', () => {
+test('read-knowledge --topic --blocks ignores legacy promoted markers', () => {
   const repo = makeRepo();
   const root = join(repo, 'speccode', 'knowledge');
   mkdirSync(join(root, 'development'), { recursive: true });
@@ -895,7 +901,7 @@ test('read-knowledge --topic --blocks parses legacy promoted markers', () => {
   const { code, json } = runCli(repo, 'read-knowledge', '--cwd', repo, '--topic', 'pitfalls', '--blocks');
   assert.equal(code, 0);
   assert.equal(json.exists, true);
-  assert.deepEqual(json.blocks, [{ source: 'archive/a/', body: 'body' }]);
+  assert.deepEqual(json.blocks, [], '旧标记不是蒸馏块');
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -1064,7 +1070,7 @@ test('subagent-driven-development.md documents the tick-task completion step', (
 test('init.md writes the code_intel_tools config field (renamed from knowledge_tools)', () => {
   const md = readFileSync(join(__dirname, '..', 'skills', 'init', 'SKILL.md'), 'utf8');
   assert.ok(md.includes('"code_intel_tools": []'), 'init.md must write the empty code_intel_tools default with the new field name');
-  assert.ok(md.includes('code_intel_tools'), 'init.md must document code_intel_tools in the config v2 field set');
+  assert.ok(md.includes('code_intel_tools'), 'init.md must document code_intel_tools in the config field set');
   assert.ok(!md.includes('knowledge_tools'), 'init.md must not retain the old knowledge_tools field name');
 });
 
@@ -1158,20 +1164,12 @@ test('write-state lands in state/branches and feature-progress reads it back', (
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('migrate-state converts a v2 file end to end', () => {
+test('migrate-state verb no longer exists', () => {
   const repo = makeRepo();
-  const v2 = join(repo, '.speccode', 'state', 'features');
-  mkdirSync(v2, { recursive: true });
-  writeJsonAtomic(join(v2, 'feature__old.json'), {
-    feature_branch: 'feature/old', created_at: '2026-09-01T00:00:00.000Z',
-    initial_branch: 'main', status: 'pending', worktrees: {},
-  });
   const r = spawnSync('node', [BIN, 'migrate-state', '--cwd', repo, '--json-stdin'],
     { cwd: repo, input: '{}', encoding: 'utf8' });
-  assert.equal(r.status, 0);
-  const json = JSON.parse(r.stdout.trim());
-  assert.deepEqual(json.migrated, ['feature__old.json']);
-  assert.ok(existsSync(join(repo, '.speccode', 'state', 'branches', 'feature__old.json')));
+  assert.equal(r.status, 1, '未知 verb → exit 1');
+  assert.equal(JSON.parse(r.stdout.trim()).ok, false);
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -1278,7 +1276,7 @@ test('detect-code-intel-tools: 输出无 host 字段,恒全量探测', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('遗留 host 字段的 config 不报错且被忽略', () => {
+test('含未知键的 config 不报错且被忽略', () => {
   const repo = makeRepo();
   mkdirSync(join(repo, '.speccode'), { recursive: true });
   writeFileSync(join(repo, '.speccode', 'config.json'),
@@ -1371,36 +1369,37 @@ test('list-memory: files annotate completed via state join; topics unchanged', (
   writeFileSync(join(repo, '.speccode', 'memory', 'feature__done.md'), 'm');
   writeFileSync(join(repo, '.speccode', 'memory', 'feature__live.md'), 'm');
   writeFileSync(join(repo, '.speccode', 'memory', '_exploring__topic.md'), 'm');
-  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
-  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__done.json'),
-    { branch: 'feature/done', status: 'completed' });
-  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__live.json'),
-    { branch: 'feature/live', status: 'in_progress' });
-  // v2 遗留条目:worktrees 全 completed → completed:true(与 reconcile 同款分流)
+  // v2 遗留条目不再参与派生:features 目录整体隐形
   writeFileSync(join(repo, '.speccode', 'memory', 'feature__legacy.md'), 'm');
   mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
   writeJsonAtomic(join(repo, '.speccode', 'state', 'features', 'feature__legacy.json'), {
     feature_branch: 'feature/legacy', status: 'in_progress',
     worktrees: { legacy: { status: 'completed' } },
   });
+  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__done.json'),
+    { branch: 'feature/done', status: 'completed' });
+  writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__live.json'),
+    { branch: 'feature/live', status: 'in_progress' });
   const { code, json } = runCli(repo, 'list-memory', '--cwd', repo);
   assert.equal(code, 0);
   assert.deepEqual(json.topics, ['_exploring/topic'], 'topics 形状不变');
   const byBranch = Object.fromEntries(json.files.map((f) => [f.branch, f.completed]));
   assert.deepEqual(byBranch,
-    { 'feature/done': true, 'feature/live': false, 'feature/legacy': true, '_exploring/topic': null });
+    { 'feature/done': true, 'feature/live': false, 'feature/legacy': null, '_exploring/topic': null });
   rmSync(repo, { recursive: true, force: true });
 });
 
 test('lint-state verb: reports config + state warnings, exit 0', () => {
   const repo = makeRepo();
   mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
-  writeJsonAtomic(join(repo, '.speccode', 'config.json'), { version: 3, trunk: 'main', host: 'zcode' });
+  writeJsonAtomic(join(repo, '.speccode', 'config.json'), { version: 2, trunk: 'main', pr_tool: 'hub' });
   writeJsonAtomic(join(repo, '.speccode', 'state', 'branches', 'feature__bad.json'),
     { branch: 'feature/bad', type: 'feature', status: 'done' });
   const { code, json } = runCli(repo, 'lint-state', '--cwd', repo);
   assert.equal(code, 0);
-  assert.ok(json.config.warnings.some((x) => x.includes('host')), 'config 侧 host 退役提示');
+  assert.ok(json.config.warnings.some((x) => x.includes('pr_tool')), 'config 侧 pr_tool 非法警告');
+  assert.ok(!json.config.warnings.some((x) => x.includes('version')), 'version 不再产出警告');
   const bad = json.states.find((s) => s.branch === 'feature/bad');
   assert.ok(bad && bad.warnings.some((x) => x.includes('status')), 'state 侧 status 非法警告');
   rmSync(repo, { recursive: true, force: true });
@@ -1418,16 +1417,16 @@ test('write-state gate: branch key mismatch rejected without touching disk', () 
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('lint-state: v2 entry and corrupt JSON described without crashing', () => {
+test('lint-state: features dir ignored, corrupt JSON described without crashing', () => {
   const repo = makeRepo();
+  mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });
   mkdirSync(join(repo, '.speccode', 'state', 'features'), { recursive: true });
   writeJsonAtomic(join(repo, '.speccode', 'state', 'features', 'feature__old.json'),
     { feature_branch: 'feature/old', status: 'in_progress', worktrees: {} });
-  writeFileSync(join(repo, '.speccode', 'state', 'features', 'feature__mangled.json'), '{oops');
+  writeFileSync(join(repo, '.speccode', 'state', 'branches', 'feature__mangled.json'), '{oops');
   const { code, json } = runCli(repo, 'lint-state', '--cwd', repo);
   assert.equal(code, 0, 'lint 永不因坏数据 exit 1');
-  const v2 = json.states.find((x) => x.branch === 'feature/old');
-  assert.ok(v2 && v2.warnings.length === 1 && v2.warnings[0].includes('v2'), 'v2 单条迁移提示');
+  assert.ok(!json.states.some((x) => x.branch === 'feature/old'), 'features 目录条目不出现');
   const mangled = json.states.find((x) => x.branch === 'feature/mangled');
   assert.ok(mangled && mangled.warnings.some((w) => w.includes('unparseable')));
   rmSync(repo, { recursive: true, force: true });

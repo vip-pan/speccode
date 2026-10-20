@@ -97,7 +97,7 @@ test('memoryPath encodes an _exploring topic via branchToStateName', () => {
 });
 
 test('validateMemoryBranch accepts reserved keys, topics, and feature branches', () => {
-  assert.equal(validateMemoryBranch('_exploring'), true);
+  assert.equal(validateMemoryBranch('_exploring'), false, '无斜杠 _exploring 已退役');
   assert.equal(validateMemoryBranch('_knowledge'), true);
   assert.equal(validateMemoryBranch('_exploring/payment-rework'), true);
   assert.equal(validateMemoryBranch('feature/payment-api'), true);

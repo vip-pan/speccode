@@ -30,7 +30,7 @@ speccode 是一个面向 coding-agent CLI 的流程编排插件——Claude Code
 8. [memory](#8-memory)
 9. [代码智能工具](#9-代码智能工具)
 10. [风险与缓解(R1–R13)](#10-风险与缓解r1r13)
-11. [从 0.1 迁移](#11-从-01-迁移)
+11. [安装与更新](#11-安装与更新)
 12. [理念](#12-理念)
 13. [未解决问题](#13-未解决问题)
 14. [⚠ 重要警告](#14-⚠-重要警告)
@@ -163,7 +163,7 @@ speccode/
 
 - **落盘即 commit**:proposing / brainstorming / writing-plans / applying(逐条簿记 commit)/ syncing / archiving / distilling-knowledge / recording-knowledge 每一步产出文档后立即提交,文档历史与代码历史同分支同行。
 - **同 feature 多轮重建不冲突**:changes/<slug>/ 归档后目录释放,同一 slug 可再次 proposing 开新一轮;未归档重建时 proposing 会询问「续写 / 先归档 / 取消」。
-- **知识集:以能力为键的当前态快照**:`knowledge/` 下每个 topic 文件混合两类内容。`distilling-knowledge` 把 `spec/`(全量读——新鲜度锚点)与 `archive/`(**增量**,经 `knowledge/_distilled.meta.json` 追踪,纯为读成本控制)蒸馏为**蒸馏块(distilled blocks)**,用 `<!-- distilled-from: cap/<slug> --> ... <!-- /distilled -->` 标记包裹:键是能力 slug,每文件唯一,每次运行 upsert——后蒸覆盖先蒸,退役知识经闸门附理由删除(不留墓碑;历史在 `archive/` 与 CHANGELOG 里),且每次运行都把既有蒸馏块对照当前 spec 做新鲜度审查。`recording-knowledge` 在这些标记之外写入并整理自由格式的**手写(hand-written)**内容(replace-hand 模式:每次写入整建整个手写区,distilled 块逐字节存活;整理动作——合并/删除——附理由,裁决权归当下用户而非 spec)。两类写入都产出规范布局:手写在前,蒸馏块在后。知识集只策展 SDD 过程知识(`development/*`;pitfalls 兼收评审中反复出现的问题模式与团队评审共识)。业务知识交由外部 RAG 系统:`recording-knowledge` 写入前做适配判断(建议而非硬拦),`distilling-knowledge` 对范围外 topic 的蒸馏块经同一人工闸门日落,hand-written 段逐字节保留。读侧仍解析旧 `promoted-from`/`/promoted` marker 与旧 provenance 来源值;存量文件随首次蒸馏经闸门迁移为能力键。
+- **知识集:以能力为键的当前态快照**:`knowledge/` 下每个 topic 文件混合两类内容。`distilling-knowledge` 把 `spec/`(全量读——新鲜度锚点)与 `archive/`(**增量**,经 `knowledge/_distilled.meta.json` 追踪,纯为读成本控制)蒸馏为**蒸馏块(distilled blocks)**,用 `<!-- distilled-from: cap/<slug> --> ... <!-- /distilled -->` 标记包裹:键是能力 slug,每文件唯一,每次运行 upsert——后蒸覆盖先蒸,退役知识经闸门附理由删除(不留墓碑;历史在 `archive/` 与 CHANGELOG 里),且每次运行都把既有蒸馏块对照当前 spec 做新鲜度审查。`recording-knowledge` 在这些标记之外写入并整理自由格式的**手写(hand-written)**内容(replace-hand 模式:每次写入整建整个手写区,distilled 块逐字节存活;整理动作——合并/删除——附理由,裁决权归当下用户而非 spec)。两类写入都产出规范布局:手写在前,蒸馏块在后。知识集只策展 SDD 过程知识(`development/*`;pitfalls 兼收评审中反复出现的问题模式与团队评审共识)。业务知识交由外部 RAG 系统:`recording-knowledge` 写入前做适配判断(建议而非硬拦),`distilling-knowledge` 对范围外 topic 的蒸馏块经同一人工闸门日落,hand-written 段逐字节保留。旧 `promoted-from` 时代的 marker 不再被解析为块边界——其字节按普通手写文本对待,逐字节保留并在蒸馏闸门中提示人工清理。
 
 > 插件侧辅助资源:`references/` 内含 visual-companion(brainstorming 的可视化伴侣,见 `references/visual-companion.md`)、评审提示与调试方法论等,随插件源码跟踪。
 
@@ -173,16 +173,16 @@ speccode/
 .speccode/
 ├── config.json                          # 静态配置(config v3),init / reset 整体写入;creating-worktree 可回写 worktree_dir
 ├── config.json.bak.<timestamp>          # init 幂等 / reset 流程改写 config 前的显式备份(backup-config verb)
-├── state/branches/<type>__<slug>.json   # 动态状态,按分支隔离(v2 遗留在 state/features/,双格式兼容)
+├── state/branches/<type>__<slug>.json   # 动态状态,按分支隔离
 ├── memory/                              # feature 级记忆 + 按 topic 分文件的 _exploring__<topic>.md / _knowledge.md(自忽略 .gitignore)
 └── sdd/                                 # SDD 执行工件:task brief / review 包 / ledger(自忽略 .gitignore)
 ```
 
-- **`config.json`**:全局静态配置,config v3 字段集:`version`(=3)、`initialized_at`、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`hooks` 仅在用户配置时存在(v2 的 `worktree_prefix` 已随双层拓扑退役,`host` 已随 host-neutral-engine 退役——幂等 init 经字段 diff 一并移除)。整体写入只发生在 `/speccode:init`(全新或幂等)与 `/speccode:reset`;此外 `/speccode:creating-worktree` 在 config 缺少 `worktree_dir` 时会询问存放目录,并经 `write-config` 把该字段回写进 config(读当前 config → 加字段 → 整体写回)。**备份不是 `write-config` 的自动行为**:`config.json.bak.<timestamp>` 由 init 幂等流程与 reset 流程在改写前显式调用 `backup-config` 生成,creating-worktree 的单字段回写不产生备份。备份有轮转:每次新备份只保留最新 5 份 `config.json.bak.*` 同前缀文件(`BACKUP_KEEP` 常量;仅触碰该前缀,绝不动其他文件)。
-- **`state/branches/`**:每条 active 分支一个独立文件(`<type>__<slug>.json`,双下划线分隔 type 与 slug),记录该分支状态(`pending | in_progress | pr_open | completed`)与挂起的 `pending_operation`(供 `--resume` 续跑);父实体(`kind:"integration"`)另存 children 清单(仅子 slug,纯身份),子分支状态实时派生、不存储于父实体。v2 遗留的 `state/features/` 文件按 v2 语义原样读写(双格式兼容,init 可显式迁移)。多分支并行各写各的文件,无需加锁。
+- **`config.json`**:全局静态配置,config v3 字段集:`version`(=3)、`initialized_at`、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`hooks` 仅在用户配置时存在(字段集之外的键按普通未知键对待:读取容忍、不消费)。整体写入只发生在 `/speccode:init`(全新或幂等)与 `/speccode:reset`;此外 `/speccode:creating-worktree` 在 config 缺少 `worktree_dir` 时会询问存放目录,并经 `write-config` 把该字段回写进 config(读当前 config → 加字段 → 整体写回)。**备份不是 `write-config` 的自动行为**:`config.json.bak.<timestamp>` 由 init 幂等流程与 reset 流程在改写前显式调用 `backup-config` 生成,creating-worktree 的单字段回写不产生备份。备份有轮转:每次新备份只保留最新 5 份 `config.json.bak.*` 同前缀文件(`BACKUP_KEEP` 常量;仅触碰该前缀,绝不动其他文件)。
+- **`state/branches/`**:每条 active 分支一个独立文件(`<type>__<slug>.json`,双下划线分隔 type 与 slug),记录该分支状态(`pending | in_progress | pr_open | completed`)与挂起的 `pending_operation`(供 `--resume` 续跑);父实体(`kind:"integration"`)另存 children 清单(仅子 slug,纯身份),子分支状态实时派生、不存储于父实体。多分支并行各写各的文件,无需加锁。
 - **`memory/`**:feature 级会话记忆(见第 8 节),插件自写 `.gitignore`(内容 `*`)使其对 `git status` 隐身、免于 `git clean -fd`。
 - **`sdd/`**:SDD 执行工件,归属**当前 worktree 根**(而非主仓根),随 `git worktree remove` 一并清理;同样自忽略。
-- 所有对 `config.json` 与 `state/branches/*.json`(v2 遗留 `state/features/*.json` 同策)的写入均采用「写临时文件 + rename 覆盖」的原子策略,避免进程中断导致半写状态;memory 文本写入同策。
+- 所有对 `config.json` 与 `state/branches/*.json` 的写入均采用「写临时文件 + rename 覆盖」的原子策略,避免进程中断导致半写状态;memory 文本写入同策。
 
 ## 7. hooks
 
@@ -236,9 +236,9 @@ speccode 为每个 feature 维护一份跨会话记忆:`.speccode/memory/<type>_
 
 ## 10. 风险与缓解(R1–R13)
 
-> 编号沿用 v0.1 原始风险表:R1 / R7 / R10 随 v0.1 四层拓扑(标的分支层 + 临时收尾分支)一并废止,见第 11 节迁移;其余保留并更新到新命令名。
+> 编号沿用历史风险表:R1 / R7 / R10 随 v0.1 四层拓扑(标的分支层 + 临时收尾分支)一并废止,详见 [CHANGELOG.md](../CHANGELOG.md);其余保留并更新到新命令名。
 
-- **R2 — ancestor 判定在 cherry-pick 跨 feature 场景下会误判** → v3 起对账改**路径识别**(worktree_dir 之下 + state 登记),不再做 ancestry 判定,该误判面随之消失;v2 时代以 `worktree_overrides` 字段显式指定归属作高级兜底,该字段现已退役(读兼容,被忽略)。
+- **R2 — ancestor 判定在 cherry-pick 跨 feature 场景下会误判** → 对账采用**路径识别**(worktree_dir 之下 + state 登记),不做 ancestry 判定,该误判面不存在。
 - **R3 — init 逐字段幂等时用户可能误改 trunk 等字段** → 缓解:每个变化字段确认时 MUST 显示 `[旧值] → [新值]` diff,只有用户选择「改用新值」后才写入。
 - **R4 — `.speccode/` 不在 `.gitignore`,`git clean -fdx` 会丢配置** → 缓解:在 init 提示与本 README 中明确警告;不在命令层面强制保护(与「插件不改 `.gitignore`、不越权改写用户 git 机制」的原则一致)。见第 14 节的重要警告。
 - **R5 — 阻塞等 PR 合并默认 30 分钟超时,长 PR review 可能不够** → 缓解:超时是软限制,挂起态写入 `pending_operation`,`--resume` 允许后续续跑,不会永久卡死命令。
@@ -249,7 +249,7 @@ speccode 为每个 feature 维护一份跨会话记忆:`.speccode/memory/<type>_
 - **R12 — memory 并发写 last-writer-wins** → 同一 feature 的多个 worktree 共享一份 memory 文件,两个会话同时「出口写」时后写覆盖先写。缓解:写前必读(read-before-write,在现有内容上做增量而非整文件替换);涉及大段覆盖性重写前向用户确认。
 - **R13 — trunk 文档 churn** → spec 文档在所有分支 tracked,多 feature 并行落地会让 trunk 的 `speccode/` 目录频繁变更,增加合并冲突面。缓解:`syncing` 只做**增量合并且幂等**(重跑无脏变更);`archiving` 是目录整体**移动**而非删除,review diff 干净、历史可追溯;文档与代码同 PR 上 trunk,review 时可见。
 
-## 11. 从 0.1 迁移
+## 11. 安装与更新
 
 各版本完整变更记录见仓库根目录 [CHANGELOG.md](../CHANGELOG.md)。
 
@@ -276,29 +276,9 @@ Claude Code 是主宿主;另有五个宿主从同一仓库安装(薄 per-host ad
 | Kimi Code | `.kimi-plugin/plugin.json` | manifest `skillInstructions` + 映射文档 | 安装待验证 |
 | ZCode | `.zcode-plugin/plugin.json`(官方六键形态) | `references/host-mapping/zcode.md` | manifest schema/安装通路/skill frontmatter 已验证(2026-09-17);工具名待验证 |
 | OpenCode | `.opencode/INSTALL.md` | `references/host-mapping/opencode.md` | 待验证 |
-| Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | 待验证 |
+| Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | 待验证(扩展 API 为假定) |
 
-非 Claude Code 宿主还需把引擎装进 PATH:`npm i -g speccode`(npm bin 机制,机器级、全宿主通用;`v*` tag CI 自动发布 npm)或从检出运行 `bash scripts/install-shim.sh`——同一台机器二选一。发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
-
-### 命令对照表
-
-| v0.1 | v0.2 |
-|---|---|
-| `/speccode:start` | `/speccode:creating-feature` |
-| `/speccode:develop-start` | `/speccode:creating-worktree` |
-| `/speccode:develop-complete` | `/speccode:finishing-worktree` |
-| `/speccode:finish` | `/speccode:finishing-feature` |
-| `/speccode:display-merge-trunk` | **下线**(display 层移除) |
-| `/speccode:display-rebase-trunk` | **下线** |
-| `/speccode:display-reset-to-trunk` | **下线** |
-
-迁移步骤:
-
-1. **config 重新 init 升 0.2**:直接运行 `/speccode:init`,幂等流程会逐字段 diff;旧 config(`version` 为 1 或缺失)的 `display` / `spec_tools` / `untracked_permanent` 三字段会标记为「移除」,接受升级后写入 `version: 2`,不存在混合态。改写前的旧值经 `backup-config` 显式备份为 `config.json.bak.<timestamp>`。
-2. **遗留 display 分支**:v0.2 不再使用 display 层。已无 active feature 的仓库可直接删除 display 分支;spec 文档在 v0.2 全分支 tracked,不再需要专门的「标的分支」托管。
-3. **遗留 `waiting_display_pr` 挂起态**:v0.1 finish 阶段卡在 display PR 的 feature,其 state 的 `pending_operation` 无法被 v0.2 自动续跑。按 `/speccode:finishing-feature` 命令文档中的手动指引处理:① 检查当时的 display PR 是否已合并;② 已合并则 `git checkout <trunk> && git pull`,手动创建 `<feature> → <trunk>` 的 PR;③ 用 `write-state` 清除该 feature 的 `pending_operation` 后重新执行 `/speccode:finishing-feature`。v0.1 的 `<feature>-complete` 临时分支若仍残留,确认 trunk PR 已合并后手动删除即可。
-4. **旧命令名的肌肉记忆与脚本**:改名无别名,任何引用 v0.1 命令名的脚本/文档/习惯都要按上表改。state 中遗留 `pending_operation.command` 的旧值(`develop-complete` / `finish`)由引擎在读路径自动规范化为新名,**无需手动处理**。
-5. **`.speccode/memory/` 与 `.speccode/sdd/`**:v0.1 时代没有这两个目录,升级时**无需任何操作**;它们由各命令按需自建(目录内自带 `.gitignore` 自忽略)。
+非 Claude Code 宿主还需把引擎装进 PATH:`npm i -g speccode`(npm bin 机制,机器级、全宿主通用;`v*` tag CI 自动发布 npm)或从检出运行 `bash scripts/install-shim.sh`——同一台机器二选一。发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
 
 ## 12. 理念
 
@@ -318,7 +298,7 @@ speccode 的方法论命令继承五条工作理念:
 
 `.speccode/` 目录在用户项目中**不会被 git 跟踪,也不会被加入 `.gitignore`**——这是插件的显式设计决策(speccode 与 git 原生机制解耦,所有跟踪管理都走显式命令,不代用户修改 `.gitignore`)。
 
-**这意味着**:如果你在该仓库执行 `git clean -fdx`,`.speccode/config.json`、`state/`(`branches/` 与遗留 `features/`)、`memory/`、`sdd/` 全部会被当作「未跟踪/被忽略文件」一并删除,直接丢失当前的 speccode 配置、所有 active 分支的进度状态与全部会话记忆(对应风险 R4)。
+**这意味着**:如果你在该仓库执行 `git clean -fdx`,`.speccode/config.json`、`state/`(`branches/`)、`memory/`、`sdd/` 全部会被当作「未跟踪/被忽略文件」一并删除,直接丢失当前的 speccode 配置、所有 active 分支的进度状态与全部会话记忆(对应风险 R4)。
 
 `git clean -fd`(不带 `-x`)稍微温和:`memory/` 与 `sdd/` 因插件自写的 `.gitignore`(内容 `*`)而被判定为 ignored,`-fd` 不伤两者;但 `config.json`、`state/`、`config.json.bak.*` 仍是普通 untracked 文件,**`-fd` 一样会删除**。
 

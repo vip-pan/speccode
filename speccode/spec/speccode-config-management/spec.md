@@ -1,6 +1,6 @@
 ## Purpose
 
-`.speccode/config.json` 与 `state/branches/*.json` 的读写策略:字段集、按分支维度隔离、原子写、备份、init 字段级幂等与 v2→v3 迁移、路径识别对账、worktree 状态枚举、pending_operation 挂起态、ISO 8601 时间戳。
+`.speccode/config.json` 与 `state/branches/*.json` 的读写策略:字段集、按分支维度隔离、原子写、备份、init 字段级幂等、路径识别对账、worktree 状态枚举、pending_operation 挂起态、ISO 8601 时间戳。
 
 ## Requirements
 
@@ -17,32 +17,26 @@
 
 可选字段:`hooks`(事件名 → shell 命令字符串;缺失视为全部事件无 hook,见 hook-event-integration);`language`(工件语言,BCP-47 语言标签自由 tag,格式经 lib 校验,由 init 经用户确认写入;缺失视为未记录,工件语言跟随交互语言,见「language 字段校验与登记」)。
 
-`display`、`spec_tools`、`untracked_permanent` 三个 v1 字段、`worktree_prefix` v2 字段与 `host` 字段 MUST NOT 出现在 `version: 3` 的 config 中(v2 读兼容见「state v2 兼容读取与迁移」;`host` 随 host-neutral-engine 退役,幂等 init 经字段 diff 剥离)。
+引擎不定义退役字段机制:字段集之外的未知键(含历史版本的已删除字段)在读取时按普通未知键容忍与忽略,不产出警告、不参与 init 字段 diff,也不被引擎消费。
 
 #### Scenario: 首次 init 后字段齐备
 
 - **WHEN** 用户执行 `/speccode:init` 并完成所有询问
-- **THEN** `.speccode/config.json` MUST 存在,`version` 为 `3`,包含上述全部字段(hooks 仅在用户选择配置时存在;language 仅在用户选择登记时存在),MUST NOT 含 `worktree_prefix` 或 `host`
+- **THEN** `.speccode/config.json` MUST 存在,`version` 为 `3`,包含上述全部字段(hooks 仅在用户选择配置时存在;language 仅在用户选择登记时存在)
 
-#### Scenario: v2 升级 v3 的字段 diff
-- **WHEN** v2 config(含 worktree_prefix)存在时二次执行 init
-- **THEN** 命令 MUST 逐字段展示 diff:`worktree_prefix` 标记移除,经用户确认后写入 `version: 3`
+#### Scenario: 含历史已删除字段的 config 读取不报错
 
-#### Scenario: 拒绝升级则整体保持 v2
-- **WHEN** 二次 init 时用户拒绝对 config 的任何修改
-- **THEN** config MUST 保持 v2 原样(`version: 2`);一旦接受升级(`version: 3`),`worktree_prefix` MUST 被移除,不存在「version: 3 但保留该字段」的混合态
-
-#### Scenario: 遗留 host 字段的幂等剥离
-- **WHEN** v3 config 含历史遗留的 `host` 字段时二次执行 init
-- **THEN** 字段 diff MUST 将 `host` 标记移除,经用户确认后写入不含 `host` 的 v3 config;引擎各 verb 对含 `host` 的既有 config 读取时 MUST NOT 报错(字段被忽略)
+- **WHEN** config 中残留历史版本的已删除字段(如 `host` 或更早版本的 `worktree_prefix`)
+- **THEN** 引擎各 verb 读取该 config 时 MUST 正常工作不报错,该字段被作为未知键忽略,`validateConfigShape` 对其 MUST NOT 产出警告
 
 #### Scenario: worktree_dir 缺省中性
+
 - **WHEN** config 存在但不含 `worktree_dir` 字段(或字段被手删)
 - **THEN** `speccode resolve-worktree-dir --cwd .` 返回 `dir: ".speccode/worktrees"`、`source: "default"`;对账与创建命令按同一缺省解析
 
 ### Requirement: state/branches 文件隔离
 
-每条 active 分支 MUST 有独立的 `.speccode/state/branches/<type>__<slug>.json` 文件,文件名格式 MUST 为 `<type>__<slug>`(type 与 slug 之间用双下划线 `__` 分隔;slug 内的连字符保留)。普通分支 state MUST 含 `branch`(全名)、`type`、`worktree`(worktree 绝对路径;唯一例外:迁移自 v2 且无在册 worktree 的分支允许为 `null`,见「state v2 兼容读取与迁移」)、`merge_target`(恒写:普通分支 MUST 写 config.trunk,集成分支的子分支 MUST 写其集成分支名)、`status`、`created_at`、`initial_branch`;父实体 state MUST 含 `branch`、`kind: "integration"`、`children`(数组,条目仅 `{slug}` 纯身份登记——状态不存于父实体,唯一真源为各子分支 state)、`status`、`created_at`、`initial_branch`,MUST NOT 含 `worktree`。
+每条 active 分支 MUST 有独立的 `.speccode/state/branches/<type>__<slug>.json` 文件,文件名格式 MUST 为 `<type>__<slug>`(type 与 slug 之间用双下划线 `__` 分隔;slug 内的连字符保留)。普通分支 state MUST 含 `branch`(全名)、`type`、`worktree`(worktree 绝对路径)、`merge_target`(恒写:普通分支 MUST 写 config.trunk,集成分支的子分支 MUST 写其集成分支名)、`status`、`created_at`、`initial_branch`;父实体 state MUST 含 `branch`、`kind: "integration"`、`children`(数组,条目仅 `{slug}` 纯身份登记——状态不存于父实体,唯一真源为各子分支 state)、`status`、`created_at`、`initial_branch`,MUST NOT 含 `worktree`。
 
 #### Scenario: 并行多个分支
 - **WHEN** 用户并行开发 feature/payment 与 feature/auth
@@ -56,28 +50,9 @@
 - **WHEN** 用户开发 feature/pay-ment
 - **THEN** state 文件 MUST 为 `feature__pay-ment.json`,双下划线保证 type 与 slug 分隔无歧义
 
-### Requirement: state v2 兼容读取与迁移
-
-引擎 MUST 双格式运行:`state/features/` 下的 v2 遗留文件(含 `feature_branch`、`worktrees{}`、`worktree_overrides` 字段)MUST 按 **v2 语义原样读写**(既有行为不变,旧命令继续可用;`normalizeState()` 按目录与字段形态识别格式,v2 侧既有 legacy command 规范化保留),v3 命令只读写 `state/branches/`;v2 数据 MUST NOT 被实时翻译为 v3 形状。迁移 MUST 仅发生在 `/speccode:init`:检测到 `state/features/` 存在时 MUST 展示迁移预览(逐文件的 v2→v3 转换说明)并经用户确认,确认后经 `migrate-state` verb 逐文件转换为 v3 格式移入 `state/branches/`、清空原目录,并经 reconcile 验证;用户拒绝时 MUST 保持 v2 原样且读路径继续兼容。静默自动迁移 MUST NOT 发生;迁移前 config 备份机制照常适用。迁移跳过规则:worktrees 多于一条、单 worktree 状态非 completed(在途)、缺 `feature_branch`、或 v3 目标文件已存在的文件 MUST 跳过并报告;迁移产物 `worktree: null`。
-
-#### Scenario: 双格式运行
-- **WHEN** `state/features/`(v2)与 `state/branches/`(v3)同时存在
-- **THEN** v2 命令流 MUST 按 v2 语义读写旧文件,v3 命令流 MUST 按 v3 语义读写新文件,互不干扰,均不报错
-
-#### Scenario: init 一次性迁移
-- **WHEN** init 检测到 `state/features/` 目录且用户确认迁移
-- **THEN** 可迁移文件 MUST 被转换为 v3 格式移入 `state/branches/`,跳过文件 MUST 保留并报告(在途/多 worktree/畸形/目标已存在),迁移结果 MUST 经 reconcile 验证
-
-#### Scenario: 在途 feature 被跳过
-- **WHEN** 某 v2 文件含单个 status 为 `in_progress` 的 worktree 条目
-- **THEN** 迁移 MUST 跳过该文件并报告(其 worktree 状态与 PR 号不得被静默丢弃)
-
-#### Scenario: 拒绝迁移保持 v2
-- **WHEN** init 提供迁移而用户拒绝
-- **THEN** `state/features/` MUST 原样保留,读路径 MUST 继续按 v2 语义兼容工作
-
 ### Requirement: 写文件原子性
-任何对 `.speccode/config.json` 或 `state/features/*.json` 的写入 MUST 采用"写临时文件 + `mv` 覆盖"模式,避免半写半旧。
+
+任何对 `.speccode/config.json` 或 `state/branches/*.json` 的写入 MUST 采用"写临时文件 + `mv` 覆盖"模式,避免半写半旧。
 
 #### Scenario: 写入过程异常退出
 - **WHEN** AI 进程在写入 config.json 时被 kill
@@ -114,12 +89,12 @@
 - **THEN** 命令 MUST 显示 diff 并询问用户确认是否更新,只有用户确认后才写入
 
 #### Scenario: 二次 init 不影响 state
-- **WHEN** 二次 init 时 `.speccode/state/features/feature__payment.json` 存在
+- **WHEN** 二次 init 时 `.speccode/state/branches/feature__payment.json` 存在
 - **THEN** 该文件 MUST 在 init 过程中不被读取、修改或删除
 
 ### Requirement: 对账算法
 
-每个涉及分支的命令(`/speccode:creating-worktree`、`/speccode:finishing-worktree`、`/speccode:finishing-feature`、`/speccode:status`)开头 MUST 执行「state ↔ git」对账,扫描 `git worktree list --porcelain` 与 `state/branches/*.json`(及 v2 遗留 `state/features/`),自动补齐/标记不一致项,并推进 `pr_open` 的分支。管辖识别 MUST 为路径识别:路径位于 `config.worktree_dir` 之下的 worktree 为 speccode 管辖;worktree_dir 缺失时 MUST 回退默认值 `".speccode/worktrees"`(相对路径按仓库根解析;与 `resolve-worktree-dir` 的缺省同源单常量),对账 MUST NOT 因 config 缺失而失败。分支名前缀与 ancestry 判定 MUST NOT 参与识别(v3 中 worktree↔state 为 1:1);父实体(无 worktree 的集成分支)MUST 由 state 侧识别。
+每个涉及分支的命令(`/speccode:creating-worktree`、`/speccode:finishing-worktree`、`/speccode:finishing-feature`、`/speccode:status`)开头 MUST 执行「state ↔ git」对账,扫描 `git worktree list --porcelain` 与 `state/branches/*.json`,自动补齐/标记不一致项,并推进 `pr_open` 的分支。管辖识别 MUST 为路径识别:路径位于 `config.worktree_dir` 之下的 worktree 为 speccode 管辖;worktree_dir 缺失时 MUST 回退默认值 `".speccode/worktrees"`(相对路径按仓库根解析;与 `resolve-worktree-dir` 的缺省同源单常量),对账 MUST NOT 因 config 缺失而失败。分支名前缀与 ancestry 判定 MUST NOT 参与识别(v3 中 worktree↔state 为 1:1);父实体(无 worktree 的集成分支)MUST 由 state 侧识别。
 
 #### Scenario: worktree 在 git 中但不在 state 中
 - **WHEN** git worktree list 含路径位于 worktree_dir 之下的 worktree,但 state 中无记录
@@ -145,6 +120,10 @@
 - **WHEN** 某分支 state 的 `merge_target` 指向的集成分支在 git 中不存在
 - **THEN** 对账 MUST 将其计入 orphans 并报告
 
+#### Scenario: 遗留旧格式 state 目录完全隐形
+- **WHEN** `.speccode/state/features/`(旧格式遗留目录)存在且含 JSON 文件
+- **THEN** 对账 MUST 完全忽略该目录(不扫描、不报告 orphan、不报错),输出等价于该目录不存在
+
 ### Requirement: worktree 状态枚举
 
 `state/branches/*.json` 中每条分支(含父实体 `children` 清单条目)的 `status` MUST ∈ `{pending, in_progress, pr_open, completed}`。`pr_open` 表示已创建 PR/MR 但尚未合并,此时 state MUST 记录 `pr_number`。
@@ -159,7 +138,7 @@
 
 ### Requirement: pending_operation 挂起状态
 
-当长阻塞操作(等 PR 合并)超时或被中断时,命令 MUST 把挂起状态写入对应 feature state 文件的 `pending_operation` 字段,结构为 `{ command, phase, pr_number, updated_at }`,其中 `command` MUST ∈ `{finishing-worktree, finishing-feature}`,`phase` MUST ∈ `{waiting_worktree_pr, waiting_trunk_pr}`(新写入只允许这两个值;legacy 数据中的 `waiting_display_pr` 按「legacy pending_operation 规范化」处理,不属新写入枚举)。`--resume` MUST 从该字段恢复。
+当长阻塞操作(等 PR 合并)超时或被中断时,命令 MUST 把挂起状态写入对应 feature state 文件的 `pending_operation` 字段,结构为 `{ command, phase, pr_number, updated_at }`,其中 `command` MUST ∈ `{finishing-worktree, finishing-feature}`,`phase` MUST ∈ `{waiting_worktree_pr, waiting_trunk_pr}`。`--resume` MUST 从该字段恢复。
 
 #### Scenario: finishing-feature 超时写入挂起状态
 - **WHEN** `/speccode:finishing-feature` 等待 PR→trunk 合并超时
@@ -200,22 +179,6 @@
 - **WHEN** 经 `tools/call write-config`,`arguments.payload` 为合法 config 对象
 - **THEN** `.speccode/config.json` 经原子写落盘,内容与经 CLI stdin 写入同一对象的结果一致
 
-### Requirement: legacy pending_operation 规范化
-
-引擎读取 state 时 MUST 经统一的 `normalizeState()` 规范化遗留数据:`pending_operation.command` 的旧值 `develop-complete` MUST 规范化为 `finishing-worktree`、`finish` MUST 规范化为 `finishing-feature`。`normalizeState()` MUST 被 `readState` 与 `listActiveFeatures` 共同调用,保证 reconcile 输出与单 feature 读取路径一致。`phase = "waiting_display_pr"` 的挂起态 MUST 原样保留在 state 中,命令层(finishing-feature)检测到该 phase 时 MUST 报错并打印手动收尾指引(该判定不进引擎)。
-
-#### Scenario: readState 路径规范化
-- **WHEN** state 文件含 `pending_operation.command = "finish"`,经 feature-progress 等 readState 路径读取
-- **THEN** 输出中该值 MUST 为 `finishing-feature`
-
-#### Scenario: listActiveFeatures 路径规范化
-- **WHEN** state 文件含 `pending_operation.command = "develop-complete"`,经 reconcile(走 listActiveFeatures)读取
-- **THEN** 输出中该值 MUST 为 `finishing-worktree`,`--resume` 按新命令名匹配 MUST 命中
-
-#### Scenario: waiting_display_pr 不可续跑
-- **WHEN** finishing-feature 检测到 `pending_operation.phase = "waiting_display_pr"`
-- **THEN** 命令 MUST 报错退出并打印手动收尾指引(该挂起态依赖已删除的 display 分支,无法自动续跑)
-
 ### Requirement: language 字段校验与登记
 
 config 的 `language` 字段 MUST 经 lib 纯函数格式校验:BCP-47 语言标签(主子标签为 2-3 个小写字母,可附连字符分隔的后续子标签),非法值 MUST 被写 verb 拒绝(`{ok:false, error}` + 非零退出)且不落盘。`language` 的登记 MUST 走 init 询问:推荐值取自当前会话的用户语言(而非 LANG/LC_* 等环境变量),经用户确认后写入;二次 init 按既有字段级幂等 diff 处理该字段。`language` 缺失 = 未记录,工件语言跟随交互语言,MUST NOT 存在其他隐式缺省语言。
@@ -236,17 +199,22 @@ config 的 `language` 字段 MUST 经 lib 纯函数格式校验:BCP-47 语言标
 
 引擎 SHALL 提供两个纯函数形状校验器,产出警告字符串数组、MUST NOT 抛错:
 
-- `validateStateShape(state)`:v3 普通分支必填 `branch`、`type` ∈ TYPES 枚举、`worktree`(string|null)、`merge_target`、`status` ∈ 状态枚举、`created_at`(ISO 8601)、`initial_branch`;父实体(`kind:"integration"`)必填 `children`( `{slug}` 数组)且 MUST NOT 含 `worktree`;时间戳字段非 ISO、未知顶层键各产出一条警告;v2 形状(`feature_branch` 键)返回单条迁移提示,不套 v3 契约。
-- `validateConfigShape(config)`:退役字段(`worktree_prefix`/`host`/`display`/`spec_tools`/`untracked_permanent`)在场、`pr_tool` 非枚举、`trunk`/`remote`/`worktree_dir` 非字符串、`code_intel_tools` 非数组、`hooks` 非字符串映射、`language` 非字符串各产出警告;`version` 非 3 产出提示级警告(v1/v2 读兼容)。
+- `validateStateShape(state)`:v3 普通分支必填 `branch`、`type` ∈ TYPES 枚举、`worktree`(string)、`merge_target`、`status` ∈ 状态枚举、`created_at`(ISO 8601)、`initial_branch`;父实体(`kind:"integration"`)必填 `children`( `{slug}` 数组)且 MUST NOT 含 `worktree`;时间戳字段非 ISO、`worktree` 非字符串、未知顶层键各产出一条警告。
+- `validateConfigShape(config)`:`pr_tool` 非枚举、`trunk`/`remote`/`worktree_dir` 非字符串、`code_intel_tools` 非数组、`hooks` 非字符串映射、`language` 非字符串各产出警告。
 
-引擎 SHALL 提供只读 verb `lint-state --cwd .`(时间戳校验为形状级——`Z` 结尾 ISO 形态;不校验语义日期;不可解析的 JSON 文件 MUST 被描述为 `unparseable JSON` 警告而非报错):输出 `{ok, config:{warnings}, states:[{branch,warnings}]}`,扫描 `state/branches/` 与 `state/features/` 全部条目。
+引擎 SHALL 提供只读 verb `lint-state --cwd .`(时间戳校验为形状级——`Z` 结尾 ISO 形态;不校验语义日期;不可解析的 JSON 文件 MUST 被描述为 `unparseable JSON` 警告而非报错):输出 `{ok, config:{warnings}, states:[{branch,warnings}]}`,仅扫描 `state/branches/` 条目。
 
-`writeState` SHALL 在写入前对 v3 形状 payload 做门禁(违规抛错,不落盘):payload `branch` 与登记键(`--branch` 参数)不一致、`status` 非法、`type` 非法、`created_at` 非 ISO、父实体 `children` 非数组;未知顶层键与可选键(`completed_at`/`pr_number`/`note`/`pending_operation`)MUST NOT 被拒绝;v2 形状 payload 原样放行。`readState`/`loadConfig` 的返回形状与容错语义 MUST NOT 因本变更改变。
+`writeState` SHALL 在写入前对 payload 做门禁(违规抛错,不落盘),门禁对一切 payload 统一生效、不区分形状:payload `branch` 与登记键(`--branch` 参数)不一致、`status` 非法、`type` 非法、`created_at` 非 ISO、父实体 `children` 非数组;未知顶层键与可选键(`completed_at`/`pr_number`/`note`/`pending_operation`)MUST NOT 被拒绝。`readState`/`loadConfig` 的返回形状与容错语义 MUST NOT 因本变更改变。
 
-#### Scenario: lint-state 报告退役字段与坏枚举
+#### Scenario: lint-state 报告坏枚举
 
-- **WHEN** config 含 `host` 遗留字段,某 state 条目 `status` 为 `"done"`(非法枚举)
-- **THEN** `lint-state` 输出的 `config.warnings` 含 host 退役提示,该条目 `warnings` 含 status 非法警告;exit 0 不抛错
+- **WHEN** 某条目 `status` 为 `"done"`(非法枚举)
+- **THEN** `lint-state` 输出的该条目 `warnings` 含 status 非法警告;exit 0 不抛错
+
+#### Scenario: lint-state 不扫描旧格式目录
+
+- **WHEN** `.speccode/state/features/` 存在且含条目
+- **THEN** `lint-state` 输出的 `states` MUST NOT 含来自该目录的条目
 
 #### Scenario: writeState 门禁拒绝键不一致
 
@@ -256,9 +224,4 @@ config 的 `language` 字段 MUST 经 lib 纯函数格式校验:BCP-47 语言标
 #### Scenario: 未知顶层键不拦截
 
 - **WHEN** v3 payload 含合法必填集与额外 `surprise` 字段(未知键),经 `write-state` 写入
-- **THEN** 写入成功;`validateStateShape` 对该条目产出一条未知键提示级警告(已知可选键如 `note` 不产生警告)
-
-#### Scenario: 读路径零变化
-
-- **WHEN** 对含坏形状条目的仓库执行既有 `read-state` / `reconcile`
-- **THEN** 行为与本变更前完全一致(校验不进读路径)
+- **THEN** 写入成功,`validateStateShape` 对 `surprise` 产出 informational 警告
