@@ -67,7 +67,7 @@ gh / glab CLI 的探测与封装:remote URL 探测 pr_tool、安装校验、PR/M
 
 ### Requirement: wait_for_pr_merge 轮询
 
-PR 等待轮询 MUST 在命令层以引擎 `query-pr` verb 单次查询为基础实现:每 30 秒轮询一次 PR/MR 状态,默认 30 分钟超时(约 60 次查询);`--resume` 续跑时 MUST 使用相同轮询间隔。(v1 的阻塞式 `wait_for_pr_merge` 引擎函数已随 `lib/waitmerge.mjs` 删除,本 requirement 标题保留,语义迁移为命令层轮询。)
+PR 等待轮询 MUST 在命令层以引擎 `query-pr` verb 单次查询为基础实现:每 30 秒轮询一次 PR/MR 状态,默认 30 分钟超时(约 60 次查询);`--resume` 续跑时 MUST 使用相同轮询间隔。引擎 MUST NOT 提供阻塞式等待形态,等待循环只存在于命令层。
 
 #### Scenario: 轮询间隔
 - **WHEN** 命令处于 PR 等待中
@@ -76,7 +76,6 @@ PR 等待轮询 MUST 在命令层以引擎 `query-pr` verb 单次查询为基础
 #### Scenario: 超时中止
 - **WHEN** 达到 30 分钟仍未 MERGED
 - **THEN** MUST 中止并把挂起状态写入 feature state 的 `pending_operation` 字段
-
 ### Requirement: PR 状态查询
 
 `query-pr` verb 与命令层轮询 MUST 按 pr_tool 调用对应查询命令获取 PR 状态,并解析为 MERGED / OPEN / CLOSED / CONFLICTING / UNKNOWN。`--number` 与按 head ref 查询 MUST 都被支持(gh/glab 均支持按编号查询)。

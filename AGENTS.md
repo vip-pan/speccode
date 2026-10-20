@@ -48,23 +48,23 @@ speccode 编排的分支拓扑是**双层**:普通需求从 trunk 直接切 `<ty
 
 ### 关键不变量(跨文件才能看清)
 
-- **原子写**:所有 `.speccode/config.json` 和 `state/branches/*.json`(v3;v2 遗留 `state/features/*.json` 同策)写入必须走 `atomic.writeJsonAtomic`(临时文件 `${path}.${pid}.tmp` + `renameSync`)。命令层通过 `write-config` / `write-state` verb 间接调用,**绝不手写 JSON 文件**。
+- **原子写**:所有 `.speccode/config.json` 和 `state/branches/*.json` 写入必须走 `atomic.writeJsonAtomic`(临时文件 `${path}.${pid}.tmp` + `renameSync`)。命令层通过 `write-config` / `write-state` verb 间接调用,**绝不手写 JSON 文件**。
 
 - **仓库根定位**:`bin/speccode.mjs` 用 `git rev-parse --path-format=absolute --git-common-dir` + `dirname` 定位仓库根(**不是** `--show-toplevel`)。这是为了让 `finishing-worktree` 等从 linked worktree 内运行的命令也能解析到主仓的 `.speccode/`。改这里要保持主仓与 worktree 两种 cwd 都正确。
 
-- **`.speccode/`(运行时数据)vs 插件源码**:仓库根的插件源码(`.claude-plugin/`、`skills/`、`bin/`、`lib/`、`hooks/`、`references/`、`tests/`——单仓三合一后插件根即仓库根)在本仓库被 git 跟踪。而 speccode **运行时**在目标项目产生的 `.speccode/`(config + `state/branches/`(v2 遗留为 `state/features/`)+ `memory/` + `sdd/` + `backup/`)是运行时数据,设计上保持 untracked、插件不往项目 `.gitignore` 加条目(靠命令维护,见设计文档 R4);其中 `memory/` 与 `sdd/` 由插件自写目录内 `.gitignore`(内容 `*`)自忽略。这两者别混淆。仓库根下的 `support/`、`speccode/`(dogfood 规格)、`docs/`、`.github/` 是本仓自用内容,SHALL NOT 被声明进插件组件(打包边界 = plugin.json 声明)。
+- **`.speccode/`(运行时数据)vs 插件源码**:仓库根的插件源码(`.claude-plugin/`、`skills/`、`bin/`、`lib/`、`hooks/`、`references/`、`tests/`——单仓三合一后插件根即仓库根)在本仓库被 git 跟踪。而 speccode **运行时**在目标项目产生的 `.speccode/`(config + `state/branches/` + `memory/` + `sdd/` + `backup/`)是运行时数据,设计上保持 untracked、插件不往项目 `.gitignore` 加条目(靠命令维护,见设计文档 R4);其中 `memory/` 与 `sdd/` 由插件自写目录内 `.gitignore`(内容 `*`)自忽略。这两者别混淆。仓库根下的 `support/`、`speccode/`(dogfood 规格)、`docs/`、`.github/` 是本仓自用内容,SHALL NOT 被声明进插件组件(打包边界 = plugin.json 声明)。
 
 - **裸调与手动调试**:命令正文裸调 `speccode <verb>`(Claude Code 启用本插件时插件 `bin/` 自动进 PATH;其他宿主经 npm 全局安装或 install-shim.sh 提供 PATH);手动终端调试用 `node bin/speccode.mjs <verb> --cwd .`。
 
-- **对账算法**(`reconcile.mjs`)是核心:每个涉及 worktree 的命令(creating-worktree / finishing-worktree / finishing-feature / status 等)入口都跑它,扫 `git worktree list` ↔ `state/`(v3 `state/branches/` + v2 遗留 `state/features/` 双格式原样)。管辖识别 = **路径识别**:路径位于 `config.worktree_dir`(缺省 `.speccode/worktrees`)之下的 worktree 才归 speccode 管,分支名 / ancestry / `worktree_overrides` 一概不参与(用户手工分支零误伤);orphan = 登记非 completed 的分支在 git 缺失 / worktree_dir 下存在未登记 worktree / `merge_target` 指向分支不存在;`conflicts` 恒 `[]`(输出形状保持兼容,出现即异常);带 `--advance-pr` 时查 PR 状态把 `pr_open` → `completed`(仅 v3 条目,v2 遗留原样跳过)。
+- **对账算法**(`reconcile.mjs`)是核心:每个涉及 worktree 的命令(creating-worktree / finishing-worktree / finishing-feature / status 等)入口都跑它,扫 `git worktree list` ↔ `state/branches/`。管辖识别 = **路径识别**:路径位于 `config.worktree_dir`(缺省 `.speccode/worktrees`)之下的 worktree 才归 speccode 管,分支名 / ancestry / `worktree_overrides` 一概不参与(用户手工分支零误伤);orphan = 登记非 completed 的分支在 git 缺失 / worktree_dir 下存在未登记 worktree / `merge_target` 指向分支不存在;`conflicts` 恒 `[]`(输出形状保持兼容,出现即异常);带 `--advance-pr` 时查 PR 状态把 `pr_open` → `completed`。
 
-- **分支状态枚举**:`pending | in_progress | pr_open | completed`(定义在 `state.mjs` 的 `WORKTREE_STATUS`,reconcile/CLI/命令三处用法必须一致;v3 一分支一 state,v2 遗留 `state/features/` 的 worktree 条目沿用同一枚举)。
+- **分支状态枚举**:`pending | in_progress | pr_open | completed`(定义在 `state.mjs` 的 `WORKTREE_STATUS`,reconcile/CLI/命令三处用法必须一致;一分支一 state)。
 
 - **worktree 管辖 = 路径识别 ∪ state 登记**:清理与对账只处理「路径位于 `config.worktree_dir` 之下」或「state 有登记」的 worktree,与分支名无关;宿主自建的 worktree 原样保留并说明。开发分支直接以 `<type>/<slug>` 命名,身份锚点是 state 登记而非分支名前缀。
 
 - **children 仅身份,状态派生**:父实体(`kind:"integration"`)的 `children` 只登记 `{slug}`;**任何命令 MUST NOT 写父实体的 children 状态**——唯一真源是各子分支 state,门禁与 status 渲染实时派生(children 有 slug 无子 state = 计划未开工,渲染 pending);子收尾只写自己的 state、永不写父实体。
 
-- **命名规则**:功能分支 `<type>/<slug>`,`type ∈ {feature,bugfix,refactor,chore}`,`slug` 匹配 `/^[a-z0-9-]+$/`;state 文件名用 `<type>__<slug>.json`(双下划线分隔,防撞名)。**该命名对开发分支(worktree)与集成分支同样适用**——worktree 分支不再带 `worktree-` 硬前缀(config 的 `worktree_prefix` 字段随之退役),集成分支由父实体 state(`kind:"integration"`)识别而非前缀。逻辑在 `slug.mjs`。
+- **命名规则**:功能分支 `<type>/<slug>`,`type ∈ {feature,bugfix,refactor,chore}`,`slug` 匹配 `/^[a-z0-9-]+$/`;state 文件名用 `<type>__<slug>.json`(双下划线分隔,防撞名)。**该命名对开发分支(worktree)与集成分支同样适用**——worktree 分支不带硬前缀,集成分支由父实体 state(`kind:"integration"`)识别而非前缀。逻辑在 `slug.mjs`。
 
 - **单 PR 直通 trunk(按 merge_target 路由)**:v0.1 的「先 PR→display 合并、再基于 merge commit 建 `<feature>-complete`、剥离文档 `git rm --cached` + `commit --amend`、再 PR→trunk」双 PR 流程与临时收尾分支已移除。v3 起普通需求由 finishing-worktree 按 state 的 `merge_target`(缺省 trunk)直接 PR → trunk;大需求 opt-in 集成分支,子分支本地 squash 汇入,终局 finishing-feature 一次 PR(集成分支 → trunk,children 全 completed 门禁)。阻塞等合并,超时把挂起态写进分支 state 的 `pending_operation`,`--resume` 续跑。
 

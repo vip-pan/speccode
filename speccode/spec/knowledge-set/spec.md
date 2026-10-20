@@ -40,17 +40,17 @@ speccode MUST 支持 tracked 知识集目录 `speccode/knowledge/`,包含 `_inde
 
 布局规范:hand-written 段在前、蒸馏块在后。replace-distilled 与 replace-hand 写入 MUST 输出该规范布局——存量文件首次写入时归位(hand-written 字节级保留、仅位置重排),此后幂等。蒸馏写入路径 MUST 仅重写蒸馏块,hand-written 内容字节级保留。
 
-读侧 MUST 同时解析现行格式与旧格式 `<!-- promoted-from: <source> -->` … `<!-- /promoted -->`,以及 distilled-from 值为旧来源值(`archive/<名>/`、`spec/<名>/`)的存量块,三者视为同一蒸馏块列表,按出现顺序统一解析;写侧 MUST 只接受能力键格式(存量旧 source 块的迁移见「蒸馏命令」)。marker 解析失败 MUST 报错退出并提示人工检查,不静默、不猜测。
+读侧 MUST 仅解析现行格式(distilled-from 能力键标记);历史旧格式 `<!-- promoted-from: <source> -->` … `<!-- /promoted -->` 标记与旧来源值(`archive/<名>/`、`spec/<名>/`)MUST NOT 被识别为蒸馏块,按 hand-written 普通字节对待(字节级保留、不参与块列表,由人工在重蒸闸门中清理)。写侧 MUST 只接受能力键格式。marker 解析失败 MUST 报错退出并提示人工检查,不静默、不猜测。
 
 #### Scenario: 蒸馏保留手写内容
 
 - WHEN 某 topic 文件同时含蒸馏块与 hand-written 段
 - THEN 蒸馏重蒸后 hand-written 段与原内容逐字节一致(位置按布局规范归位)
 
-#### Scenario: 旧格式 marker 兼容
+#### Scenario: 旧格式标记不再解析
 
-- WHEN topic 文件含旧格式 `<!-- promoted-from: <source> -->` … `<!-- /promoted -->` 蒸馏块,或 distilled-from 值为 `archive/<名>/` 的存量块
-- THEN 读侧正常解析为蒸馏块(与手写段区分不变);经闸门映射后以能力键格式重写
+- WHEN topic 文件含旧格式 `<!-- promoted-from: <source> -->` … `<!-- /promoted -->` 标记或 distilled-from 值为 `archive/<名>/` 的存量块
+- THEN 读侧 MUST NOT 将其识别为蒸馏块(不进入块列表、不参与 upsert 定位),字节按 hand-written 保留
 
 #### Scenario: 标记格式损坏
 
@@ -75,7 +75,7 @@ speccode MUST 支持 tracked 知识集目录 `speccode/knowledge/`,包含 `_inde
 
 蒸馏目标 MUST 为:初始骨架 6 个 development topic ∪ `development/` 下用户自建 topic;蒸馏内容 MUST 限于 SDD 开发过程知识(架构、准则、环境、对接、坑与评审共识、安全)。变更元数据不属于蒸馏对象:归档包内文档的 frontmatter 字段(如 proposal.md 的 `tier:`)MUST NOT 单独成块,MUST NOT 混入正文蒸馏块,SHALL 仅作为理解变更体量与权重的参考上下文。蒸馏目标之外既存的 topic 文件,其蒸馏块 MUST 在闸门内逐块建议移除(日落),经用户确认后删除;其 hand-written 段 MUST 字节级保留,绝不自动修改。
 
-**存量迁移(零工具)**:旧 source 值(`archive/<名>/`、`spec/<名>/`)的既有蒸馏块解析照常进入候选;首次运行时 distiller MUST 为每个旧块提议能力键映射(优先对齐既有 spec capability 目录名,无对应者用稳定 kebab 主题词),闸门逐块确认后以能力键格式重写;MUST NOT 提供专用迁移脚本。
+旧格式标记(`promoted-from`/`/promoted`、旧 source 值)不再是蒸馏块的识别对象;存量文件中的此类标记字节按 hand-written 对待,重蒸闸门 MUST 提示人工清理对应残留,不做自动格式迁移、MUST NOT 提供专用迁移脚本。
 
 蒸馏成功落盘后 MUST 把本次读过的归档包(含读了无产出的)追记进 `consumed_archives`(去重)。`_distilled.meta.json` 缺失时 MUST 做一次性全量读 archive,并用全部现有归档包种子 `consumed_archives` 创建该 sidecar;删除 sidecar 重跑仍是强制全量重读的官方逃生口,不另设 `--full` flag。
 
@@ -97,7 +97,7 @@ speccode MUST 支持 tracked 知识集目录 `speccode/knowledge/`,包含 `_inde
 #### Scenario: 删 sidecar 强制全量重读
 
 - WHEN 用户删除 `_distilled.meta.json` 再跑 distilling-knowledge
-- THEN 全部归档包变未消费 → 全量重读 + 重种子;既有块的新鲜度审查与存量映射照常进行(重蒸本就每次全量)
+- THEN 全部归档包变未消费 → 全量重读 + 重种子;既有块的新鲜度审查照常进行(重蒸本就每次全量)
 
 #### Scenario: 退役知识删除附理由
 
@@ -114,16 +114,10 @@ speccode MUST 支持 tracked 知识集目录 `speccode/knowledge/`,包含 `_inde
 - WHEN 存量项目存在蒸馏目标外的 topic 文件(如 business/domain.md)且含蒸馏块
 - THEN 蒸馏闸门 MUST 展示「建议移除(该 topic 不在蒸馏目标内;若属业务知识,建议归外部 RAG)」选项;用户确认后块删除,同文件 hand-written 段与原内容逐字节一致;用户拒绝则块保留
 
-#### Scenario: 首次重蒸迁移旧 marker
+#### Scenario: 旧格式残留提示人工清理
 
-- WHEN 存量 topic 文件的蒸馏块使用旧格式 `promoted-from`/`/promoted` marker 或旧 source 值
-- THEN 经闸门确认写入后,全部蒸馏块以能力键格式重写,hand-written 段与原内容逐字节一致
-
-#### Scenario: 存量块映射能力键
-
-- WHEN 首次新规则运行,既有蒸馏块 source 为 `archive/<名>/` 或 `spec/<名>/`
-- THEN distiller 为每块提议能力键(优先对齐既有 spec capability 目录名),闸门逐块确认(提供「全部确认」);未经映射的旧 source 块无法经写侧校验直写
-
+- WHEN 存量 topic 文件含旧格式 `promoted-from`/`/promoted` marker 或旧 source 值的残留字节
+- THEN 重蒸闸门 MUST 提示人工清理该残留(作为 hand-written 字节呈现);MUST NOT 自动重写为能力键格式
 ### Requirement: 蒸馏消费追踪
 
 speccode MUST 维护 `speccode/knowledge/_distilled.meta.json`(knowledge/ 内 tracked sidecar,与 topic 文件平级),记录蒸馏已消费的归档包。其职责 MUST 限于读成本控制:distilling-knowledge 增量读判定(未消费集 = `speccode/archive/` 下实扫归档目录 ∖ `consumed_archives`);MUST NOT 承担蒸馏块存废判定职责(不用于 stale 检测)。结构:`{"consumed_archives": ["<归档目录名>", ...]}`(数组、去重、顺序无关)。该文件 MUST 经 atomic 写入(临时文件 + rename,复用 `atomic.writeJsonAtomic`);MUST NOT 手写。

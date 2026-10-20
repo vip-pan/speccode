@@ -210,48 +210,30 @@ test('writeKnowledge writes atomically and creates parent dirs', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('parseDistilledBlocks parses legacy promoted markers', () => {
+test('parseDistilledBlocks ignores legacy promoted markers (hand bytes)', () => {
   const text = 'hand\n<!-- promoted-from: archive/a/ -->\nbody\n<!-- /promoted -->\n';
-  assert.deepEqual(parseDistilledBlocks(text), [{ source: 'archive/a/', body: 'body' }]);
+  assert.deepEqual(parseDistilledBlocks(text), []);
 });
 
-test('parseDistilledBlocks parses mixed current and legacy markers in order', () => {
-  const text = [
-    '<!-- distilled-from: spec/x/ -->',
-    'new body',
-    '<!-- /distilled -->',
-    'middle hand',
-    '<!-- promoted-from: archive/y/ -->',
-    'old body',
-    '<!-- /promoted -->',
-  ].join('\n');
-  assert.deepEqual(parseDistilledBlocks(text), [
-    { source: 'spec/x/', body: 'new body' },
-    { source: 'archive/y/', body: 'old body' },
-  ]);
-});
-
-test('parseDistilledBlocks throws on mismatched opening/closing marker formats', () => {
+test('parseDistilledBlocks throws on stray or mismatched closing markers', () => {
   assert.throws(
-    () => parseDistilledBlocks('<!-- distilled-from: x/ -->\nbody\n<!-- /promoted -->'),
-    /knowledge: mismatched distilled marker/,
+    () => parseDistilledBlocks('<!-- /distilled -->'),
+    /knowledge: closing distilled marker without opening/,
   );
-  assert.throws(
-    () => parseDistilledBlocks('<!-- promoted-from: x/ -->\nbody\n<!-- /distilled -->'),
-    /knowledge: mismatched distilled marker/,
-  );
+  assert.doesNotThrow(() => parseDistilledBlocks('<!-- /promoted -->\nhand'));
 });
 
-test('replaceDistilledBlocks rewrites legacy markers to the current format, preserving hand-written bytes', () => {
-  const text = 'hand A\n<!-- promoted-from: cap/old -->\nold body\n<!-- /promoted -->\nhand B\n';
-  const out = replaceDistilledBlocks(text, [{ source: 'cap/old', body: 'new body' }]);
-  assert.equal(out, 'hand A\nhand B\n\n<!-- distilled-from: cap/old -->\nnew body\n<!-- /distilled -->\n');
-});
-
-test('replaceDistilledBlocks drops legacy blocks whose source is gone', () => {
+test('replaceDistilledBlocks keeps legacy marker bytes in the hand region', () => {
   const text = 'keep\n<!-- promoted-from: gone/ -->\nold\n<!-- /promoted -->\ntail';
   const out = replaceDistilledBlocks(text, []);
-  assert.equal(out, 'keep\ntail\n');
+  assert.ok(out.includes('<!-- promoted-from: gone/ -->'), '旧标记字节保留在 hand 区');
+  assert.ok(!out.includes('distilled-from'), '不产新块');
+});
+
+test('replaceDistilledBlocks writes new blocks in the current format only', () => {
+  const text = 'hand A\n<!-- distilled-from: cap/old -->\nold body\n<!-- /distilled -->\nhand B\n';
+  const out = replaceDistilledBlocks(text, [{ source: 'cap/old', body: 'new body' }]);
+  assert.equal(out, 'hand A\nhand B\n\n<!-- distilled-from: cap/old -->\nnew body\n<!-- /distilled -->\n');
 });
 
 test('replaceDistilledBlocks repositions hand-written content before blocks (first-run normalization)', () => {
@@ -277,9 +259,10 @@ test('replaceHandBlocks replaces hand region and preserves distilled blocks byte
   assert.equal(out, 'new hand\n\n<!-- distilled-from: cap/x -->\nbody\n<!-- /distilled -->\n');
 });
 
-test('replaceHandBlocks preserves legacy-format blocks unmigrated', () => {
+test('replaceHandBlocks treats legacy markers as ordinary hand text', () => {
+  // 旧标记不是块边界:整段属 hand 区,replace-hand 重建 hand 区时被替换
   const out = replaceHandBlocks('<!-- promoted-from: old/ -->\nbody\n<!-- /promoted -->\n', 'hand\n');
-  assert.equal(out, 'hand\n\n<!-- promoted-from: old/ -->\nbody\n<!-- /promoted -->\n');
+  assert.equal(out, 'hand\n');
 });
 
 test('replaceHandBlocks with no existing blocks writes content alone', () => {

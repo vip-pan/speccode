@@ -7,7 +7,7 @@ import { git } from '../lib/git.mjs';
 import { detectPrToolFromUrl, isInstalled, queryPrState, repoMergeConfig, isSquashOnly } from '../lib/prtool.mjs';
 import { reconcile } from '../lib/reconcile.mjs';
 import { loadConfig, saveConfig, backupConfig, validateLanguage, validateConfigShape } from '../lib/config.mjs';
-import { readState, writeState, deleteState, listActiveFeatures, lintStateEntries, migrateStateV2toV3, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
+import { readState, writeState, deleteState, listActiveFeatures, lintStateEntries, validateStateShape, WORKTREE_STATUS } from '../lib/state.mjs';
 import { detectCodeIntelTools, resolveWorktreeDir, worktreeDirIgnoreState } from '../lib/detect.mjs';
 import { sddWorkspace, taskBrief, reviewPackage, tickTask } from '../lib/sdd.mjs';
 import { buildHookPayload, runHook } from '../lib/hooks.mjs';
@@ -127,34 +127,19 @@ const VERBS = {
     return { ok: true, config: { warnings: validateConfigShape(loadConfig(sd)) }, states: lintStateEntries(sd) };
   },
 
-  'migrate-state': ({ cwd }) => {
-    const sd = speccodeDirOf(cwd);
-    const trunk = loadConfig(sd)?.trunk ?? 'main';
-    return { ok: true, ...migrateStateV2toV3(sd, { trunk }) };
-  },
-
   'feature-progress': ({ cwd, branch }) => {
     const st = readState(speccodeDirOf(cwd), branch);
     if (!st) return { ok: false, error: `no state for ${branch}` };
-    // v3: one branch IS one unit (branch ↔ worktree 1:1, the legacy `worktrees`
-    // map is gone — design D3). v2-era states keep the old counting. The v3
-    // discriminator matches reconcile's own v3/legacy split in reconcile.mjs.
-    if (typeof st.branch === 'string') {
-      return { ok: true, total: 1,
-        completed: st.status === WORKTREE_STATUS.COMPLETED ? 1 : 0,
-        worktree: st.worktree ?? null };
-    }
-    const wts = st.worktrees || {};
-    const total = Object.keys(wts).length;
-    const completed = Object.values(wts)
-      .filter((w) => w.status === WORKTREE_STATUS.COMPLETED).length;
-    return { ok: true, total, completed, worktrees: wts };
+    // v3: one branch IS one unit (branch ↔ worktree 1:1, design D3).
+    return { ok: true, total: 1,
+      completed: st.status === WORKTREE_STATUS.COMPLETED ? 1 : 0,
+      worktree: st.worktree ?? null };
   },
 
   // Resolve against the main repo root (same --git-common-dir invariant as the
   // other verbs) so .mcp.json / project dirs are found from subdirs and
   // linked worktrees too. Host-neutral (host-neutral-engine): full probes on
-  // every host; a legacy `host` key in config, if present, is ignored.
+  // every host; unknown extra config keys are ignored.
   'detect-code-intel-tools': ({ cwd }) => ({
     ok: true,
     tools: detectCodeIntelTools(repoRoot(cwd)),
@@ -280,16 +265,6 @@ const VERBS = {
     for (const f of listActiveFeatures(sd)) {
       if (typeof f?.branch === 'string') {
         statusByBranch.set(f.branch, f.status === WORKTREE_STATUS.COMPLETED);
-      } else if (typeof f?.feature_branch === 'string') {
-        // v2-legacy shape {feature_branch, worktrees:{...}}: derive from the
-        // per-worktree statuses (all completed → completed), falling back to
-        // the top-level v2 status when no worktree is registered — the same
-        // reconciliation split reconcile.mjs applies.
-        const ws = Object.values(f.worktrees ?? {});
-        statusByBranch.set(f.feature_branch,
-          ws.length > 0
-            ? ws.every((w) => w?.status === WORKTREE_STATUS.COMPLETED)
-            : f.status === WORKTREE_STATUS.COMPLETED);
       }
     }
     const files = listMemoryKeys(sd).map((branch) => ({
