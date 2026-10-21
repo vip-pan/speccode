@@ -3,9 +3,9 @@
 
 **children 仅身份**:父实体 `children` 只登记 {slug},状态唯一真源是各子分支 state,门禁与 status 渲染实时派生(有 slug 无子 state = 计划未开工,渲染 pending);任何命令 MUST NOT 写父实体 children。**依赖 = 切点即依赖**:并行兄弟同 head 切,串行后序在前序合入集成后再切,零依赖机制,串并行由人依状态板决策。**trunk 保护 squash**:合并 trunk 只经 PR(squash);插件职责收缩为 repo-merge-config 探测 + 非 squash-only 警告(不阻断);pr_tool=none 打印等效命令,否决插件代合并。
 
-**对账算法(reconcile)是核心安全保证**:每个涉及 worktree 的命令(creating-worktree/finishing-worktree/finishing-feature/status)入口都跑,扫 `git worktree list` ↔ state(v3 `state/branches/` + v2 遗留 `state/features/` 双格式原样)。管辖 = 路径识别:路径位于 `config.worktree_dir` 之下 ∪ state 登记,与分支名/ancestry/worktree_overrides 无关(用户手工分支零误伤)。orphan 三判定 = 登记非 completed 但 git 缺失 / worktree_dir 下未登记 worktree / merge_target 指向分支不存在;completed 豁免(git 侧清理是正常终态,state 供核算);conflicts 恒 [](形状兼容)。带 --advance-pr 时查 PR 状态把 pr_open → completed(MERGED)/回退 in_progress(CLOSED)。
+**对账算法(reconcile)是核心安全保证**:每个涉及 worktree 的命令(creating-worktree/finishing-worktree/finishing-feature/status)入口都跑,扫 `git worktree list` ↔ state(v3-only `state/branches/`;v2 双格式读取已随 2026-10-14-remove-legacy-compat 移除)。管辖 = 路径识别:路径位于 `config.worktree_dir` 之下 ∪ state 登记,与分支名/ancestry/worktree_overrides 无关(用户手工分支零误伤)。orphan 三判定 = 登记非 completed 但 git 缺失 / worktree_dir 下未登记 worktree / merge_target 指向分支不存在;completed 豁免(git 侧清理是正常终态,state 供核算);conflicts 恒 [](形状兼容)。带 --advance-pr 时查 PR 状态把 pr_open → completed(MERGED)/回退 in_progress(CLOSED)。
 
-**worktree 状态枚举** `pending | in_progress | pr_open | completed`(pr_open 必含 pr_number);**pending_operation 挂起态与 --resume 续跑**:PR 等待(30s 轮询、30min 超时)超时或中断后把 {command, phase, pr_number, updated_at} 写分支 state,按 phase 续跑不重复已完成阶段,成功完成即清除。**finishing-worktree 门禁与菜单**:合并路径前跑全量测试(失败即停不呈现菜单),菜单按 merge_target 路由——集成分支目标 → 本地 squash 自动路径(合并 + 复测);trunk 目标 → 恰好三项 PR+等待/PR+不等待/保留;丢弃仅显式要求且逐字输入 discard。**收尾路由硬约束**:有落地文档 → syncing → archiving → finishing-worktree(顺序是硬约束,finishing-worktree 会移除 worktree);无 → 直接 finishing-worktree;C 门 warn-only 安全网。**type/slug 推断**:参数直给 → list-memory 列 topic 供选 → AskUserQuestion;推断结果 MUST NOT 静默生效。(出自 archive/2026-07-13-add-speccode-plugin、2026-08-09-speccode-v2-sdd-flow、2026-08-11-orphan-false-alarm、2026-08-11-type-inference-source、2026-08-12-finish-routing-sync-archive、2026-09-03-remove-feature-layer 等)
+**worktree 状态枚举** `pending | in_progress | pr_open | completed`(pr_open 必含 pr_number);**pending_operation 挂起态与 --resume 续跑**:PR 等待(30s 轮询、30min 超时)超时或中断后把 {command, phase, pr_number, updated_at} 写分支 state,按 phase 续跑不重复已完成阶段,成功完成即清除。**finishing-worktree 门禁与菜单**:合并路径前跑全量测试(失败即停不呈现菜单),菜单按 merge_target 路由——集成分支目标 → 本地 squash 自动路径(合并 + 复测);trunk 目标 → 恰好三项 PR+等待/PR+不等待/保留;丢弃仅显式要求且逐字输入 discard。**收尾路由硬约束**:有落地文档 → syncing → archiving → finishing-worktree(顺序是硬约束,finishing-worktree 会移除 worktree);无 → 直接 finishing-worktree;C 门 warn-only 安全网。**type/slug 推断**:参数直给 → list-memory 列 topic 供选 → AskUserQuestion;推断结果 MUST NOT 静默生效。(出自 archive/2026-07-13-add-speccode-plugin、2026-08-09-speccode-v2-sdd-flow、2026-08-11-orphan-false-alarm、2026-08-11-type-inference-source、2026-08-12-finish-routing-sync-archive、2026-09-03-remove-feature-layer、2026-10-14-remove-legacy-compat 等)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/speccode-config-management -->
@@ -15,11 +15,11 @@
 <!-- distilled-from: cap/sdd-document-lifecycle -->
 **文档全分支 tracked**:speccode/ 目录(含 spec/、changes/、archive/)在包括 trunk 在内所有分支一律 git tracked;MUST NOT 执行 `git rm --cached` 类剥离/untrack/amend 折叠操作(docstrip 机制已整体删除)。
 
-**SDD 工作区定位与主仓定位的有意差异**:主仓根(state/config/memory 所在)统一用 `git rev-parse --path-format=absolute --git-common-dir` + dirname(linked worktree 内运行也能解析主仓 .speccode/);唯独 SDD 工作区(.speccode/sdd/<plan>/)归属当前 worktree 根,用 `git rev-parse --show-toplevel`——SDD 工件(brief/report/diff/ledger)随 `git worktree remove` 一并清理。两处定位方式不同是刻意的,不可统一。
+**SDD 工作区定位与主仓定位的有意差异**:主仓根(state/config/memory 所在)统一用 `git rev-parse --path-format=absolute --git-common-dir` + dirname(linked worktree 内运行也能解析主仓 .speccode/);唯独 SDD 工作区(.speccode/sdd/<plan>/)归属当前 worktree 根,用 `git rev-parse --show-toplevel`(实现在伴生脚本 skills/subagent-driven-development/scripts/sdd-plan.mjs)——SDD 工件(brief/report/diff/ledger)随 `git worktree remove` 一并清理。两处定位方式不同是刻意的,不可统一。
 
 **syncing 源契约**:delta 源 = `speccode/changes/<slug>/propose/` 四类文档;brainstorm 结论经两条路径进入——(a) brainstorming 完成时回写 propose/(默认权威路径);(b) syncing 检测 brainstorm/ 存在时先吸收未回写残余(兜底)。幂等判定按 requirement 标题存在性(ADDED 已存在即更新、MODIFIED 部分应用、REMOVED 删块、RENAMED 改标题);主 spec 既有 Purpose 不被 delta 覆盖。**capability 目录 RENAME 机制**:delta 顶部 HTML 注释元数据(rename-from)+ syncing 读取后 `git mv` 旧目录到新目录(目标已存在则跳过幂等),补 capability 级 RENAME 缺口(否则只有 requirement 级 RENAMED,旧目录空壳残留)。
 
-**plan 执行进度勾选架构**:ledger(progress.md)是崩溃恢复唯一权威,plan checkbox 仅作完成态的派生视图、不参与恢复判断(避免双源不一致窗口);勾选经 tick-task verb(复用 extractTaskBrief 的 fence 状态机)下沉,勾选 commit 落审查通过之后、不进入 review-package 的 base..head diff;task 级粒度(无 step 级事件锚点)。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-16-code-intel-rename、2026-08-16-plan-progress-tick)
+**plan 执行进度勾选架构**:ledger(progress.md)是崩溃恢复唯一权威,plan checkbox 仅作完成态的派生视图、不参与恢复判断(避免双源不一致窗口);勾选经 tick-task 伴生脚本(与 task-brief 共用 sdd-plan.mjs 的 fence 状态机)下沉,勾选 commit 落审查通过之后、不进入 review-package 的 base..head diff;task 级粒度(无 step 级事件锚点)。ledger 完成行自 2026-10 起经 task-done.mjs 单次追加写入(--note / -- <cmd> 双模式),手写完成行退役。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-16-code-intel-rename、2026-08-16-plan-progress-tick、2026-10-21-sdd-companion-scripts)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/session-memory -->
@@ -35,11 +35,11 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/plugin-packaging -->
-**引擎/CLI/命令三层分层架构**:所有确定性逻辑(config/state 读写、原子写、对账、PR 查询)实现为 `lib/*.mjs` 下经单测的 Node.js ESM 模块;`bin/speccode.mjs` 把 lib 暴露为输出单行 JSON 的 CLI verb;命令 markdown 仅负责交互层(提问/确认/调 verb/解析 JSON/报告),不重复实现逻辑。确定性逻辑绝不写进命令 markdown,一律下沉到 lib。
+**引擎/双前端/命令/伴生脚本分层(现行)**:确定性逻辑实现为 `lib/*.mjs` 下经单测的 Node.js ESM 模块(verb 表单源在 `lib/verbs.mjs`,导出 VERBS / runVerb / STDIN_MODE);两个薄前端共享它——`bin/speccode.mjs`(CLI,输出单行 JSON)与 `bin/speccode-mcp.mjs`(MCP stdio server,tools 与 verb 1:1 同名、写类以 payload 参数替代 stdin、contract-version 自报契约版本);命令 markdown 仅负责交互层(提问/确认/调 verb/解析 JSON/报告),不重复实现逻辑。确定性逻辑绝不写进命令 markdown:编排脊柱下沉 lib,SDD 执行机器下沉随 skill 分发的伴生脚本(skills/<skill>/scripts/,MUST NOT import lib)。两个前端入口守卫 = realpath 比对(兼容 npm bin 符号链接;argv 后缀检查在 `speccode` 链接名下静默失效,是 #69 的真 bug,2026-10 修复)。
 
 **版本断言不变量化**:plugin.json 的 version 规格约束 = 合法语义化版本 + 与 CHANGELOG.md 最新版本小节一致,MUST NOT 钉死字面量(否则每次发版必然制造规格漂移)。
 
-**visual companion 渲染防御**:渲染层不盲信元数据——homepage 渲染前 MUST 经 http/https scheme 校验,非法/非字符串/空串统一回退兜底常量;门禁放 readSpeccodeManifest(读取时消毒)而非使用点,未来新增使用点无需各自记得。references 自包含:渲染产物 MUST NOT 引用第三方品牌标识、MUST NOT 运行时请求第三方远程资源;版本号、仓库链接等元数据 MUST 读自 plugin.json,不硬编码(兜底常量除外)。死代码清零:删除元素后失去作用对象的 CSS 属性(gap、translateY)须一并清理。(出自 archive/2026-07-13-add-speccode-plugin、2026-08-11-release-0-2-2、2026-08-11-visual-companion-cleanup;visual companion 防御类按 plugin-packaging「references 自包含与品牌中立」requirement 归属,brief 默认归 documentation-facade 可改判)
+**visual companion 渲染防御**:渲染层不盲信元数据——homepage 渲染前 MUST 经 http/https scheme 校验,非法/非字符串/空串统一回退兜底常量;门禁放 readSpeccodeManifest(读取时消毒)而非使用点,未来新增使用点无需各自记得。references 自包含:渲染产物 MUST NOT 引用第三方品牌标识、MUST NOT 运行时请求第三方远程资源;版本号、仓库链接等元数据 MUST 读自 plugin.json,不硬编码(兜底常量除外)。死代码清零:删除元素后失去作用对象的 CSS 属性(gap、translateY)须一并清理。(出自 archive/2026-07-13-add-speccode-plugin、2026-08-11-release-0-2-2、2026-08-11-visual-companion-cleanup、2026-10-20-mcp-engine、2026-10-21-sdd-companion-scripts;visual companion 防御类按 plugin-packaging「references 自包含与品牌中立」requirement 归属,brief 默认归 documentation-facade 可改判)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/code-intel-tool-integration -->
@@ -55,13 +55,13 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/knowledge-set -->
-**知识集层架构(能力键制,现行)**:tracked 的 `speccode/knowledge/`(与 spec/changes/archive 平级),按主题组织 topic 文件 + `_index.md` 实扫索引。**块身份 = 能力键**:蒸馏块 marker 值为 `cap/<slug>`(同文件唯一),写入 = upsert——同能力键新块覆盖旧块、不累积历史;知识退役即删,不留墓碑块(历史叙事归 archive/ 与 CHANGELOG);块的出处(归档包名/spec capability)以纯文本括注记在 body 内。stale/superseded/carry-forward 机制已退役:块存废一律由新鲜度审查提议(真值锚 = spec/ 主规格),不由来源包存废/是否消费决定。读侧永久兼容旧 promoted-from 开标记与旧 source 值,写侧只产能力键格式(存量块迁移必经闸门,写侧校验拒旧 source 是引擎级兜底)。蒸馏块 body 不得含 marker 字符串。
+**知识集层架构(能力键制,现行)**:tracked 的 `speccode/knowledge/`(与 spec/changes/archive 平级),按主题组织 topic 文件 + `_index.md` 实扫索引。**块身份 = 能力键**:蒸馏块 marker 值为 `cap/<slug>`(同文件唯一),写入经 replace-distilled 时**块集是整组替换语义**——传入的 blocks 数组即该文件蒸馏区的完整目标集,未提及的既有块会被移除;调用方必须传完整集,不可当 upsert 只传增量(2026-10 stale-sweep 曾据此误删未提及块,靠未提交状态恢复)。知识退役即删,不留墓碑块(历史叙事归 archive/ 与 CHANGELOG);块的出处(归档包名/spec capability)以纯文本括注记在 body 内。stale/superseded/carry-forward 机制已退役:块存废一律由新鲜度审查提议(真值锚 = spec/ 主规格),不由来源包存废/是否消费决定。读侧永久兼容旧 promoted-from 开标记与旧 source 值,写侧只产能力键格式(存量块迁移必经闸门,写侧校验拒旧 source 是引擎级兜底)。蒸馏块 body 不得含 marker 字符串。
 
 **增量读(纯读成本控制)**:archive 读取基于 sidecar `_distilled.meta.json` 的 consumed_archives 只读未消费包,已消费包整包跳过;sidecar 职责限读成本控制、不参与块存废;删 sidecar 重跑 = 强制全量重读 + 重种子的官方逃生口,不设 --full flag。knowledge 根解析用当前 worktree 根(--show-toplevel),刻意区别于主仓根(--git-common-dir):tracked 文件随 worktree 各有检出。
 
 **统一入口(0.4.0)**:distilling/recording 运行于 state 登记的 `chore/knowledge-*` worktree 分支(与其他开发分支同一入口与收尾,无特权形态)——trunk 上运行时经 reconcile 筛未完成分支询问续跑,无候选引导 creating-worktree(type=chore,基点 MUST trunk);收尾经 finishing-worktree,命令层不内置 PR 逻辑。「未完成」判定 MUST 基于 state 查询(status ∈ {pending, in_progress, pr_open}),git merge 判定(git branch --no-merged)在 squash-only 合并下对已合并分支永真,禁止依赖。维护摘要含 PR url 写 trunk 级 `.speccode/memory/_knowledge.md`(跨 feature 产物无 feature 拥有者)。
 
-**架构分工与命名纪律**:蒸馏判断是 LLM 层(命令 prose),lib/knowledge.mjs 只承担 marker 解析、块替换、索引生成、原子写等确定性部分。命令层绝不手写 knowledge/ 文件,一律经 write-knowledge verb。命令名/块术语/marker/verb mode/lib 函数同词根一致,硬切改名不留别名;读侧双格式兼容使存量随全量重蒸自然迁移,无需迁移脚本。消费入口静默兜底:9 个认知型命令(exploring/proposing/brainstorming/writing-plans/executing-plans/subagent-driven-development/systematic-debugging/requesting-code-review/receiving-code-review)入口读 _index.md → 按需读 topic → 失败静默跳过绝不阻断(T0 兜底);接入段统一模板集中入口小节防 9 处 prose 漂移。(出自 archive/2026-08-14-knowledge-set、2026-08-15-knowledge-command-rename、2026-08-15-knowledge-set-refocus、2026-08-16-distill-incremental-archive、2026-08-16-knowledge-trunk-bootstrap、2026-09-03-knowledge-unified-entry;能力键制条目出自本需求 delta)
+**架构分工与命名纪律**:蒸馏判断是 LLM 层(命令 prose),lib/knowledge.mjs 只承担 marker 解析、块替换、索引生成、原子写等确定性部分。命令层绝不手写 knowledge/ 文件,一律经 write-knowledge verb。命令名/块术语/marker/verb mode/lib 函数同词根一致,硬切改名不留别名;读侧双格式兼容使存量随全量重蒸自然迁移,无需迁移脚本。消费入口静默兜底:9 个认知型命令(exploring/proposing/brainstorming/writing-plans/executing-plans/subagent-driven-development/systematic-debugging/requesting-code-review/receiving-code-review)入口读 _index.md → 按需读 topic → 失败静默跳过绝不阻断(T0 兜底);接入段统一模板集中入口小节防 9 处 prose 漂移。(出自 archive/2026-08-14-knowledge-set、2026-08-15-knowledge-command-rename、2026-08-15-knowledge-set-refocus、2026-08-16-distill-incremental-archive、2026-08-16-knowledge-trunk-bootstrap、2026-09-03-knowledge-unified-entry;能力键制与整组替换语义条目按本需求 delta 与 2026-10-21 stale-sweep 修正)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/development-flow-tiering -->
