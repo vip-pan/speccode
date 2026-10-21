@@ -11,6 +11,8 @@ description: "Execute an implementation plan in batches within this session, wit
 
 **开始时宣布:**"我在用 executing-plans 执行这个 plan。"
 
+> **伴生脚本锚点**:本 skill 使用的 tick/ledger 伴生脚本随 `subagent-driven-development` skill 分发:`<scripts>` = `<本 skill base>/../subagent-driven-development/scripts`(宿主报告的 base directory 的相邻目录);宿主未报告时以 `$(speccode plugin-root --cwd .)/skills/subagent-driven-development/scripts` 兜底。调用形态 `node <scripts>/<name>.mjs …`,输出单行 JSON。
+
 **注意:** 告诉人类伙伴,有子代理可用时执行效果好得多(Claude Code、Codex CLI、Codex App、Copilot CLI、Gemini CLI 都满足子代理可用条件)。如果子代理可用,改用 `/speccode:subagent-driven-development`,而不是本命令。
 
 ## 知识库入口
@@ -27,6 +29,7 @@ description: "Execute an implementation plan in batches within this session, wit
 2. **绑定功能分支**:运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。
 3. **读记忆**:运行 `speccode read-memory --cwd . --branch <F>`;返回非 null 时把 memory 内容作为既有上下文参考,再继续——memory 上下文 MUST 参与第 1 步的批判性审查。
 4. **记录 BASE**:开始执行前 MUST 运行 `git rev-parse HEAD` 记录当前 commit,完成后 code review 以它为 BASE。
+5. **解析工作区与 ledger**:运行 `node <scripts>/sdd-workspace.mjs <PLAN_FILE>` 取 `dir`;若 `<dir>/progress.md` 存在且首行为 `# SDD ledger — plan: <PLAN_FILE>`,凡有 `Task <N>: complete` 行的任务都是 DONE——跳过不重做,从第一个没有完成行的任务继续。
 
 ### 第 1 步:加载并审查 Plan
 
@@ -38,9 +41,9 @@ description: "Execute an implementation plan in batches within this session, wit
 ### 第 2 步:执行任务
 
 对每个任务:
-1. 标记为 in_progress
+1. 标记为 in_progress;运行 `node <scripts>/task-start.mjs <PLAN_FILE> <N>` 记下 `base`(本任务 ledger 行与 diff 的起点)
 2. 严格按各步执行(plan 的步是一口大小的)
-3. 按规定运行验证
+3. 按规定运行验证,并以 task-done 收口:`node <scripts>/task-done.mjs <PLAN_FILE> <N> <base> -- <该任务的验证命令>`——脚本运行验证命令、全量输出落工作区日志,**仅通过时**追加 ledger 完成行(`Task <N>: complete (commits …, tests: … → …)`),失败透传退出码、不记行、不进入下一步
 4. 标记为 completed
 5. 触发 onTaskCompleted 钩子(每个 task 完成时,payload 带 `"task": <N>`):
    ```bash
@@ -49,9 +52,9 @@ description: "Execute an implementation plan in batches within this session, wit
    输出 `hook.ok=false` 或含 `warning` 时打印警告(含事件名与错误摘要),MUST NOT 阻断主流程。
 6. **同步勾选 plan 进度**:运行
    ```bash
-   speccode tick-task --cwd . --plan <PLAN_FILE> --task <N>
+   node <scripts>/tick-task.mjs <PLAN_FILE> <N>
    ```
-   把 plan 中 Task N 的 step checkbox 勾选为 `[x]`。verb 输出 `ticked`(本次真正勾选的 step 行)与 `already`(此前已是 `[x]` 的行),二者共同表达幂等:重跑同一 task 时 `ticked` 为空、`already` 列出全部,plan 文件不被改写。
+   把 plan 中 Task N 的 step checkbox 勾选为 `[x]`。脚本输出 `ticked`(本次真正勾选的 step 行)与 `already`(此前已是 `[x]` 的行),二者共同表达幂等:重跑同一 task 时 `ticked` 为空、`already` 列出全部,plan 文件不被改写。
    - `ticked` **非空**:把勾选 diff 折进本簿记点提交
      ```bash
      git add <PLAN_FILE> && git commit -m "docs(speccode): tick task <N>"

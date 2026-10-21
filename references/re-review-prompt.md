@@ -102,8 +102,9 @@ Subagent:
 - `[REPORT_FILE]` — the implementer's report file (fix reports appended)
 - `[FIX_BASE_SHA]` — the head the previous review saw
 - `[HEAD_SHA]` — current commit
-- `[DIFF_FILE]` — the path `speccode review-package --cwd . --plan
-  PLAN_FILE --base FIX_BASE --head HEAD` printed as the JSON `path` field
+- `[DIFF_FILE]` — the path `node <scripts>/review-package.mjs PLAN_FILE
+  FIX_BASE HEAD` printed as the JSON `path` field (see the SDD skill for
+  the `<scripts>` anchor)
 
 **Re-reviewer returns:** per-finding verdicts (ADDRESSED / NOT ADDRESSED),
 new breakage in the fix diff, out-of-scope observations, and a round verdict.

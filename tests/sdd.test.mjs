@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { makeRepo, commitFile } from './helpers/tmprepo.mjs';
 import {
   worktreeRoot, sddWorkspace, extractTaskBrief, taskBrief, reviewPackage, tickTask,
-} from '../lib/sdd.mjs';
+} from '../skills/subagent-driven-development/scripts/sdd-plan.mjs';
 
 function headSha(repo) {
   return spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).stdout.trim();

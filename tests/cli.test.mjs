@@ -332,80 +332,14 @@ test('resolve-worktree-dir returns config value when present', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('sdd-workspace requires --plan', () => {
+test('SDD verbs no longer exist (moved to companion scripts)', () => {
   const repo = makeRepo();
-  const { code, json } = runCli(repo, 'sdd-workspace', '--cwd', repo);
-  assert.equal(code, 1);
-  assert.equal(json.ok, false);
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('sdd-workspace rejects a bare --plan flag', () => {
-  const repo = makeRepo();
-  const { code, json } = runCli(repo, 'sdd-workspace', '--cwd', repo, '--plan');
-  assert.equal(code, 1);
-  assert.equal(json.ok, false);
-  assert.ok(json.error.includes('--plan'));
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('task-brief rejects a bare --task flag (never silently task 1)', () => {
-  const repo = makeRepo();
-  const plan = join(repo, 'p.md');
-  writeFileSync(plan, '### Task 1: A\nbody-1\n');
-  const { code, json } = runCli(repo, 'task-brief', '--cwd', repo, '--plan', plan, '--task');
-  assert.equal(code, 1);
-  assert.equal(json.ok, false);
-  assert.ok(json.error.includes('--task'));
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('task-brief extracts a task into the workspace', () => {
-  const repo = makeRepo();
-  const plan = join(repo, 'p.md');
-  writeFileSync(plan, '### Task 1: A\nbody-1\n\n### Task 10: B\nbody-10\n');
-  const { code, json } = runCli(repo, 'task-brief', '--cwd', repo, '--plan', plan, '--task', '1');
-  assert.equal(code, 0);
-  assert.ok(json.ok);
-  const content = readFileSync(json.path, 'utf8');
-  assert.ok(content.includes('body-1'));
-  assert.ok(!content.includes('body-10'));
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('review-package writes a range-named diff file', () => {
-  const repo = makeRepo();
-  const plan = join(repo, 'p.md');
-  writeFileSync(plan, '# p');
-  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).stdout.trim();
-  spawnSync('git', ['checkout', '-b', 'side'], { cwd: repo });
-  writeFileSync(join(repo, 'x.txt'), 'x');
-  spawnSync('git', ['add', '.'], { cwd: repo });
-  spawnSync('git', ['commit', '-m', 'x'], { cwd: repo });
-  const tip = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).stdout.trim();
-  const { code, json } = runCli(repo, 'review-package', '--cwd', repo,
-    '--plan', plan, '--base', head, '--head', tip);
-  assert.equal(code, 0);
-  assert.ok(json.ok);
-  assert.ok(json.path.includes('review-'));
-  assert.ok(readFileSync(json.path, 'utf8').includes('x.txt'));
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('sdd-workspace inside a linked worktree resolves to the worktree root', () => {
-  const repo = realpathSync(makeRepo());
-  const wtPath = join(repo, '.claude', 'worktrees', 'wt-sdd');
-  mkdirSync(join(repo, '.claude', 'worktrees'), { recursive: true });
-  const add = spawnSync('git', ['worktree', 'add', wtPath, '-b', 'worktree-sdd', 'HEAD'],
-    { cwd: repo, encoding: 'utf8' });
-  assert.equal(add.status, 0, add.stderr);
-  const plan = join(wtPath, 'p.md');
-  writeFileSync(plan, '# p');
-  const { code, json } = runCli(wtPath, 'sdd-workspace', '--cwd', wtPath, '--plan', plan);
-  assert.equal(code, 0);
-  // realpath 归一:macOS 上 tmpdir 是 /var→/private/var 符号链接
-  assert.equal(realpathSync(json.dir), join(realpathSync(wtPath), '.speccode', 'sdd', 'p'));
-  spawnSync('git', ['worktree', 'remove', wtPath, '--force'], { cwd: repo, encoding: 'utf8' });
+  for (const verb of ['sdd-workspace', 'task-brief', 'review-package', 'tick-task']) {
+    const { code, json } = runCli(repo, verb, '--cwd', repo);
+    assert.equal(code, 1);
+    assert.equal(json.ok, false);
+    assert.match(json.error, /unknown verb/);
+  }
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -1019,36 +953,6 @@ test('write-consumed-archives without --json-stdin fails', () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('tick-task verb ticks plan checkboxes and returns ticked/already', () => {
-  const repo = makeRepo();
-  const plan = join(repo, 'plan.md');
-  writeFileSync(plan, [
-    '# P', '', '### Task 1: A', '', '- [ ] s1', '', '```js', '- [ ] fenced', '```', '',
-    '- [ ] s2', '', '### Task 2: B', '', '- [ ] s3', '',
-  ].join('\n'));
-  const { code, json } = runCli(repo, 'tick-task', '--cwd', repo, '--plan', plan, '--task', '1');
-  assert.equal(code, 0);
-  assert.equal(json.ok, true);
-  assert.equal(json.task, 1);
-  assert.equal(json.ticked.length, 2);
-  const after = readFileSync(plan, 'utf8');
-  assert.ok(after.includes('- [x] s1'));
-  assert.ok(after.includes('- [ ] fenced'));
-  assert.ok(after.includes('- [ ] s3'));
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('tick-task verb errors when task N absent', () => {
-  const repo = makeRepo();
-  const plan = join(repo, 'plan.md');
-  writeFileSync(plan, '# P\n\n### Task 1: A\n\n- [ ] s1\n');
-  const { code, json } = runCli(repo, 'tick-task', '--cwd', repo, '--plan', plan, '--task', '9');
-  assert.equal(code, 1);
-  assert.equal(json.ok, false);
-  assert.match(json.error, /task 9 not found/);
-  rmSync(repo, { recursive: true, force: true });
-});
-
 test('executing-plans.md documents the tick-task completion step', () => {
   const md = readFileSync(join(__dirname, '..', 'skills', 'executing-plans', 'SKILL.md'), 'utf8');
   assert.ok(md.includes('tick-task'), 'executing-plans must reference tick-task verb');
@@ -1114,22 +1018,6 @@ test('根 README.md / README_CN.md 用 code intelligence / 代码智能工具 �
   assert.ok(cn.includes('代码智能工具'), '根 README_CN.md 必须含"代码智能工具"措辞');
   assert.ok(!cn.includes('知识库工具'), '根 README_CN.md 不得残留"知识库工具"措辞');
   assert.ok(!cn.includes('knowledge_tools'), '根 README_CN.md 不得残留 knowledge_tools 字段名');
-});
-
-test('tick-task verb is idempotent and leaves the plan byte-identical on re-run', () => {
-  const repo = makeRepo();
-  const plan = join(repo, 'plan.md');
-  writeFileSync(plan, '# P\n\n### Task 1: A\n\n- [ ] s1\n\n## 收尾\n\n- [ ] tail\n');
-  const first = runCli(repo, 'tick-task', '--cwd', repo, '--plan', plan, '--task', '1');
-  assert.equal(first.json.ticked.length, 1);
-  const afterFirst = readFileSync(plan, 'utf8');
-  assert.ok(afterFirst.includes('- [ ] tail')); // 任务区段止于 `## 收尾`
-  const { code, json } = runCli(repo, 'tick-task', '--cwd', repo, '--plan', plan, '--task', '1');
-  assert.equal(code, 0);
-  assert.deepEqual(json.ticked, []);
-  assert.equal(json.already.length, 1);
-  assert.equal(readFileSync(plan, 'utf8'), afterFirst);
-  rmSync(repo, { recursive: true, force: true });
 });
 
 test('syncing.md documents capability RENAME handling via rename-from metadata', () => {

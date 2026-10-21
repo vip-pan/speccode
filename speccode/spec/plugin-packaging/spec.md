@@ -20,9 +20,9 @@ speccode 的开发库仓库 SHALL 同时作为 Claude Code marketplace 仓与插
 
 ### Requirement: 插件根目录布局
 
-speccode 插件根 SHALL 为仓库根本身,并 MUST 含 `.claude-plugin/plugin.json`(manifest)、`skills/`(skill markdown,`<name>/SKILL.md` 目录式布局)、`bin/speccode.mjs`(CLI 引擎前端,自带 `#!/usr/bin/env node` shebang)、`bin/speccode-mcp.mjs`(MCP stdio 引擎前端,自带同一 shebang)、`lib/`(引擎纯逻辑模块,含 verb 表 `lib/verbs.mjs`)、`hooks/`(插件 hooks 层)、`references/`(辅助资源)、`tests/`(单测)。`.claude-plugin/` 目录 MUST 恰含 `plugin.json` 与 `marketplace.json` 两个文件,插件根 MUST NOT 把组件放在 `.claude-plugin/` 目录内部,MUST NOT 存在遗留的 `plugins/` 嵌套层与 `commands/` 目录。
+speccode 插件根 SHALL 为仓库根本身,并 MUST 含 `.claude-plugin/plugin.json`(manifest)、`skills/`(skill markdown,`<name>/SKILL.md` 目录式布局;skill 目录内允许 `scripts/` 子目录承载伴生脚本——node ESM、首行 `#!/usr/bin/env node`、可执行位、仅 `node:` 内置与同目录相对 import、MUST NOT import `lib/`)、`bin/speccode.mjs`(CLI 引擎前端,自带 `#!/usr/bin/env node` shebang)、`bin/speccode-mcp.mjs`(MCP stdio 引擎前端,自带同一 shebang)、`lib/`(引擎纯逻辑模块,含 verb 表 `lib/verbs.mjs`)、`hooks/`(插件 hooks 层)、`references/`(辅助资源)、`tests/`(单测)。`.claude-plugin/` 目录 MUST 恰含 `plugin.json` 与 `marketplace.json` 两个文件,插件根 MUST NOT 把组件放在 `.claude-plugin/` 目录内部,MUST NOT 存在遗留的 `plugins/` 嵌套层与 `commands/` 目录。
 
-仓库根 SHALL 另含 `package.json` **仅承载 npm 分发元数据**:`name`/`version`/`type: "module"`/`bin`(`speccode` → `bin/speccode.mjs`,`speccode-mcp` → `bin/speccode-mcp.mjs`)/`files` 白名单(`bin`、`lib`、`skills`、`hooks`、`references`);MUST NOT 含 `dependencies`/`devDependencies`(零第三方依赖不变量随 npm 分发延续,MCP 前端亦不引入 SDK),MUST NOT 引入构建步骤。`files` 白名单外的本仓自用内容(tests/docs/speccode/support/scripts/.github/各宿主 adapter 目录)MUST NOT 进入 npm 包。
+仓库根 SHALL 另含 `package.json` **仅承载 npm 分发元数据**:`name`/`version`/`type: "module"`/`bin`(`speccode` → `bin/speccode.mjs`,`speccode-mcp` → `bin/speccode-mcp.mjs`)/`files` 白名单(`bin`、`lib`、`skills`、`hooks`、`references`);MUST NOT 含 `dependencies`/`devDependencies`(零第三方依赖不变量随 npm 分发延续,MCP 前端与伴生脚本亦不引入任何依赖),MUST NOT 引入构建步骤。`files` 白名单外的本仓自用内容(tests/docs/speccode/support/scripts/.github/各宿主 adapter 目录)MUST NOT 进入 npm 包。
 
 #### Scenario: 插件根目录树
 - **WHEN** 列出仓库根内容
@@ -44,6 +44,10 @@ speccode 插件根 SHALL 为仓库根本身,并 MUST 含 `.claude-plugin/plugin.
 - **WHEN** 检查 `bin/speccode.mjs` 与 `bin/speccode-mcp.mjs`
 - **THEN** 二者首行均为 `#!/usr/bin/env node` 且具备可执行位
 
+#### Scenario: 伴生脚本自包含
+- **WHEN** 检查 `skills/*/scripts/*.mjs`
+- **THEN** 可执行脚本首行为 `#!/usr/bin/env node` 且具备可执行位,全部 import 为 `node:` 内置或同目录相对路径,不存在指向 `lib/` 的 import
+
 ### Requirement: plugin.json 元数据
 
 `.claude-plugin/plugin.json` SHALL 声明 `name: "speccode"`(提供 `/speccode:` 命名空间)、`version`(MUST 为合法语义化版本,且与根 `CHANGELOG.md` 最新版本小节一致——规格 MUST NOT 把 version 钉死为字面量,否则每次发版必然制造规格漂移)、`description`、`author`(含 `name`)、`license`,并 SHOULD 声明 `homepage`、`repository`、`keywords`(含 `"sdd"`、`"tdd"`、`"hooks"`、`"memory"` 等)。
@@ -60,6 +64,8 @@ speccode 插件根 SHALL 为仓库根本身,并 MUST 含 `.claude-plugin/plugin.
 
 命令正文 SHALL 通过裸调 `speccode <verb> --cwd .` 引擎——`bin/speccode` wrapper(可执行,转调同目录 `bin/speccode.mjs`)依赖插件 `bin/` 在启用期间被加入 PATH,或由宿主安装步骤提供的 PATH shim 解析;prose MUST NOT 写死 `node <绝对或相对路径>/speccode.mjs`、`speccode.mjs` 或 `node ${CLAUDE_PLUGIN_ROOT}` 形态。`bin/speccode.mjs` 与 `bin/speccode` MUST 均具备可执行位;`speccode.mjs` 直调保留为手动终端调试形态(AGENTS.md 指引)。stdin 管道写法(`echo '<json>' | speccode <verb> --json-stdin`)MUST 保持兼容。
 
+**伴生脚本例外**:skill 自带的伴生脚本(`skills/<name>/scripts/*.mjs`)不是引擎,prose SHALL 以 `node <scripts>/<name>.mjs …` 形态调用,其中 `<scripts>` 的锚点 MUST 是宿主加载 skill 时报告的 skill base directory(相邻 skill 以 `<本 skill base>/../<skill>/scripts` 引用),宿主未报告时以 `$(speccode plugin-root --cwd .)/skills/<skill>/scripts` 兜底;锚点说明 MUST 集中在该 skill 正文开头一段,prose MUST NOT 写死绝对路径或宿主专属变量。
+
 #### Scenario: 命令正文裸调形态
 - **WHEN** 检查 `skills/*/SKILL.md` 与 `references/*.md`
 - **THEN** 引擎调用写作 `speccode <verb> --cwd .`,不存在 `speccode.mjs <verb>`、`node plugins/speccode/...`、`node .claude/speccode/...` 或 `node ${CLAUDE_PLUGIN_ROOT}` 形态的引用
@@ -75,6 +81,10 @@ speccode 插件根 SHALL 为仓库根本身,并 MUST 含 `.claude-plugin/plugin.
 #### Scenario: speccode.mjs 手动调试形态保留
 - **WHEN** 检查 `bin/speccode.mjs` 文件权限与 AGENTS.md 的调试指引
 - **THEN** 首行为 `#!/usr/bin/env node`、文件具备可执行位,AGENTS.md 手动调试指引仍为 `node bin/speccode.mjs <verb> --cwd .`
+
+#### Scenario: 伴生脚本调用形态
+- **WHEN** 检查 `skills/subagent-driven-development/SKILL.md` 与 `skills/executing-plans/SKILL.md`
+- **THEN** 伴生脚本以 `node <scripts>/<name>.mjs` 形态调用,正文开头存在唯一一段锚点说明(含宿主 base directory 与 `plugin-root` 兜底),不含 `${CLAUDE_PLUGIN_ROOT}`
 
 ### Requirement: 插件源码与运行时数据边界
 

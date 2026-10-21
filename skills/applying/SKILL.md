@@ -42,7 +42,7 @@ description: "Tier 1 manual execution entry: implement tasks.md checklist items 
 2. 严格按条目内容实现;涉及代码的条目 MUST 遵循 test-driven-development(先写失败测试、确认失败、再实现转绿)。实现所需的完整细节以条目文本与 propose/ 文档为准。
 3. 按条目自带验证方式验证;涉及代码的条目 MUST 跑全量测试确认不因本条变红。
 4. **发现前序文档矛盾**(specs delta / proposal / design 与实际可行方案冲突)→ MUST 回写受影响文档使文档集一致,回写随本条 commit 落盘(回写范围不含 frontmatter 元数据)。
-5. **勾选回填**:把该条 `- [ ]` 改为 `- [x]`(tasks.md 是文档,直接编辑;`tick-task` verb 面向 plan 的 `### Task N` 结构,MUST NOT 用于 tasks.md)。已勾选条目重跑时幂等跳过。
+5. **勾选回填**:把该条 `- [ ]` 改为 `- [x]`(tasks.md 是文档,直接编辑;tick-task 伴生脚本面向 plan 的 `### Task N` 结构,MUST NOT 用于 tasks.md)。已勾选条目重跑时幂等跳过。
 6. **簿记提交**(两个 commit,与 executing-plans 的进度节奏一致):
    本条无产出文件(如纯验证条目)时跳过第一个 commit,仅做勾选簿记提交,不硬跑 `git commit` 让 "nothing to commit" 以非零退出误报失败。
    ```bash
@@ -73,5 +73,5 @@ description: "Tier 1 manual execution entry: implement tasks.md checklist items 
 
 - 唯一准入 = tier 字段为 1 且无 plan;绝不绕过 review 进 syncing。
 - tier 字段只读;缺失/非法报错退出,不猜默认值。
-- tasks.md 勾选是文档编辑,不用 tick-task verb。
+- tasks.md 勾选是文档编辑,不用 tick-task 伴生脚本。
 - 卡住(条目不可实现、验证反复失败、指令不清)就停下求助,不盲猜。

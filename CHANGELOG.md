@@ -13,6 +13,8 @@
 - Added: 契约版本——`lib/contract.mjs` 的 `CONTRACT_VERSION` 与 `contract-version` verb/tool(自报 contractVersion / engineVersion / protocolVersions),MCP `initialize.instructions` 携带契约版本。
 - Changed: verb 表下沉 `lib/verbs.mjs`(导出 `VERBS` / `runVerb` / `STDIN_MODE`),`bin/speccode.mjs` 收缩为薄壳;写 verb 的 stdin 非法 JSON 统一返回 `invalid JSON on stdin`。
 - Fixed: 两个引擎前端的入口守卫改为 realpath 比对——此前 `process.argv[1].endsWith('speccode.mjs')` 在 npm bin 符号链接(名为 `speccode`)下为假,`npm i -g speccode` 后裸调静默零输出。
+- Added: SDD 伴生脚本 `task-start.mjs` / `task-done.mjs`(ledger 脚本化:BASE+brief 一次取得;完成行仅在验证命令通过(note 模式则按注记)时单次追加写入)。
+- Changed: **BREAKING** SDD 执行机器由引擎 verb 改为伴生脚本(`skills/subagent-driven-development/scripts/`,node ESM、自包含、不 import lib、随插件分发零安装)——`sdd-workspace` / `task-brief` / `review-package` / `tick-task` 四个 verb 与同名 MCP tool 删除,升级路径:改调对应脚本 CLI(位置参数、单行 JSON 输出不变);`lib/sdd.mjs` 移除。
 
 ## [0.7.3] - 2026-09-17
 

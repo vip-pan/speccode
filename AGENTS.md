@@ -33,6 +33,9 @@ node bin/speccode.mjs <verb> --cwd . [--flags]
 # 手动驱动 MCP 前端(ndjson JSON-RPC,每行一条消息;stdout 每行一条回应,日志只走 stderr)
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | node bin/speccode-mcp.mjs
+
+# 手动驱动 SDD 伴生脚本(单行 JSON 输出)
+node skills/subagent-driven-development/scripts/sdd-workspace.mjs speccode/changes/<slug>/plan/<plan>.md
 ```
 
 无 lint / build 步骤。
@@ -43,9 +46,9 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol
 
 speccode 编排的分支拓扑是**双层**:普通需求从 trunk 直接切 `<type>/<slug>` 开发分支(git worktree,一步直达),大需求 opt-in 走集成分支 + 父实体(子分支从集成 head 切出,终局一次 PR 上 trunk)。开发流程由 proposing 定层(Tier 1/2/3)路由后续链路(Tier 1 → applying 手动实现 / Tier 2 → writing-plans + SDD / Tier 3 → 先 brainstorming 再 writing-plans),tier 字段落 proposal.md frontmatter。代码分三层(外加 `references/` 辅助层),改动前先定位属于哪一层——**确定性逻辑绝不写进命令 markdown,一律下沉到 lib**:
 
-1. **引擎 lib**(`lib/*.mjs`)—— 17 个经单测的纯逻辑模块(atomic / config / contract / detect / git / hooks / knowledge / mcp / memory / prtool / reconcile / sanitize / sdd / slug / state / timestamp / verbs)。所有 git 操作、JSON 读写、对账、hooks/memory、SDD 工件、verb 表与 MCP 协议都在这里。改逻辑改这里,并配套改 `tests/`。
+1. **引擎 lib**(`lib/*.mjs`)—— 16 个经单测的纯逻辑模块(atomic / config / contract / detect / git / hooks / knowledge / mcp / memory / prtool / reconcile / sanitize / slug / state / timestamp / verbs)。所有 git 操作、JSON 读写、对账、hooks/memory、verb 表与 MCP 协议都在这里。改逻辑改这里,并配套改 `tests/`。
 2. **引擎前端**(`bin/speccode.mjs` CLI 与 `bin/speccode-mcp.mjs` MCP stdio server)—— 两个薄壳,共享 `lib/verbs.mjs` 的 `VERBS` 表(verb 清单以该表为准;`runVerb` 把未知 verb 与 handler 抛错统一为 `{ok:false,error}`)。CLI:读 verb 直接返回;**写 verb 必须走 `--json-stdin`**(`echo '<json>' | speccode write-state --json-stdin`),stdin 由壳按 `STDIN_MODE` 声明读取并注入为 `flags.payload`(`run-hook` 的片段为 `flags.fragment`),handler 自身不读 stdin;非法 JSON 统一 `invalid JSON on stdin` + exit 1。MCP:tools 与 verb 1:1 同名(排除 `plugin-root`),写类 tool 以 `payload` 参数承载同一 JSON,verb 失败映射 `isError` 而非协议错误;协议逻辑在 `lib/mcp.mjs`,`lib/contract.mjs` 的 `CONTRACT_VERSION` 经 `contract-version` verb/tool 与 `initialize.instructions` 自报。两前端入口守卫均为 realpath 比对(兼容 npm bin 符号链接)。
-3. **命令交互层**(`skills/<name>/SKILL.md`,一 skill 一目录)—— 24 个 slash 命令的 prose 指令,只负责提问/确认/调用 CLI verb/解析 JSON/报告。**不重复实现逻辑**,纯 git 动作(如 `git worktree add`)可直接写,其余走 verb。其中 `applying` 是 Tier 1(极小需求)的手动执行入口:按 tasks.md 逐条实现、勾选回填 + 簿记 commit,完成后必经 code review。
+3. **命令交互层**(`skills/<name>/SKILL.md`,一 skill 一目录)—— 24 个 slash 命令的 prose 指令,只负责提问/确认/调用 CLI verb/解析 JSON/报告。**不重复实现逻辑**,纯 git 动作(如 `git worktree add`)可直接写,其余走 verb。其中 `applying` 是 Tier 1(极小需求)的手动执行入口:按 tasks.md 逐条实现、勾选回填 + 簿记 commit,完成后必经 code review。SDD 执行机器以伴生脚本形态随 skill 分发(skills/subagent-driven-development/scripts/,node ESM、不 import lib、锚点见各 skill 的「伴生脚本锚点」段),不再经引擎 verb。
 4. **references 层**(`references/`)—— 命令可引用的辅助文档(评审提示 / 调试与防御方法 / 测试要点等),与命令 markdown 分离、不承载交互逻辑,随插件源码跟踪。
 
 5. **插件自带 hooks 层**(`hooks/`)—— Claude Code settings hook(`hooks/hooks.json` 声明、经 `${CLAUDE_PLUGIN_ROOT}` 引用,如 PreToolUse 工具输入清洗)——与 `lib/hooks.mjs` 的 config 生命周期事件是两个家族,别混淆。
@@ -76,7 +79,7 @@ speccode 编排的分支拓扑是**双层**:普通需求从 trunk 直接切 `<ty
 
 - **memory 走 writeTextAtomic**:`memory/*.md` 文本写入与 config/state 同策(临时文件 + rename 覆盖,`atomic.writeTextAtomic`);写前必读(read-before-write),在现有内容上增量,不做整文件无脑覆盖。
 
-- **SDD 工作区 show-toplevel(有意差异)**:主仓根统一用 `--git-common-dir` 定位,**唯独** SDD 工作区(`.speccode/sdd/<plan>/`)归属**当前 worktree 根**,用 `git rev-parse --show-toplevel`(见 `sdd.mjs`)——这样 sdd/ 工件随 `git worktree remove` 一并清理。两处定位方式不同是刻意的,别"统一"。
+- **SDD 工作区 show-toplevel(有意差异)**:主仓根统一用 `--git-common-dir` 定位,**唯独** SDD 工作区(`.speccode/sdd/<plan>/`)归属**当前 worktree 根**,用 `git rev-parse --show-toplevel`(见 `skills/subagent-driven-development/scripts/sdd-plan.mjs`)——这样 sdd/ 工件随 `git worktree remove` 一并清理。两处定位方式不同是刻意的,别"统一"。
 
 - **写 verb 必须 `--json-stdin`**:write-config / write-state / write-memory 等写 verb 强制要求 `--json-stdin`,从 stdin 读 JSON;缺省直接 `{ok:false,error}`。命令层不许用 argv 传长 JSON。MCP 前端的等效形式是 tool 参数 `payload`;两前端对同一 payload 的落盘结果一致。
 

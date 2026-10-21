@@ -169,9 +169,9 @@ Subagent:
 **Placeholders:**
 - `[MODEL]` — REQUIRED: reviewer model per the Model Selection section of
   /speccode:subagent-driven-development
-- `[BRIEF_FILE]` — REQUIRED: the task brief file (`speccode task-brief
-  --cwd . --plan PLAN --task N` prints it as the JSON `path` field; same file
-  the implementer worked from)
+- `[BRIEF_FILE]` — REQUIRED: the task brief file (`node
+  <scripts>/task-brief.mjs PLAN N` prints it as the JSON `path` field; same
+  file the implementer worked from)
 - `[GLOBAL_CONSTRAINTS]` — the binding requirements copied verbatim from
   the plan's Global Constraints section or the spec: exact values, formats,
   and stated relationships between components (not process rules — those
@@ -181,8 +181,8 @@ Subagent:
 - `[BASE_SHA]` — commit before this task
 - `[HEAD_SHA]` — current commit
 - `[DIFF_FILE]` — REQUIRED: the path the controller wrote the review
-  package to (`speccode review-package --cwd . --plan PLAN_FILE --base
-  BASE --head HEAD` prints the unique path it wrote as the JSON `path`
+  package to (`node <scripts>/review-package.mjs PLAN_FILE BASE HEAD`
+  prints the unique path it wrote as the JSON `path`
   field; the package never enters the controller's context)
 
 **Reviewer returns:** Spec Compliance verdict (✅/❌/⚠️), Strengths, Issues
