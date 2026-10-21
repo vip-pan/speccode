@@ -34,6 +34,9 @@ node bin/speccode.mjs <verb> --cwd . [--flags]
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | node bin/speccode-mcp.mjs
 
+# lite 探测(命令开头的「引擎可用性」锚点段据此降级)
+command -v speccode || echo lite
+
 # 手动驱动 SDD 伴生脚本(单行 JSON 输出)
 node skills/subagent-driven-development/scripts/sdd-workspace.mjs speccode/changes/<slug>/plan/<plan>.md
 ```

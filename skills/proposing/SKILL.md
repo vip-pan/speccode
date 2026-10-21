@@ -3,6 +3,18 @@ name: proposing
 description: "Land exploration conclusions as proposal/design/specs/tasks documents (speccode/changes/<slug>/propose/), committing on save (提案文档) Interact in the user's language; ask when it cannot be determined."
 ---
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 根据 exploring 的结论,通过提问完善粗略想法、探索需求漏洞,把需求落地为结构化文档。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**(`git rev-parse --abbrev-ref HEAD` 校验,且当前 worktree 必须能归属到某个 active 分支)。
 
 ## 语言守护
@@ -16,7 +28,7 @@ description: "Land exploration conclusions as proposal/design/specs/tasks docume
 ## 前置
 
 1. `read-config` 加载 config;为 null → 提示先 `/speccode:init` 并退出。
-2. 运行 `speccode reconcile --cwd . --advance-pr`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。
+2. 运行 `speccode reconcile --cwd . --advance-pr`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。lite 模式(锚点段探测失败)下本步降级:以 `git rev-parse --abbrev-ref HEAD` 取当前分支为 F(须为 `<type>/<slug>` 形态,否则报错退出,提示安装引擎),不做对账与状态推进。
 3. 计算 slug = F 的 slug 段(`feature/payment-api` → `payment-api`)。
 4. **冲突检查**:若 `speccode/changes/<slug>/` 已存在且未归档 → 向用户提问(给出选项)询问:「续写补充 / 先 archiving 再重建 / 取消」。取消 → 退出;先归档 → 引导用户先执行 `/speccode:archiving` 后重跑本命令;续写 → 在既有内容上增量修改。
 5. **代码智能工具咨询**:若当前会话中可用的代码智能工具(如代码图谱/索引类 MCP 或 CLI),参考代码时 MUST 优先使用;不可用或不存在则静默回退 Grep/Glob/Read;任何情况下工具缺失 MUST NOT 导致报错。本项不读取任何配置登记,探测与登记机制已随 config v3 瘦身退役。
@@ -27,6 +39,8 @@ description: "Land exploration conclusions as proposal/design/specs/tasks docume
 1. 运行 `speccode read-knowledge --cwd . --index` 读 `_index.md`(恒读,便宜);`exists:false` → 静默跳过本节。
 2. 判断本任务相关主题 → `speccode read-knowledge --cwd . --topic <名称>` 读对应 topic 文件;`exists:false` → 静默跳过该主题。
 3. 读取失败或目录不存在 → 静默跳过,绝不阻断主流程(T0 兜底,永不报错)。
+
+lite 模式按锚点段降级表直读文件;文件不存在 = 无知识,静默继续(T0 兜底的 lite 等价)。
 
 ## 需求澄清(提问环节)
 

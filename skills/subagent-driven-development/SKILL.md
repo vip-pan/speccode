@@ -5,6 +5,18 @@ description: "Dispatch a fresh subagent per task with dual reviews plus a final 
 
 # Subagent 驱动开发(Subagent-Driven Development)
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 执行 plan 的方式:每个任务派发一个全新的实现者子代理,其后做一次任务审查(spec 符合性 + 代码质量),最后做一次覆盖整支的终审。
 
 > **宿主能力依赖**:本 skill 依赖宿主的子代理派发能力。宿主无子代理时,按 `executing-plans` 在当前会话串行执行同一 plan,任务审查与终审由主代理自查替代。
@@ -53,6 +65,8 @@ digraph when_to_use {
 1. 运行 `speccode read-knowledge --cwd . --index` 读 `_index.md`(恒读,便宜);`exists:false` → 静默跳过本节。
 2. 判断本任务相关主题 → `speccode read-knowledge --cwd . --topic <名称>` 读对应 topic 文件;`exists:false` → 静默跳过该主题。
 3. 读取失败或目录不存在 → 静默跳过,绝不阻断主流程(T0 兜底,永不报错)。
+
+lite 模式按锚点段降级表直读文件;文件不存在 = 无知识,静默继续(T0 兜底的 lite 等价)。
 
 ## 流程
 
@@ -125,7 +139,7 @@ digraph process {
 
 确保工作发生在隔离工作区中:你应当已经在 speccode worktree 里(由 `/speccode:creating-worktree` 创建)。未经人类伙伴明确同意,MUST NOT 在 main/master 分支上开始实现。
 
-**绑定功能分支**:运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。
+**绑定功能分支**:运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。lite 模式(锚点段探测失败)下本步降级:以 `git rev-parse --abbrev-ref HEAD` 取当前分支为 F(须为 `<type>/<slug>` 形态,否则报错退出,提示安装引擎),不做对账与状态推进。
 
 **读记忆**:运行 `speccode read-memory --cwd . --branch <F>`;返回非 null 时把 memory 内容作为既有上下文参考,再继续——memory 上下文 MUST 参与下面的 plan 通读与 pre-flight 冲突扫描。
 

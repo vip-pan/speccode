@@ -3,6 +3,18 @@ name: brainstorming
 description: "Socratic design refinement: one question at a time, weigh options, present the design in sections for approval; writes to brainstorm/, syncs back to propose/, commits on save (脑暴设计) Interact in the user's language; ask when it cannot be determined."
 ---
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 把想法通过自然协作对话打磨成完整设计。先理解项目现状,再一次一个问题地精化;理解清楚后分段呈现设计并获得用户批准。
 
 <HARD-GATE>
@@ -24,7 +36,7 @@ description: "Socratic design refinement: one question at a time, weigh options,
 ## 前置
 
 1. **trunk 防护**:`git rev-parse --abbrev-ref HEAD` 必须为非 trunk 的 `<type>/<slug>` 形态分支;否则退出并提示「请在开发分支上运行本命令」(防止直提 trunk)。(`read-config` 先跑,为 null → 提示先 `/speccode:init` 并退出)。
-2. 运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错退出。计算 slug = F 的 slug 段。
+2. 运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错退出。计算 slug = F 的 slug 段。lite 模式(锚点段探测失败)下本步降级:以 `git rev-parse --abbrev-ref HEAD` 取当前分支为 F(须为 `<type>/<slug>` 形态,否则报错退出,提示安装引擎),不做对账与状态推进。
 3. **读既有文档**:若 `speccode/changes/<slug>/propose/` 存在,读其中的 proposal/design/specs/tasks 作为脑暴起点;不存在 → 本命令将从零产出设计(简单场景可不经 proposing 直接使用本命令)。
 4. **代码智能工具咨询**:若当前会话中可用的代码智能工具(如代码图谱/索引类 MCP 或 CLI),参考代码时 MUST 优先使用;不可用或不存在则静默回退 Grep/Glob/Read;任何情况下工具缺失 MUST NOT 导致报错。本项不读取任何配置登记,探测与登记机制已随 config v3 瘦身退役。
 5. **读记忆**:运行 `speccode read-memory --cwd . --branch <F>`;返回非 null 时把 memory 内容作为既有上下文参考,再继续。
@@ -34,6 +46,8 @@ description: "Socratic design refinement: one question at a time, weigh options,
 1. 运行 `speccode read-knowledge --cwd . --index` 读 `_index.md`(恒读,便宜);`exists:false` → 静默跳过本节。
 2. 判断本任务相关主题 → `speccode read-knowledge --cwd . --topic <名称>` 读对应 topic 文件;`exists:false` → 静默跳过该主题。
 3. 读取失败或目录不存在 → 静默跳过,绝不阻断主流程(T0 兜底,永不报错)。
+
+lite 模式按锚点段降级表直读文件;文件不存在 = 无知识,静默继续(T0 兜底的 lite 等价)。
 
 ## 检查清单
 
