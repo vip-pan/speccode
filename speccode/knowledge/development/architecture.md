@@ -43,11 +43,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/code-intel-tool-integration -->
-**代码智能工具探测:available / integrated 两维度独立探测,不短路**。available = 插件命中(~/.claude/plugins/installed_plugins.json)∨ CLI 命中(command -v)∨ 任意 MCP 配置(项目 .mcp.json 或用户 ~/.claude.json);integrated = 项目 .mcp.json ∨ ~/.claude.json[projects][cwd].mcpServers ∨ 项目配置目录(understand-anything 为 .ua/.understand-anything、codegraph 为 .codegraph、graphify 为 .graphify、codemap 为 .codemaker/codeindex 或 .codemaker/codemap、gitnexus 为 .gitnexus;lightrag 已移出——通用文档 RAG 非代码非图谱,属分类噪声)。登记判据 = available ∧ integrated 双 true;MCP 类「项目 .mcp.json 配置」同时即两轴,避免 MCP-only 工具被误杀。verb 输出形状 {tools:[{id, available:{value,evidence}, integrated:{value,evidence}}]},按工具聚合贴近 init 逐项确认交互。
-
-**gitignore 校验三分支化(worktree_dir)**:worktree_dir 在仓库根之外 → {scope:'outside'} 静默继续(仓库外永不可能被跟踪,根本不调 git);仓库内未忽略 → {scope:'inside', ignored:false} 警告+询问;仓库内已忽略 → {scope:'inside', ignored:true} 静默。显式三态对象优于两态 boolean;containment 判定用纯路径(path.resolve 归一 + 前缀比较 + 尾部分隔符,防 /repo vs /repo-evil 兄弟前缀误判),与 git 解耦、可单测,不依赖 check-ignore exit 128 反推(128 还覆盖其他 fatal,反推不可靠)。确定性逻辑下沉 lib(isPathInside/worktreeDirIgnoreState 在 detect.mjs),扩展既有 verb 返回新字段优于新增独立 verb。
-
-**命名收口**:config 字段 `code_intel_tools` 与函数/常量/verb/capability 目录跨层一致(让 knowledge 词根回归知识集);改名跨引擎/CLI/命令/文档四层同步。(出自 archive/2026-08-13-knowledge-tools-detection、2026-08-12-check-ignore-outside-repo、2026-08-16-code-intel-rename;worktree_dir 三分支按「worktree 基础目录配置」requirement 的 spec 归属挂此 capability)
+**gitignore 校验三分支化(worktree_dir)**:worktree_dir 在仓库根之外 → {scope:'outside'} 静默继续(仓库外永不可能被跟踪,根本不调 git);仓库内未忽略 → {scope:'inside', ignored:false} 警告+询问;仓库内已忽略 → {scope:'inside', ignored:true} 静默。显式三态对象优于两态 boolean;containment 判定用纯路径(path.resolve 归一 + 前缀比较 + 尾部分隔符,防 /repo vs /repo-evil 兄弟前缀误判——isPathInside 需有专项单测),与 git 解耦、可单测,不依赖 check-ignore exit 128 反推。确定性逻辑下沉 lib(isPathInside/worktreeDirIgnoreState 在 detect.mjs),扩展既有 verb 返回新字段优于新增独立 verb。代码智能两维度探测与 code_intel_tools 登记已随 2026-10-21-init-slim-config 退役(叙述见 integrations 块)。(出自 archive/2026-08-13-knowledge-tools-detection、2026-08-12-check-ignore-outside-repo、2026-08-16-code-intel-rename、2026-10-21-init-slim-config;worktree_dir 三分支按「worktree 基础目录配置」requirement 的 spec 归属挂此 capability)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/documentation-facade -->

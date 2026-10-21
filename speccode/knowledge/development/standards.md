@@ -59,7 +59,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/code-intel-tool-integration -->
-**幂等补救纪律**:re-init 对 config 中已登记、但当前判定为 available-only(未集成)的项,在 diff 中标记「建议移除」并提示,经用户确认后才移除——绝不静默删除 config 已登记项;探测结果经用户逐项确认才落盘。**跨层命名一致性**:code_intel_tools(config 字段)/ detectCodeIntelTools(函数)/ CODE_INTEL_TOOL_DETECTORS(常量)/ detect-code-intel-tools(verb)/ code-intel-tool-integration(capability 目录)一致;不兼容历史不 bump config version、loadConfig 不回退旧字段,用户重新 init(避免静默兼容掩盖问题)。**兄弟前缀陷阱专项单测**:isPathInside 的 /repo vs /repo-evil 必须有专项用例。(出自 archive/2026-08-13-knowledge-tools-detection、2026-08-16-code-intel-rename、2026-08-12-check-ignore-outside-repo)
+**兄弟前缀陷阱专项单测**:isPathInside 的 /repo vs /repo-evil 必须有专项用例(纯路径 containment 判定的价值在 2026-10-21 后仍是 worktree_dir 校验的地基;代码智能幂等补救与 code_intel_tools 跨层命名一致性已随探测退役)。(出自 archive/2026-08-13-knowledge-tools-detection、2026-08-12-check-ignore-outside-repo、2026-08-16-code-intel-rename、2026-10-21-init-slim-config)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/tool-input-sanitization -->
