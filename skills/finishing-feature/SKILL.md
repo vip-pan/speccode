@@ -38,6 +38,6 @@ description: "Large-requirement finale: single PR from the integration branch to
 
 1. `delete-state --branch <集成分支>`(父实体 state;子分支 state 已随各自 finishing-worktree 完成/清理)。
 2. onFeatureFinished 钩子。
-3. `git checkout <config.trunk>` + `fetch & pull`(集成分支与子分支保留作历史,speccode 不删)。
+3. `git checkout <default-branch>`(default branch 经 `speccode default-branch --cwd .` 取 `branch` 字段)+ `fetch & pull`(集成分支与子分支保留作历史,speccode 不删)。
 4. 打印:大需求已交付,`<branch>` 已合并进 trunk。
 5. 写记忆(经用户确认或内置判据)。

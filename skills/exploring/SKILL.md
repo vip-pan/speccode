@@ -13,9 +13,9 @@ description: "Explore a requirement: learn, probe and clarify with questions; co
 
 ## 前置
 
-1. `read-config` 加载 config;为空或缺失不报错(读取方式与处理规则见「代码智能工具咨询」)。
-1b. 前置动作:先执行 `git fetch origin && git pull`(以 config.trunk 为当前分支时);失败(如离线)仅打印警告,MUST NOT 阻断。
-2. 检查 HEAD:若不在 `config.trunk` 上,打印警告「exploring 应在 trunk 执行,当前在 <branch>,建议切回」——警告 MUST NOT 硬阻断(用户可能有意在分支上查看)。
+1. `read-config` 加载 config;为空或缺失不报错(代码智能工具的使用规则见「代码智能工具咨询」)。
+1b. 前置动作:先执行 `git fetch origin && git pull`(以 `<default-branch>` 为当前分支时;该值经 `speccode default-branch --cwd .` 取 `branch` 字段);失败(如离线)仅打印警告,MUST NOT 阻断。
+2. 检查 HEAD:若不在 `<default-branch>` 上,打印警告「exploring 应在 default branch 执行,当前在 <branch>,建议切回」——警告 MUST NOT 硬阻断(用户可能有意在分支上查看)。
 
 ## 姿态
 
@@ -35,10 +35,7 @@ description: "Explore a requirement: learn, probe and clarify with questions; co
 
 ## 代码智能工具咨询
 
-开头运行 `speccode read-config --cwd .` 读取 config:
-- 若 `code_intel_tools` 非空:逐项判断其能力在当前会话是否可用(对应 MCP server/agent/CLI 是否在场);可用 → 参考代码时 MUST 优先用它(减少代码索引的 token 消耗、更好理解项目);不可用 → 回退 Grep/Glob/Read。
-- 若 `code_intel_tools` 为空或 config 缺失:静默使用基础工具。
-- 任何情况下工具缺失或不可用 MUST NOT 导致报错。
+若当前会话中可用的代码智能工具(如代码图谱/索引类 MCP 或 CLI),参考代码时 MUST 优先使用;不可用或不存在则静默回退 Grep/Glob/Read;任何情况下工具缺失 MUST NOT 导致报错。本段不读取任何配置登记,探测与登记机制已随 config v3 瘦身退役。
 
 ## 知识库入口
 

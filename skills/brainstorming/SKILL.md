@@ -26,7 +26,7 @@ description: "Socratic design refinement: one question at a time, weigh options,
 1. **trunk 防护**:`git rev-parse --abbrev-ref HEAD` 必须为非 trunk 的 `<type>/<slug>` 形态分支;否则退出并提示「请在开发分支上运行本命令」(防止直提 trunk)。(`read-config` 先跑,为 null → 提示先 `/speccode:init` 并退出)。
 2. 运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错退出。计算 slug = F 的 slug 段。
 3. **读既有文档**:若 `speccode/changes/<slug>/propose/` 存在,读其中的 proposal/design/specs/tasks 作为脑暴起点;不存在 → 本命令将从零产出设计(简单场景可不经 proposing 直接使用本命令)。
-4. **代码智能工具咨询**:若 `code_intel_tools` 非空且其能力在会话中可用,参考代码时优先使用;不可用回退 Grep/Glob/Read,不报错。
+4. **代码智能工具咨询**:若当前会话中可用的代码智能工具(如代码图谱/索引类 MCP 或 CLI),参考代码时 MUST 优先使用;不可用或不存在则静默回退 Grep/Glob/Read;任何情况下工具缺失 MUST NOT 导致报错。本项不读取任何配置登记,探测与登记机制已随 config v3 瘦身退役。
 5. **读记忆**:运行 `speccode read-memory --cwd . --branch <F>`;返回非 null 时把 memory 内容作为既有上下文参考,再继续。
 
 ## 知识库入口

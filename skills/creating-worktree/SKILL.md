@@ -19,7 +19,7 @@ description: "Cut a development branch (git worktree) from trunk or an integrati
 1. **参数直给**:参数中已含 `<type>/<slug>` 形式完整分支名 → 直接采用;slug 即探索 topic 名(slug=topic 约定),按该约定查找承接。
 2. **topic 选择**:参数未直给时,运行 `speccode list-memory --cwd .` 取既有探索 topic 清单;非空 → 向用户提问选既有 topic(给出选项)(或新建/跳过),slug 预填 topic 名,type 从所选 topic 内容推断;清单为空 → 直接询问。推断 MUST NOT 静默生效。
 3. **基点判定**(依 state 中的 `kind:"integration"` 父实体):
-   - 0 个父实体 → 基点 = `config.trunk`(普通需求),打印「普通需求:从 <trunk> 切出」。
+   - 0 个父实体 → 基点 = `<default-branch>`(普通需求;运行 `speccode default-branch --cwd .` 取 `branch` 字段),打印「普通需求:从 <default-branch> 切出」。
    - 恰好 1 个 → 打印「检测到父实体 <branch>(大需求),将从其集成 head 切出」并经用户确认。
    - ≥2 个 → 向用户提问列出父实体供选(给出选项);直给完整分支名时跳过本判定。
 4. **校验 slug**:`^[a-z0-9-]+$`;非法 → 拒绝并提示合法字符集;确认恰好一个 `/`。
@@ -28,7 +28,7 @@ description: "Cut a development branch (git worktree) from trunk or an integrati
 
 1. `git worktree add <worktree_dir>/<branch> -b <branch> <基点>`(基点为 trunk 或集成分支;worktree_dir 经 `resolve-worktree-dir` 解析,gitignore 校验同既有三分支)。
 2. **项目 setup 与基线测试**:按标记文件执行(setup 与基线失败询问,同既有契约)。
-3. 写 state:经 `write-state --branch <branch> --json-stdin`,内容 `{branch, type, worktree: <绝对路径>, merge_target: <集成分支名;普通需求写 config.trunk>, status: "in_progress", created_at, initial_branch: <基点>}`(merge_target 恒写)。
+3. 写 state:经 `write-state --branch <branch> --json-stdin`,内容 `{branch, type, worktree: <绝对路径>, merge_target: <集成分支名;普通需求写 <default-branch>(见「决定分支名与基点」)>, status: "in_progress", created_at, initial_branch: <基点>}`(merge_target 恒写)。
 4. **登记父实体**(存在父实体时):经 `write-state --branch <父分支> --json-stdin` 读后整写父实体,`children` 追加 `{slug: "<本分支 slug>"}`(**仅 slug,不写状态**——状态由本分支 state 派生)。
 5. **承接探索结论**(slug=topic 命中):`rename-memory --branch _exploring/<slug> --to <branch> --json-stdin`(stdin `{}`);ok → append 骨架头;`not found` → 骨架 replace「无」;`already exists` → 报告跳过。三分支契约同 creating-feature 既有口径。
 6. 触发 onWorktreeCreated 钩子(payload 同既有)。

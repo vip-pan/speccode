@@ -19,7 +19,7 @@ description: "Land exploration conclusions as proposal/design/specs/tasks docume
 2. 运行 `speccode reconcile --cwd . --advance-pr`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。
 3. 计算 slug = F 的 slug 段(`feature/payment-api` → `payment-api`)。
 4. **冲突检查**:若 `speccode/changes/<slug>/` 已存在且未归档 → 向用户提问(给出选项)询问:「续写补充 / 先 archiving 再重建 / 取消」。取消 → 退出;先归档 → 引导用户先执行 `/speccode:archiving` 后重跑本命令;续写 → 在既有内容上增量修改。
-5. **代码智能工具咨询**:若 `code_intel_tools` 非空且其能力在会话中可用,参考代码时优先使用;不可用回退 Grep/Glob/Read,不报错。
+5. **代码智能工具咨询**:若当前会话中可用的代码智能工具(如代码图谱/索引类 MCP 或 CLI),参考代码时 MUST 优先使用;不可用或不存在则静默回退 Grep/Glob/Read;任何情况下工具缺失 MUST NOT 导致报错。本项不读取任何配置登记,探测与登记机制已随 config v3 瘦身退役。
 6. **读记忆**:运行 `speccode read-memory --cwd . --branch <F>`;返回非 null 时把 memory 内容作为既有上下文参考,再继续。
 
 ## 知识库入口

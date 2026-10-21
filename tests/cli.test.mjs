@@ -275,43 +275,6 @@ test('reconcile works with unknown/old keys in config (unknown-key tolerance)', 
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('detect-code-intel-tools returns a tools array', () => {
-  const repo = makeRepo();
-  const { code, json } = runCli(repo, 'detect-code-intel-tools', '--cwd', repo);
-  assert.equal(code, 0);
-  assert.ok(json.ok);
-  assert.ok(Array.isArray(json.tools));
-  for (const t of json.tools) {
-    assert.ok(t.id);
-    assert.equal(typeof t.available.value, 'boolean');
-    assert.equal(typeof t.integrated.value, 'boolean');
-  }
-  rmSync(repo, { recursive: true, force: true });
-});
-
-test('detect-code-intel-tools from a subdirectory resolves against the main repo root', () => {
-  const repo = makeRepo();
-  const subdir = join(repo, 'sub', 'dir');
-  mkdirSync(subdir, { recursive: true });
-
-  const first = runCli(subdir, 'detect-code-intel-tools', '--cwd', subdir);
-  assert.equal(first.code, 0);
-  assert.ok(first.json.ok);
-  assert.ok(Array.isArray(first.json.tools));
-
-  // .mcp.json lives at the repo ROOT; running from a subdir must still see it
-  writeFileSync(join(repo, '.mcp.json'), JSON.stringify({ mcpServers: { codegraph: {} } }));
-  const second = runCli(subdir, 'detect-code-intel-tools', '--cwd', subdir);
-  assert.equal(second.code, 0);
-  assert.ok(second.json.ok);
-  assert.ok(second.json.tools.some((t) => t.id === 'codegraph'
-    && t.available.value === true
-    && t.integrated.value === true
-    && t.integrated.evidence === '.mcp.json:codegraph'),
-  `expected codegraph mcp hit, got ${JSON.stringify(second.json.tools)}`);
-  rmSync(repo, { recursive: true, force: true });
-});
-
 test('resolve-worktree-dir returns default when config lacks the key', () => {
   const repo = makeRepo();
   const { code, json } = runCli(repo, 'resolve-worktree-dir', '--cwd', repo);
@@ -971,28 +934,36 @@ test('subagent-driven-development.md documents the tick-task completion step', (
   assert.ok(/`ticked`[^\n]*为空[\s\S]{0,120}跳过 commit/.test(md), 'must skip the commit when ticked is empty');
 });
 
-test('init.md writes the code_intel_tools config field (renamed from knowledge_tools)', () => {
+test('init.md writes the minimal config shape (no code-intel, no trunk/remote)', () => {
   const md = readFileSync(join(__dirname, '..', 'skills', 'init', 'SKILL.md'), 'utf8');
-  assert.ok(md.includes('"code_intel_tools": []'), 'init.md must write the empty code_intel_tools default with the new field name');
-  assert.ok(md.includes('code_intel_tools'), 'init.md must document code_intel_tools in the config field set');
-  assert.ok(!md.includes('knowledge_tools'), 'init.md must not retain the old knowledge_tools field name');
+  for (const token of ['code_intel_tools', 'detect-code-intel-tools', 'config.trunk', 'config.remote']) {
+    assert.ok(!md.includes(token), `init.md must not reference ${token}`);
+  }
+  for (const token of ['pr_tool', 'worktree_dir', 'initialized_at']) {
+    assert.ok(md.includes(token), `init.md must reference ${token}`);
+  }
 });
 
-test('init.md calls the renamed detect-code-intel-tools verb', () => {
-  const md = readFileSync(join(__dirname, '..', 'skills', 'init', 'SKILL.md'), 'utf8');
-  assert.ok(md.includes('detect-code-intel-tools'), 'init.md must call detect-code-intel-tools');
-  assert.ok(!md.includes('detect-knowledge-tools'), 'init.md must not retain the old detect-knowledge-tools verb call');
+test('no skill references retired config fields or the retired detection verb', () => {
+  const skillsDir = join(__dirname, '..', 'skills');
+  for (const name of readdirSync(skillsDir).sort()) {
+    const md = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8');
+    for (const token of ['config.trunk', 'config.remote', 'config.code_intel_tools', 'detect-code-intel-tools']) {
+      assert.ok(!md.includes(token), `skills/${name}/SKILL.md must not reference ${token}`);
+    }
+  }
 });
 
-test('code_intel_tools 6 命令 prose: 每命令用 code_intel_tools/代码智能工具 措辞,不留 知识库工具咨询 措辞', () => {
-  const files = ['exploring', 'proposing', 'brainstorming', 'distilling-knowledge', 'init', 'reset'];
-  for (const f of files) {
-    const md = readFileSync(join(__dirname, '..', 'skills', f, 'SKILL.md'), 'utf8');
-    assert.ok(
-      md.includes('code_intel_tools') || md.includes('代码智能工具'),
-      `${f} 必须含 code_intel_tools 字段引用或"代码智能工具"措辞`
-    );
-    assert.ok(!md.includes('知识库工具咨询'), `${f} 不得残留"知识库工具咨询"措辞`);
+test('咨询 prose: 4 认知命令保留「代码智能工具」措辞,全 skills 无 code_intel_tools 字段名 / 知识库工具咨询 残留', () => {
+  const skillsDir = join(__dirname, '..', 'skills');
+  for (const name of readdirSync(skillsDir).sort()) {
+    const md = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8');
+    assert.ok(!md.includes('code_intel_tools'), `skills/${name}/SKILL.md 不再引用已退役的 code_intel_tools 字段`);
+    assert.ok(!md.includes('知识库工具咨询'), `skills/${name}/SKILL.md 不得残留"知识库工具咨询"措辞`);
+  }
+  for (const f of ['exploring', 'proposing', 'brainstorming', 'distilling-knowledge']) {
+    const md = readFileSync(join(skillsDir, f, 'SKILL.md'), 'utf8');
+    assert.ok(md.includes('代码智能工具'), `${f} 必须含"代码智能工具"措辞`);
   }
 });
 
@@ -1155,15 +1126,6 @@ test('detect-host: verb 已随 host-neutral-engine 移除,按未知 verb 拒绝'
   rmSync(repo, { recursive: true, force: true });
 });
 
-test('detect-code-intel-tools: 输出无 host 字段,恒全量探测', () => {
-  const repo = makeRepo();
-  const { code, json } = runCli(repo, 'detect-code-intel-tools', '--cwd', repo);
-  assert.equal(code, 0);
-  assert.equal('host' in json, false, 'host 字段已随 host-neutral-engine 移除');
-  assert.equal(json.tools.length, 5);
-  rmSync(repo, { recursive: true, force: true });
-});
-
 test('含未知键的 config 不报错且被忽略', () => {
   const repo = makeRepo();
   mkdirSync(join(repo, '.speccode'), { recursive: true });
@@ -1171,9 +1133,8 @@ test('含未知键的 config 不报错且被忽略', () => {
     JSON.stringify({ version: 3, initialized_at: '2026-10-14T00:00:00.000Z', trunk: 'main', host: 'zcode' }));
   const rc = runCli(repo, 'read-config', '--cwd', repo);
   assert.equal(rc.code, 0, 'read-config 对遗留 host 字段 MUST NOT 报错');
-  const dc = runCli(repo, 'detect-code-intel-tools', '--cwd', repo);
-  assert.equal(dc.code, 0, 'detect-code-intel-tools 对遗留 host 字段 MUST NOT 报错');
-  assert.equal('host' in dc.json, false);
+  const wt = runCli(repo, 'resolve-worktree-dir', '--cwd', repo);
+  assert.equal(wt.code, 0, 'resolve-worktree-dir 对遗留 host 字段 MUST NOT 报错');
   rmSync(repo, { recursive: true, force: true });
 });
 
@@ -1317,5 +1278,20 @@ test('lint-state: features dir ignored, corrupt JSON described without crashing'
   assert.ok(!json.states.some((x) => x.branch === 'feature/old'), 'features 目录条目不出现');
   const mangled = json.states.find((x) => x.branch === 'feature/mangled');
   assert.ok(mangled && mangled.warnings.some((w) => w.includes('unparseable')));
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('detect-code-intel-tools verb no longer exists; retired config keys read clean', () => {
+  const repo = makeRepo();
+  const { code, json } = runCli(repo, 'detect-code-intel-tools', '--cwd', repo);
+  assert.equal(code, 1);
+  assert.match(json.error, /unknown verb/);
+  const rc = runCliStdin(repo, 'write-config', '--cwd', repo, '--json-stdin', JSON.stringify({
+    version: 3, initialized_at: '2026-01-01T00:00:00Z', trunk: 'main', remote: 'origin', code_intel_tools: [],
+  }));
+  assert.equal(rc.code, 0);
+  const lint = runCli(repo, 'lint-state', '--cwd', repo);
+  assert.equal(lint.code, 0);
+  assert.deepEqual(lint.json.config.warnings, []);
   rmSync(repo, { recursive: true, force: true });
 });
