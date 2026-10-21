@@ -1239,6 +1239,108 @@ test('list-memory: files annotate completed via state join; topics unchanged', (
   rmSync(repo, { recursive: true, force: true });
 });
 
+// --- worktree-scoped memory homes:state 登记的分支,memory 落其 worktree ---
+// (`worktree` 路径无需真实 `git worktree add`,state 登记即驱动解析。)
+
+test('memory verbs are worktree-scoped for state-registered branches', () => {
+  const repo = makeRepo();
+  const wt = join(repo, 'wt1');
+  mkdirSync(wt, { recursive: true });
+  spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/alpha', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({
+      branch: 'feature/alpha', type: 'feature', worktree: wt, merge_target: 'master',
+      status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master',
+    }) });
+  const w = spawnSync('node', [BIN, 'write-memory', '--cwd', wt, '--branch', 'feature/alpha', '--json-stdin'],
+    { cwd: wt, encoding: 'utf8', input: JSON.stringify({ mode: 'replace', content: 'in-worktree' }) });
+  assert.equal(w.status, 0);
+  assert.ok(JSON.parse(w.stdout).path.startsWith(join(wt, '.speccode', 'memory')));
+  const r = runCli(repo, 'read-memory', '--cwd', repo, '--branch', 'feature/alpha');
+  assert.equal(r.json.memory, 'in-worktree'); // 主仓 cwd 也能读到 worktree 记忆(解析按 state)
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('rename-memory adopts a topic from main into the registered worktree', () => {
+  const repo = makeRepo();
+  const wt = join(repo, 'wt1');
+  spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/beta', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({
+      branch: 'feature/beta', type: 'feature', worktree: wt, merge_target: 'master',
+      status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master',
+    }) });
+  spawnSync('node', [BIN, 'write-memory', '--cwd', repo, '--branch', '_exploring/topic-b', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'replace', content: 'exploration notes' }) });
+  const mv = spawnSync('node', [BIN, 'rename-memory', '--cwd', repo, '--branch', '_exploring/topic-b',
+    '--to', 'feature/beta', '--json-stdin'], { cwd: repo, encoding: 'utf8', input: '{}' });
+  assert.equal(mv.status, 0);
+  assert.ok(JSON.parse(mv.stdout).path.startsWith(join(wt, '.speccode', 'memory')));
+  assert.ok(!existsSync(join(repo, '.speccode', 'memory', '_exploring__topic-b.md')));
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('list-memory aggregates main and worktree homes with home annotation', () => {
+  const repo = makeRepo();
+  const wt = join(repo, 'wt1');
+  spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/gamma', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({
+      branch: 'feature/gamma', type: 'feature', worktree: wt, merge_target: 'master',
+      status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master',
+    }) });
+  spawnSync('node', [BIN, 'write-memory', '--cwd', repo, '--branch', '_exploring/t-a', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'replace', content: 'x' }) });
+  spawnSync('node', [BIN, 'write-memory', '--cwd', repo, '--branch', 'feature/gamma', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'replace', content: 'y' }) });
+  const l = runCli(repo, 'list-memory', '--cwd', repo);
+  const byBranch = Object.fromEntries(l.json.files.map((f) => [f.branch, f]));
+  assert.equal(byBranch['_exploring/t-a'].home, 'main');
+  assert.equal(byBranch['feature/gamma'].home, 'worktree');
+  assert.equal(byBranch['feature/gamma'].completed, false);
+  assert.deepEqual(l.json.topics, ['_exploring/t-a'], 'topics 仍只派生自主仓目录');
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('list-memory dedups by branch with the worktree home winning over a stale main copy', () => {
+  const repo = makeRepo();
+  const wt = join(repo, 'wt1');
+  spawnSync('node', [BIN, 'write-state', '--cwd', repo, '--branch', 'feature/dual', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({
+      branch: 'feature/dual', type: 'feature', worktree: wt, merge_target: 'master',
+      status: 'in_progress', created_at: '2026-01-01T00:00:00.000Z', initial_branch: 'master',
+    }) });
+  // live copy:write-memory 按 state 登记解析,落在 worktree
+  spawnSync('node', [BIN, 'write-memory', '--cwd', repo, '--branch', 'feature/dual', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'replace', content: 'live' }) });
+  // stale main copy:write-memory 写不进主目录(EXDEV 双写/陈旧副本场景),直接落盘模拟
+  mkdirSync(join(repo, '.speccode', 'memory'), { recursive: true });
+  writeFileSync(join(repo, '.speccode', 'memory', 'feature__dual.md'), 'stale main copy');
+  spawnSync('node', [BIN, 'write-memory', '--cwd', repo, '--branch', '_exploring/t-a', '--json-stdin'],
+    { cwd: repo, encoding: 'utf8', input: JSON.stringify({ mode: 'replace', content: 'x' }) });
+  const l = runCli(repo, 'list-memory', '--cwd', repo);
+  const dual = l.json.files.filter((f) => f.branch === 'feature/dual');
+  assert.equal(dual.length, 1, '同分支双 home 只留一条(worktree 胜出)');
+  assert.equal(dual[0].home, 'worktree');
+  assert.equal(dual[0].completed, false);
+  assert.deepEqual(l.json.topics, ['_exploring/t-a']);
+  rmSync(repo, { recursive: true, force: true });
+});
+
+// --- memory lifecycle prose 守卫:记忆归属 worktree;收尾 purge 是义务步 ---
+
+test('memory lifecycle wording: no main-shared memory narrative; purge is mandated', () => {
+  const skillsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills');
+  const banned = [/多个 worktree 共享(一份|同一份) memory/, /主仓定位使同 feature 多 worktree 共享/];
+  const finWt = readFileSync(join(skillsDir, 'finishing-worktree', 'SKILL.md'), 'utf8');
+  // 不止检查 token 存在:purge 步必须排在 worktree remove 之前(否则收尾先删 worktree,记忆无处可清)
+  const purgeIdx = finWt.indexOf('purge-memory');
+  const removeIdx = finWt.indexOf('worktree remove');
+  assert.ok(purgeIdx !== -1 && removeIdx !== -1 && purgeIdx < removeIdx,
+    'finishing-worktree must purge before worktree remove');
+  for (const name of readdirSync(skillsDir).sort()) {
+    const md = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8');
+    for (const re of banned) assert.ok(!re.test(md), `skills/${name} still claims shared main memory`);
+  }
+});
+
 test('lint-state verb: reports config + state warnings, exit 0', () => {
   const repo = makeRepo();
   mkdirSync(join(repo, '.speccode', 'state', 'branches'), { recursive: true });

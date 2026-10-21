@@ -17,6 +17,7 @@
 - Changed: **BREAKING** SDD 执行机器由引擎 verb 改为伴生脚本(`skills/subagent-driven-development/scripts/`,node ESM、自包含、不 import lib、随插件分发零安装)——`sdd-workspace` / `task-brief` / `review-package` / `tick-task` 四个 verb 与同名 MCP tool 删除,升级路径:改调对应脚本 CLI(位置参数、单行 JSON 输出不变);`lib/sdd.mjs` 移除。
 - Added: `default-branch` verb(及 MCP tool)——主干分支名运行时探测(origin/HEAD → 本地 main → 本地 master → 兜底 main,仅本地 git 命令),取代 config 的 `trunk` 字段。
 - Changed: **BREAKING** config 瘦身为标记语义——删除 `trunk` / `remote` / `code_intel_tools` 字段(必填仅 `version` + `initialized_at`)与 `detect-code-intel-tools` verb/tool;残留旧键按未知键容忍与忽略、二次 init 整体重写时自然消失;升级路径:命令改用 `default-branch`,代码智能咨询改会话可见性(会话中可用的代码智能工具优先,否则回退 Grep/Glob/Read);init 询问面收缩为 pr_tool / worktree_dir / language / hooks。
+- Changed: memory 归属分支键驱动——`<type>/<slug>` 记忆落其 state 登记的 worktree(`.speccode/memory/`,自忽略),主仓退化为保留键/父实体/回退三层居所;承接升级跨目录事务(先建后移,EXDEV 兜底);finishing-worktree 在 worktree remove 前必经 purge、finishing-feature 清父主记忆;`list-memory` 聚合双目录并标注 `home`。调用形状(verb/tool/CLI)零变化;行为语义:同 feature 多 worktree 不再共享记忆(定位 = 本轮工作笔记,持久知识归 knowledge/ 与 archive/)。
 
 ## [0.7.3] - 2026-09-17
 

@@ -30,7 +30,7 @@ description: "Cut a development branch (git worktree) from trunk or an integrati
 2. **项目 setup 与基线测试**:按标记文件执行(setup 与基线失败询问,同既有契约)。
 3. 写 state:经 `write-state --branch <branch> --json-stdin`,内容 `{branch, type, worktree: <绝对路径>, merge_target: <集成分支名;普通需求写 <default-branch>(见「决定分支名与基点」)>, status: "in_progress", created_at, initial_branch: <基点>}`(merge_target 恒写)。
 4. **登记父实体**(存在父实体时):经 `write-state --branch <父分支> --json-stdin` 读后整写父实体,`children` 追加 `{slug: "<本分支 slug>"}`(**仅 slug,不写状态**——状态由本分支 state 派生)。
-5. **承接探索结论**(slug=topic 命中):`rename-memory --branch _exploring/<slug> --to <branch> --json-stdin`(stdin `{}`);ok → append 骨架头;`not found` → 骨架 replace「无」;`already exists` → 报告跳过。三分支契约同 creating-feature 既有口径。
+5. **承接探索结论**(slug=topic 命中):`rename-memory --branch _exploring/<slug> --to <branch> --json-stdin`(stdin `{}`);ok → append 骨架头;`not found` → 骨架 replace「无」;`already exists` → 报告跳过;target 经 state 解析落**本 worktree** 的 `.speccode/memory/`(引擎跨目录移动,主仓 topic 文件随之消失)。move 失败不回滚 worktree——最坏是 topic 原地保留供续探。三分支契约同 creating-feature 既有口径。
 6. 触发 onWorktreeCreated 钩子(payload 同既有)。
 7. 打印:worktree 已创建于 `<路径>`,请 `cd` 过去开发。
 

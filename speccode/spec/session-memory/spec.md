@@ -8,36 +8,25 @@ feature 级跨会话记忆:主仓 `.speccode/memory/` 下按 feature 维度隔�
 
 ### Requirement: memory 文件位置与命名
 
-每个 feature 的记忆文件 SHALL 为**主仓** `.speccode/memory/<type>__<slug>.md`,文件名 MUST 复用 state 文件的 `<type>__<slug>` 双下划线规则;MUST 保持 untracked(与 `.speccode/` 其他运行时数据一致);主仓定位使同一 feature 的多个 worktree 共享一份 memory。trunk 级例外:探索记忆按 topic 分文件,键形式 `_exploring/<topic>`,文件名经 `branchToStateName` 编码为 `.speccode/memory/_exploring__<topic>.md`(`topic` MUST 匹配 `[a-z0-9-]`);`.speccode/memory/_knowledge.md`(knowledge 命令的 trunk 级维护摘要)保持无斜杠键直通。分期需求的各期探索 SHALL 使用共同 topic 前缀约定(如 `<主题>-p1`、`<主题>-p2`);跨期进度与设计结论 MUST 以 state、git history 与 spec 主规格为真源,MUST NOT 记入 memory。
+记忆归属 SHALL 由**分支键驱动**:保留键(`_knowledge`、`_exploring/<topic>`)的记忆文件恒为**主仓** `.speccode/memory/<key>.md`;`<type>/<slug>` 分支的记忆文件 SHALL 落在**该分支 state 登记的 worktree 根**下 `.speccode/memory/<type>__<slug>.md`(state 无 worktree 登记时——父实体 `kind:"integration"`、已完成分支、异常缺登记——落主仓同规则路径)。两个位置的 memory 目录均 MUST 保持 untracked 且由引擎写入内容为 `*` 的自忽略 `.gitignore`(幂等,不碰用户 `.gitignore`);文件名 MUST 复用 `<type>__<slug>` 双下划线规则与 `branchToStateName` 编码。分期需求的各期探索 SHALL 使用共同 topic 前缀约定(如 `<主题>-p1`、`<主题>-p2`);跨期进度与设计结论 MUST 以 state、git history 与 spec 主规格为真源,MUST NOT 记入 memory。
 
-#### Scenario: 命名复用双下划线规则
-- **WHEN** feature 分支为 `feature/payment-api`
-- **THEN** 记忆文件 MUST 为 `.speccode/memory/feature__payment-api.md`
+**定位声明**:memory 是「本轮工作笔记」——生命周期与开发 worktree 同步,随创建事务承接、随收尾清理;**同一 feature 的多个 worktree 不再共享记忆**(跨轮/跨 worktree 的持久知识归 `speccode/knowledge/` 与 `speccode/archive/`)。
 
-#### Scenario: 多 worktree 共享一份 memory
-- **WHEN** 同一 feature 的 worktree-a 与 worktree-b 分别执行命令写 memory
-- **THEN** 二者 MUST 读写主仓的同一个记忆文件(而非各自 worktree 内的副本)
+#### Scenario: 分支记忆落其 worktree
+- **WHEN** state 登记 `feature/payment-api` 的 worktree 为 `<wt>`,在任意 cwd 对 `feature/payment-api` 执行 write-memory
+- **THEN** 记忆文件 MUST 落在 `<wt>/.speccode/memory/feature__payment-api.md`(非主仓),目录自带自忽略 `.gitignore`
+
+#### Scenario: 保留键恒主仓
+- **WHEN** 对 `_knowledge` 或 `_exploring/<topic>` 执行 read/write-memory
+- **THEN** 路径 MUST 为主仓 `.speccode/memory/` 下对应文件,与任何 worktree 登记无关
+
+#### Scenario: 无 worktree 登记回退主仓
+- **WHEN** 对父实体(集成分支)或 state 缺登记的分支执行 write-memory
+- **THEN** 记忆文件 MUST 落主仓 `.speccode/memory/`,行为可用不报错
 
 #### Scenario: memory 不被 git 跟踪
-- **WHEN** 记忆文件已写入
-- **THEN** 其 MUST 处于 untracked 状态,不进入任何分支的 git 历史与 PR
-
-#### Scenario: 探索记忆按 topic 分文件
-- **WHEN** exploring 对 topic `payment-rework` 的探索结论无既有 feature 可归属
-- **THEN** 结论摘要 MUST 写入主仓 `.speccode/memory/_exploring__payment-rework.md`,MUST NOT 写入其他 topic 的文件
-
-#### Scenario: 分期使用共同前缀
-- **WHEN** 大需求 `mkt-req` 分三期探索,每期各自探索结论无 feature 归属
-- **THEN** 三期结论 MUST 分别位于 `_exploring__mkt-req-p1.md`、`_exploring__mkt-req-p2.md`、`_exploring__mkt-req-p3.md`(命名约定),各期承接时互不携带他期内容
-
-#### Scenario: 无斜杠 _exploring 键不可用
-
-- **WHEN** 对 `--branch _exploring` 执行 read-memory 或 write-memory
-- **THEN** verb MUST 返回 `{ok:false, error}`(非法分支键);探索结论 MUST 经 `_exploring/<topic>` topic 键读写
-
-#### Scenario: _knowledge.md 例外
-- **WHEN** knowledge 命令(distilling/recording)从 trunk 完成维护并创建 PR
-- **THEN** 维护摘要 MUST 追加到主仓 `.speccode/memory/_knowledge.md`,MUST NOT 写 feature 级 memory
+- **WHEN** 在有分支记忆的 worktree 内执行 `git status`
+- **THEN** memory 目录不出现在输出中(自忽略生效)
 
 ### Requirement: memory 原子写
 
@@ -61,9 +50,9 @@ memory 写入按模式分两种原子策略:replace 模式 MUST 采用「写临�
 
 ### Requirement: read-memory / write-memory verb
 
-引擎 SHALL 暴露 `read-memory --branch <F>`(文件不存在时返回 `{memory: null}`)与 `write-memory --branch <F> --json-stdin`(stdin payload 为 `{mode: "replace" | "append", content: "..."}`)两个 verb。branch 校验 MUST 收口为 lib 函数 `validateMemoryBranch`:接受保留键 `_knowledge`、topic 键 `_exploring/<topic>`(topic MUST 经 `validateSlug` 校验)、以及经 `validateBranch` 校验的功能分支;非法时返回 `{ok:false, error}`。
+引擎 SHALL 暴露 `read-memory --branch <F>`(文件不存在时返回 `{memory: null}`)与 `write-memory --branch <F> --json-stdin`(stdin payload 为 `{mode: "replace" | "append", content: "..."}`)两个 verb;二者及 `purge-memory` 的文件位置 SHALL 按「memory 文件位置与命名」的分支键驱动规则解析(保留键主仓;分支键经 state 查 worktree,有则 worktree、无则主仓)。branch 校验 MUST 收口为 lib 函数 `validateMemoryBranch`:接受保留键 `_knowledge`、topic 键 `_exploring/<topic>`(topic MUST 经 `validateSlug` 校验)、以及经 `validateBranch` 校验的功能分支;非法时返回 `{ok:false, error}`。
 
-引擎 SHALL 另暴露 `list-memory --cwd .` verb(返回既有 `_exploring` topic 键清单,无 topic 时为空数组)与 `rename-memory --branch <from> --to <to> --json-stdin` verb(将 `<from>` 的记忆文件原子 rename 为 `<to>` 的记忆文件名)。rename-memory MUST:两侧 branch 均经 `validateMemoryBranch` 校验;源文件不存在时返回 `{ok:false, error}`;目标记忆文件已存在时 MUST 拒绝并返回错误(MUST NOT 覆盖、MUST NOT 合并);rename MUST 为同目录原子操作。
+引擎 SHALL 另暴露 `list-memory --cwd .` verb 与 `rename-memory --branch <from> --to <to> --json-stdin` verb。rename-memory MUST:两侧 branch 均经 `validateMemoryBranch` 校验;源文件不存在时返回 `{ok:false, error}`;目标记忆文件已存在时 MUST 拒绝并返回错误(MUST NOT 覆盖、MUST NOT 合并);rename 的 source 与 target 各按分支键驱动规则解析——**允许跨目录移动**(探索 topic 在主仓、目标分支记忆在其 worktree),同文件系统 MUST 用原子 `renameSync`,跨设备(`EXDEV`)MUST 回退为「原子写目标 + unlink 源」(读侧以目标为优先,中间崩溃最坏双份不损坏)。
 
 #### Scenario: 文件缺失返回 null
 - **WHEN** 对无记忆文件的 feature 执行 read-memory
@@ -72,6 +61,10 @@ memory 写入按模式分两种原子策略:replace 模式 MUST 采用「写临�
 #### Scenario: append 模式追加
 - **WHEN** 以 `{mode: "append", content: "..."}` 执行 write-memory
 - **THEN** 内容 MUST 追加到既有文件末尾,既有内容完整保留
+
+#### Scenario: 跨目录承接
+- **WHEN** 主仓存在 `_exploring__<topic>.md`,state 登记 `<branch>` 的 worktree 为 `<wt>`,执行 `rename-memory --branch _exploring/<topic> --to <branch>`
+- **THEN** 文件 MUST 出现在 `<wt>/.speccode/memory/<type>__<slug>.md` 且主仓源文件消失;`<wt>` 未登记时退化为既有主仓内 rename
 
 ### Requirement: 命令读写时机
 
@@ -119,14 +112,36 @@ memory 写入按模式分两种原子策略:replace 模式 MUST 采用「写临�
 
 ### Requirement: 已完成 memory 的可见性与清理
 
-`list-memory` verb 输出 SHALL 在既有 `topics` 之外新增 `files` 数组:每个元素为 `{branch, completed}`,枚举 memory 目录全部 `.md` 文件(`<type>__<slug>.md` 还原为 `<type>/<slug>` 键,`_exploring__<t>.md` 还原为 `_exploring/<t>` 键,含 `_knowledge`);`completed` SHALL 经 state 登记连接派生,三态语义:state 存在且 status 为 `completed` → `true`;state 存在但非 `completed` → `false`;无 state 对应(如 `_exploring/*`、`_knowledge`、state 已被清理的历史键)→ `null`。MUST NOT 修改既有 `topics` 字段的形状与取值。引擎 SHALL 提供 `purge-memory --branch <F>` verb:经 `validateMemoryBranch` 校验分支键后删除对应 memory 文件并返回 `{ok:true, purged:true, path}`;文件不存在时返回 `{ok:true, purged:false}` 不报错(幂等);MUST NOT 提供批量/全量删除形态。
+`list-memory` verb 输出 SHALL 聚合**主仓 memory 目录与 state 登记的各 active 分支 worktree memory 目录**:既有 `topics` 字段(主仓探索 topic)形状不变;`files` 数组每个元素为 `{branch, completed, home}`,`home` ∈ `"main"` | `"worktree"`(标注该条目所在目录);`completed` 经 state 登记连接派生,三态语义不变(state completed → `true`;state 非 completed → `false`;无 state → `null`)。`purge-memory --branch <F>` verb 语义不变(按分支键驱动定位删除,幂等,MUST NOT 提供批量形态)。
 
-#### Scenario: list-memory 标注已完成分支
+**清理职责**:`finishing-worktree` MUST 在 `git worktree remove` 之前对分支记忆执行 purge(worktree 内未跟踪文件会卡 remove;丢弃路径的 `--force` 连记忆一起消亡亦符合本轮笔记定位);`finishing-feature` MUST purge 父实体主记忆。主仓 `_exploring` 孤儿 topic 仍由 reset 兜底。
 
-- **WHEN** memory 目录存在 `feature__done-item.md` 与 `_exploring__topic-a.md`,且 state 中 `feature/done-item` 为 `completed`
-- **THEN** `list-memory` 输出的 `files` 含 `{branch:"feature/done-item", completed:true}` 与 `{branch:"_exploring/topic-a", completed:null}`,`topics` 仍为 `["_exploring/topic-a"]`
+#### Scenario: 聚合与归属标注
+
+- **WHEN** 主仓存在 `_exploring__topic-a.md` 与 `_knowledge.md`,worktree-a(state 登记 `feature/alpha`,非 completed)存在 `feature__alpha.md`
+- **THEN** `list-memory` 的 `files` 含 `{branch:"_exploring/topic-a", completed:null, home:"main"}`、`{branch:"_knowledge", completed:null, home:"main"}` 与 `{branch:"feature/alpha", completed:false, home:"worktree"}`,`topics` 仍为 `["_exploring/topic-a"]`
 
 #### Scenario: purge-memory 幂等
 
-- **WHEN** 执行 `speccode purge-memory --cwd . --branch feature/done-item` 两次
-- **THEN** 第一次返回 `purged:true` 且文件消失;第二次返回 `purged:false`,exit 0 不报错
+- **WHEN** 对分支记忆(其 worktree 内)执行 `speccode purge-memory --cwd . --branch feature/done-item` 两次
+- **THEN** 第一次返回 `purged:true` 且 worktree 内文件消失;第二次返回 `purged:false`,exit 0 不报错
+
+### Requirement: 记忆事务化承接
+
+记忆进入分支 SHALL 是创建事务的一部分,**先建后移**:命令层 MUST NOT 在 worktree/feature 尚未创建时预先移动记忆。
+
+- `creating-worktree`:worktree add → write state → **move 记忆**(`rename-memory --branch _exploring/<topic> --to <branch>`)。move 失败的最坏结果是 topic 记忆原地保留于主仓(续探无损),MUST NOT 回滚已创建的 worktree;move 的三种先在状态(源不存在 / 目标已存在 / 用户拒绝承接)MUST 分别走「骨架 replace『无』」「报告跳过、骨架增量维护」「原地保留」既有语义,事务化不改变它们的分支契约。
+- `creating-feature`:`git checkout -b` + push → write 父实体 state → **move 主记忆**(target 为父分支,无 worktree,即主仓内 rename)。大需求主记忆留主仓;每个子需求的探索 → 子 worktree 记忆事务与普通需求同构。
+- 用户在形态确认时拒绝建 worktree/feature:topic 记忆 MUST 原地保留于主仓(续探与分期 topic 语义不变),主干 git 零痕迹。
+
+#### Scenario: worktree 承接事务序
+- **WHEN** exploring 结论在 `_exploring/<topic>`,用户确认建 worktree
+- **THEN** 命令先完成 worktree add 与 state 登记,再执行 rename-memory;成功后主仓无该 topic 文件、新 worktree 的 memory 目录有 `<type>__<slug>.md`
+
+#### Scenario: 拒建原地保留
+- **WHEN** 用户在形态确认选择不建分支
+- **THEN** `_exploring__<topic>.md` MUST 仍在主仓,后续会话可续探或再承接
+
+#### Scenario: feature 主记忆事务
+- **WHEN** exploring 结论确认建 feature(大需求)
+- **THEN** 主记忆经 rename 落主仓 `feature__<父slug>.md`;子需求各自的 worktree 记忆独立生灭,父主记忆由 finishing-feature purge

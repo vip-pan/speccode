@@ -59,11 +59,14 @@ description: "Finish a development branch and merge by merge_target (local squas
 
 ## 清理(来源限定)
 
-仅处理「路径位于 resolve-worktree-dir 解析结果之下 或 state 有登记」的 worktree;先离开被清理目录(`cd <主仓根>` 或全程 `git -C`);`worktree remove --force` + `branch -D` + 询问删远端 + `worktree prune`。不满足 → 原样保留并说明。
+仅处理「路径位于 resolve-worktree-dir 解析结果之下 或 state 有登记」的 worktree;先离开被清理目录(`cd <主仓根>` 或全程 `git -C`);不满足 → 原样保留并说明。
+
+1. **purge 分支记忆**:`speccode purge-memory --cwd . --branch <branch>`(MUST 先于 `git worktree remove`——显式、幂等、可报告的清理(自忽略目录并不阻塞 remove,但静默消亡不可审计);丢弃路径经 --force 连记忆一起消亡,亦符合本轮笔记定位)。
+2. `worktree remove --force` + `branch -D` + 询问删远端 + `worktree prune`。
 
 ## 收尾
 
 1. `feature-progress --branch <所属父分支或本分支>` 取进度。
 2. onWorktreeFinished 钩子(有 PR 带 pr_number)。
-3. 状态报告:`<分支> 进度 X/Y done`;大需求场景按父实体 children 派生渲染;建议后续(finishing-feature / finishing-worktree 下一子分支)。任一完成路径(本地 squash 汇入或 PR MERGED)在报告后附一句可选提示:「本分支 memory 已留存,确认不再需要可经 `speccode purge-memory --cwd . --branch <branch>` 清理」——仅提示,不主动清理。
-4. 写记忆(经用户确认或内置判据)。
+3. 状态报告:`<分支> 进度 X/Y done`;大需求场景按父实体 children 派生渲染;建议后续(finishing-feature / finishing-worktree 下一子分支)。任一完成路径在报告后附注:分支记忆已随清理消亡(本地 squash 汇入或 PR MERGED);经 `PR+不等待` 保留 worktree 的路径,记忆仍留该 worktree,续跑 `--resume` 时可见。
+4. **收尾摘要不入分支记忆**:分支记忆已随清理消亡(或随保留的 worktree 存续)——完成摘要直接呈现在本命令的最终报告里,不再 write-memory;仅当走「保留 worktree」或「PR+不等待」路径(记忆存续、供 --resume 续读)且距上次写入已隔多个阶段时,才补一次 write-memory 摘要。

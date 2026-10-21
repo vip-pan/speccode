@@ -11,7 +11,7 @@ description: "Read-only overview: progress and pending_operation of every active
 2. 开头跑对账,汇总 `.speccode/state/branches/` 下所有 active 分支:普通分支渲染状态与 `pending_operation`;父实体(`kind:"integration"`)以树状渲染 `children`——各子分支的 status **实时读取对应子分支 state 派生**,children 有 slug 但无子 state 的渲染为 `pending`(计划未开工)。(对账 verb:`speccode reconcile --cwd . --advance-pr`,顺便自愈状态漂移、查询 PR 状态并推进已合并的 pr_open。)
 3. 报告 `orphans` / `conflicts`(若有),提示如何处理。
 4. 运行 `speccode lint-state --cwd .`:`config.warnings` 或任一 state 条目 `warnings` 非空 → 报告一行(坏形状条目经一次纠正性 write-state 修复),不阻断。
-5. 运行 `speccode list-memory --cwd .`,若 `files` 中 `completed:true` 的条目非空,报告一行:「已完成分支的 memory 文件 N 个滞留(如 <branch>),确认不再需要后可经 `speccode purge-memory --cwd . --branch <branch>` 逐条清理」——仅提示,不主动清理。
+5. 运行 `speccode list-memory --cwd .`;`files` 条目按 `home` 标注归属(`main` = 主仓目录,`worktree` = 该分支 worktree 内,随收尾消亡);`completed:true` 且 `home:"main"` 的条目为滞留(如收尾异常遗留),报告一行提示可经 `purge-memory` 清理。
 6. 末尾打印 config 摘要:`trunk / pr_tool`。
 7. 若无 active 分支:打印"当前无 active 分支",仅显示 config 摘要。
 
@@ -27,5 +27,5 @@ speccode — 4 active 分支
     ⧗ feature/shop-pay       pr_open (PR #52)
     · feature/shop-report    pending(计划未开工)
 config: trunk=master pr_tool=gh
-memory: 3 个已完成分支的 memory 滞留(如 feature/done),可经 purge-memory 清理
+memory: 2 个滞留条目(completed 且 home:"main",如 feature/done),可经 purge-memory 清理
 ```

@@ -18,6 +18,6 @@ description: "Opt-in for large requirements: cut an integration branch from trun
 
 1. `git checkout -b <branch>`(从 trunk);`git push -u origin <branch>`。
 2. 写父实体 state:经 `write-state --branch <branch> --json-stdin`,内容 `{branch, type, kind: "integration", children: [], status: "in_progress", created_at, initial_branch: <default-branch>}`(**MUST NOT 含 worktree 字段**)。
-3. **承接父 topic**(slug=topic 命中):`rename-memory --branch _exploring/<slug> --to <branch> --json-stdin`(stdin `{}`);ok → append 骨架头(创建时间);`not found` → 骨架 replace「无」;`already exists` → 报告跳过。三分支契约同既述。
+3. **承接父 topic**(slug=topic 命中):`rename-memory --branch _exploring/<slug> --to <branch> --json-stdin`(stdin `{}`);ok → append 骨架头(创建时间);`not found` → 骨架 replace「无」;`already exists` → 报告跳过;父实体无 worktree,主记忆留在主仓(rename 为主仓内移动)。子需求的记忆事务与普通需求同构(见 creating-worktree)。三分支契约同既述。
 4. 触发 onFeatureCreated 钩子。
 5. 打印:大需求模式已建立,集成分支 `<branch>`;子需求经 `/speccode:creating-worktree` 从本分支切出;终局用 `/speccode:finishing-feature`。

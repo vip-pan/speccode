@@ -77,7 +77,7 @@ speccode 编排的分支拓扑是**双层**:普通需求从 trunk 直接切 `<ty
 
 - **run-hook 永远 exit 0**:hook 失败是 warn-only,绝不能破坏调用它的命令。`run-hook` verb 把所有错误(未传 `--event`、stdin 片段解析失败、hook 本身超时/非零退出)折叠进 hook 字段,恒返 `{ok:true}`。
 
-- **memory 走 writeTextAtomic**:`memory/*.md` 文本写入与 config/state 同策(临时文件 + rename 覆盖,`atomic.writeTextAtomic`);写前必读(read-before-write),在现有内容上增量,不做整文件无脑覆盖。
+- **memory 走 writeTextAtomic**:`memory/*.md` 文本写入与 config/state 同策(临时文件 + rename 覆盖,`atomic.writeTextAtomic`);写前必读(read-before-write),在现有内容上增量,不做整文件无脑覆盖。记忆归属分支键驱动:分支记忆在其 state 登记的 worktree 内,保留键与父主记忆在主仓(`memoryHomeDir`)。
 
 - **SDD 工作区 show-toplevel(有意差异)**:主仓根统一用 `--git-common-dir` 定位,**唯独** SDD 工作区(`.speccode/sdd/<plan>/`)归属**当前 worktree 根**,用 `git rev-parse --show-toplevel`(见 `skills/subagent-driven-development/scripts/sdd-plan.mjs`)——这样 sdd/ 工件随 `git worktree remove` 一并清理。两处定位方式不同是刻意的,别"统一"。
 

@@ -40,4 +40,5 @@ description: "Large-requirement finale: single PR from the integration branch to
 2. onFeatureFinished 钩子。
 3. `git checkout <default-branch>`(default branch 经 `speccode default-branch --cwd .` 取 `branch` 字段)+ `fetch & pull`(集成分支与子分支保留作历史,speccode 不删)。
 4. 打印:大需求已交付,`<branch>` 已合并进 trunk。
-5. 写记忆(经用户确认或内置判据)。
+5. **终局摘要不入父主记忆**:父主记忆即将被下一步清理——完成摘要(含 PR url)直接呈现在最终报告;若需留痕,写 trunk 级 `_knowledge` 键(知识维护摘要语义)。
+6. **purge 父主记忆**:`speccode purge-memory --cwd . --branch <父分支>`(父记忆在主仓,终局清理)。

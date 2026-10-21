@@ -85,6 +85,8 @@ echo '{"command":"exploring"}' | speccode run-hook --cwd . --event onExplored
   EOF
   ```
 
+topic 记忆临时落**主仓**(untracked,拒建分支则原地保留);移入分支发生在 creating-worktree / creating-feature 的承接事务内(先建后移)。
+
 **长会话主动记忆**:在以下时机 MUST 主动执行 write-memory(append),不等命令出入口:①一个开发阶段/任务完成且距上次写入已隔多个阶段;②会话上下文显著增长(接近 compact 风险);③compact 恢复后继续工作的首个阶段完成时。写入内容 MUST 是关键决策/进度/待办的摘要,并经用户确认或遵循本命令内置判据。探索会话中该键为当前(或拟新建的)topic 键 `_exploring/<topic>`;topic 尚未确定时先经用户确认再写,MUST NOT 写无斜杠 `_exploring` 键。
 
 - **手动模式**:按形态确认结果引导——单普通需求 → `/speccode:creating-worktree`;多个独立普通需求 → 逐个走普通流程,不建集成;大需求(整体上线)→ `/speccode:creating-feature`。
