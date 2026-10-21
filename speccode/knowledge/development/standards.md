@@ -35,9 +35,9 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/session-memory -->
-**memory 写入两模式原子性刻意不同**:replace 模式经 writeTextAtomic(临时文件 + renameSync 覆盖),写前必读(read-before-write),在现有内容上增量,不做整文件无脑覆盖;append 模式是单次 O_APPEND 追加写(appendFileSync 打开即 O_APPEND,MUST NOT 读-改-写),条目边界补换行(前条无尾换行且新条无头换行时插恰好一个换行)并入同一次追加写——「append 走读-改-写」是旧印象,与现行 spec 及引擎实现相悖,勿回流。
+**memory 写入两模式原子性刻意不同**:replace 模式经 writeTextAtomic(临时文件 + renameSync 覆盖),写前必读(read-before-write);append 模式是单次 O_APPEND 追加写(appendFileSync 打开即 O_APPEND,MUST NOT 读-改-写),条目边界补换行并入同一次追加写——「append 走读-改-写」是旧印象,勿回流。
 
-**校验收口 lib**:read/write-memory 的 branch 校验收口为 lib 纯函数 validateMemoryBranch(保留键 _knowledge、_exploring 遗留读兼容、_exploring/<topic> 经 validateSlug、回退 validateBranch),可单测——确定性逻辑下沉铁律的又一实例。memory 文件命名复用 state 的 type__slug 双下划线规则;主仓定位使同 feature 多 worktree 共享一份。**trunk 级**:知识维护摘要 MUST 含 PR url(或等效命令),MUST NOT 写 feature 级 memory。**承接零歧义**:slug=topic 命名约定(否决独立 --topic 参数——与 slug 构成双源歧义);rename 目标已存在拒绝并报告,不覆盖不合并(重复创建时骨架应增量维护,而非静默吞掉既有 memory)。**既有测试语义随契约演进**:契约变化时旧用例重构为新契约用例,不是回归而是契约演进。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-16-knowledge-trunk-bootstrap、2026-09-02-exploring-topic-split;append 原子性表述按现行 session-memory spec 与引擎实现改写)
+**校验收口 lib**:validateMemoryBranch 收口 lib(保留键 _knowledge、_exploring/<topic> 经 validateSlug、回退 validateBranch),可单测。**承接 = 跨目录事务**:rename-memory 双端各按分支键解析(source 常为主仓 topic、target 为分支 worktree),同设备 renameSync、EXDEV 回退「原子写目标 + unlink 源」(中间崩溃最坏双份,读侧目标优先);目标已存在拒绝;失败不回滚创建。**purge 必经**:finishing-worktree 在 worktree remove 前显式 purge(自忽略目录并不阻塞 remove——理由是可审计);finishing-feature 清父主记忆;终局摘要不入将死记忆。**trunk 级**:知识维护摘要含 PR url,写 _knowledge。**既有测试语义随契约演进**:契约变化时旧用例重构为新契约用例。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-16-knowledge-trunk-bootstrap、2026-09-02-exploring-topic-split、2026-10-21-memory-lifecycle)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/development-flow-tiering -->

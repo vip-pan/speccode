@@ -23,7 +23,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/session-memory -->
-**memory 数据模型**:feature 级 memory 为 .speccode/memory/<type>__<slug>.md(双下划线规则,复用 state 文件命名);trunk 级例外 .speccode/memory/_knowledge.md(知识维护摘要,保留键)与探索 topic 文件 .speccode/memory/_exploring__<topic>.md(键 _exploring/<topic>;单堆 _exploring.md 已退役,读兼容保留)。memory 保持 untracked(与 .speccode/ 其他运行时数据一致);主仓定位使同一 feature 的多个 worktree 共享同一份 memory。(出自 archive/2026-08-16-knowledge-trunk-bootstrap、2026-08-16-knowledge-command-rename)
+**memory 数据模型(2026-10-21 起)**:分支记忆 `<type>__<slug>.md` 落该分支 state 登记的 worktree(`memoryHomeDir` 解析,verbs 层 memoryStateFor:`_` 前缀键恒主仓 null state,分支键经 readState);trunk 级例外主仓:`_knowledge.md`(保留键)与探索 topic `_exploring__<topic>.md`。memory 保持 untracked(两处目录均自忽略);**同 feature 多 worktree 不再共享记忆**(有意放弃,见 architecture 块);list-memory 聚合主仓 + 各 active worktree 目录,files 条目带 home: "main"|"worktree"(去重 worktree 优先,钉死于测试)。(出自 archive/2026-08-16-knowledge-trunk-bootstrap、2026-08-16-knowledge-command-rename、2026-10-21-memory-lifecycle)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/tool-input-sanitization -->

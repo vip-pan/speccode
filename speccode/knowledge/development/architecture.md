@@ -23,11 +23,9 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/session-memory -->
-**memory 位置:主仓 `.speccode/memory/<type>__<slug>.md`,untracked**。备选(tracked in speccode/changes/)被否:会把会话笔记带进功能 PR、跨 worktree 合并冲突、泄漏进 trunk 历史。untracked + 主仓定位使同 feature 多 worktree 共享一份 memory(跨会话连续性核心诉求),与 state 哲学一致。
+**memory 位置(2026-10-21 起):分支记忆在 state 登记的 worktree 根 `.speccode/memory/<type>__<slug>.md`**(untracked、自忽略,与 .speccode/sdd/ 同生命周期——随收尾消亡);保留键(`_knowledge`、`_exploring/<topic>`)与父实体主记忆在主仓。归属 = 分支键驱动经 state(memoryHomeDir,verbs 层 memoryStateFor 接线;memory.mjs 不 import state)。**有意放弃**:同 feature 跨轮/多 worktree 共享记忆——定位为「本轮工作笔记」,持久知识归 knowledge/ 与 archive/;终局摘要不入分支记忆(走最终报告或 _knowledge)。探索记忆按 topic 分文件、原子 rename 承接的机制不变;**承接 = 先建后移事务**(move 失败不回滚 worktree,最坏 topic 原地保留)。
 
-**探索记忆按 topic 分文件**:键 `_exploring/<topic>`,落盘 `.speccode/memory/_exploring__<topic>.md`(复用 branchToStateName 编码,扁平命名否决目录分层);**承接桥 = 原子 rename**:rename-memory 同目录 renameSync,slug=topic 命名约定承接(否决独立 --topic 参数——与 slug 构成双源歧义);目标已存在拒绝并报告,不覆盖不合并;承接非强制,未承接 topic 原地保留由 reset 兜底。
-
-**memory 原子写按模式精确化**:replace 模式临时文件+rename;append 模式单次 O_APPEND 追加写(跨 worktree 并发追加互不覆盖),MUST NOT 读-改-写。两模式策略不同是刻意的,别统一。**append 条目边界规则**:既有内容非空且不以换行结尾、且追加内容不以换行开头时,边界插入恰好一个换行(同一次追加写的一部分);其余情况原样追加。**边界责任归属**:条目分隔由引擎保证,调用方传纯内容——把分隔责任下放给全部命令文档靠纪律维护是结构性陷阱,已被打破过一次。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-11-memory-append-newline、2026-09-02-exploring-topic-split)
+**memory 原子写按模式精确化**:replace 模式临时文件+rename;append 模式单次 O_APPEND 追加写,MUST NOT 读-改-写。两模式策略不同是刻意的,别统一。**append 条目边界规则**:既有内容非空且不以换行结尾、且追加内容不以换行开头时,边界插入恰好一个换行(同一次追加写的一部分);其余情况原样追加。**边界责任归属**:条目分隔由引擎保证,调用方传纯内容。(出自 archive/2026-08-09-speccode-v2-sdd-flow、2026-08-11-memory-append-newline、2026-09-02-exploring-topic-split、2026-10-21-memory-lifecycle)
 <!-- /distilled -->
 
 <!-- distilled-from: cap/hook-event-integration -->
