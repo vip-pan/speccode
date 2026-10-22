@@ -21,7 +21,6 @@
 - Changed: lite 降级语义——22 个含引擎调用的 skill 携带逐字一致的「引擎可用性」锚点段(读类 cat/git 直读、write-memory 手动编辑、plugin-root 经宿主 skill 目录、default-branch git 三连、run-hook 静默跳过、write-config 仅 init 手写例外);编排命令(creating-*/finishing-*)lite 显式中止、status 降级只读、知识蒸馏写不可用——无引擎(`speccode` 不在 PATH)时 SDD 文档流完整可用,并行编排引导安装。
 - Added: 宿主 MCP 接线指引——references/host-mapping 六文档新增「MCP 注册」节(标准 stdio:npx -y -p speccode speccode-mcp,npm 包待首次发布;项目级配置可随 repo 共享)、总览表 MCP 列与双通道通用步骤、工具映射 MCP 行;-32002 / origin-HEAD / 工具名前缀为待真机验证开放项(引擎零预置);tests/host-mapping.test.mjs 守卫钉死。
 - Changed: 门面文档与现行架构对齐——DESIGN 双语改写标记语义/探测退役/memory 归属/双通道安装(cli.test DESIGN 守卫同提交翻转);README 双语 Install 双通道 + Quickstart 现行输出 + Why 补 lite/MCP 卖点。
-
 - Changed: README 双语叙事重组——定位句改「纯 prose 插件核 + 可挂载引擎」(lite 第一屏)、Install 三段递进(插件→lite 即用→编排加引擎)、对比表 +lite/+MCP 两行、demo fixture 对齐现行 init 输出(GIF 重录)。
 
 ## [0.7.3] - 2026-09-17
