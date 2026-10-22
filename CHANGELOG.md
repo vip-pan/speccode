@@ -22,6 +22,8 @@
 - Added: 宿主 MCP 接线指引——references/host-mapping 六文档新增「MCP 注册」节(标准 stdio:npx -y -p speccode speccode-mcp,npm 包待首次发布;项目级配置可随 repo 共享)、总览表 MCP 列与双通道通用步骤、工具映射 MCP 行;-32002 / origin-HEAD / 工具名前缀为待真机验证开放项(引擎零预置);tests/host-mapping.test.mjs 守卫钉死。
 - Changed: 门面文档与现行架构对齐——DESIGN 双语改写标记语义/探测退役/memory 归属/双通道安装(cli.test DESIGN 守卫同提交翻转);README 双语 Install 双通道 + Quickstart 现行输出 + Why 补 lite/MCP 卖点。
 
+- Changed: README 双语叙事重组——定位句改「纯 prose 插件核 + 可挂载引擎」(lite 第一屏)、Install 三段递进(插件→lite 即用→编排加引擎)、对比表 +lite/+MCP 两行、demo fixture 对齐现行 init 输出(GIF 重录)。
+
 ## [0.7.3] - 2026-09-17
 
 > EN: docs-only patch — the ZCode host-mapping notes drop their last historical "researched in the mold of Kimi Code" comparison wording; with the adapter verified against the official ZCode plugin shape, the notes state facts directly and point at the page-top verification block.
