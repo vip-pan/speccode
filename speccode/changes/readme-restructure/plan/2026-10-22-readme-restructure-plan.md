@@ -67,8 +67,8 @@
 
 ### Task 2: CHANGELOG + 验证
 
-- [ ] Step 1 CHANGELOG `[Unreleased]`:`- Changed: README 双语叙事重组——定位句改「纯 prose 插件核 + 可挂载引擎」(lite 第一屏)、Install 三段递进(插件→lite 即用→编排加引擎)、对比表 +lite/+MCP 两行、demo fixture 对齐现行 init 输出。`
-- [ ] Step 2 全量 347;双语段数自查;commit `git add CHANGELOG.md && git commit -m "docs: readme restructure changelog entry"`
+- [x] Step 1 CHANGELOG `[Unreleased]`:`- Changed: README 双语叙事重组——定位句改「纯 prose 插件核 + 可挂载引擎」(lite 第一屏)、Install 三段递进(插件→lite 即用→编排加引擎)、对比表 +lite/+MCP 两行、demo fixture 对齐现行 init 输出。`
+- [x] Step 2 全量 347;双语段数自查;commit `git add CHANGELOG.md && git commit -m "docs: readme restructure changelog entry"`
 
 ## 计划自查
 - 规格覆盖:三个新 Scenario(定位句/Install 结构/对比表行)↔ T1-1/2/3;Quickstart 与双语成对 ↔ T1-4 + 全任务内嵌。
