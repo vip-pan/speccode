@@ -3,6 +3,18 @@ name: applying
 description: "Tier 1 manual execution entry: implement tasks.md checklist items one by one (no plan), tick back-fill and bookkeeping commits, followed by mandatory code review (手动执行) Interact in the user's language; ask when it cannot be determined."
 ---
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 按 `tasks.md` 勾选清单逐条手动实现变更——不走 plan、不派子代理,适用于 proposing 产物已完全覆盖需求的极小型需求(Tier 1)。**应在开发分支(`<type>/<slug>`、非 trunk)上运行**。
 
 ## 语言守护
@@ -17,7 +29,7 @@ description: "Tier 1 manual execution entry: implement tasks.md checklist items 
 
 1. `read-config` 加载 config;为 null → 提示先 `/speccode:init` 并退出。
 2. **trunk 防护**:`git rev-parse --abbrev-ref HEAD` 必须为非 trunk 的 `<type>/<slug>` 形态分支;否则退出并提示「请在开发分支上运行本命令」。
-3. 运行 `speccode reconcile --cwd .` 找到所属功能分支 F,计算 slug。
+3. 运行 `speccode reconcile --cwd .` 找到所属功能分支 F,计算 slug。lite 模式(锚点段探测失败)下本步降级:以 `git rev-parse --abbrev-ref HEAD` 取当前分支为 F(须为 `<type>/<slug>` 形态,否则报错退出,提示安装引擎),不做对账与状态推进。
 4. **准入检查(唯一准入 = tier 字段为 1 且无 plan)**,逐项过,不过即退出:
    - `speccode/changes/<slug>/propose/proposal.md` 不存在 → 报错「未找到变更文档,请先 `/speccode:proposing`」并退出(零文档直实现不被允许)。
    - 读 proposal.md 的 YAML frontmatter `tier:` 字段;缺失或取值非 `1|2|3` → 报错「tier 字段缺失或非法,请修复(重跑 proposing 定层或手动补字段)」并退出,MUST NOT 按默认层级继续。
@@ -42,7 +54,7 @@ description: "Tier 1 manual execution entry: implement tasks.md checklist items 
 2. 严格按条目内容实现;涉及代码的条目 MUST 遵循 test-driven-development(先写失败测试、确认失败、再实现转绿)。实现所需的完整细节以条目文本与 propose/ 文档为准。
 3. 按条目自带验证方式验证;涉及代码的条目 MUST 跑全量测试确认不因本条变红。
 4. **发现前序文档矛盾**(specs delta / proposal / design 与实际可行方案冲突)→ MUST 回写受影响文档使文档集一致,回写随本条 commit 落盘(回写范围不含 frontmatter 元数据)。
-5. **勾选回填**:把该条 `- [ ]` 改为 `- [x]`(tasks.md 是文档,直接编辑;`tick-task` verb 面向 plan 的 `### Task N` 结构,MUST NOT 用于 tasks.md)。已勾选条目重跑时幂等跳过。
+5. **勾选回填**:把该条 `- [ ]` 改为 `- [x]`(tasks.md 是文档,直接编辑;tick-task 伴生脚本面向 plan 的 `### Task N` 结构,MUST NOT 用于 tasks.md)。已勾选条目重跑时幂等跳过。
 6. **簿记提交**(两个 commit,与 executing-plans 的进度节奏一致):
    本条无产出文件(如纯验证条目)时跳过第一个 commit,仅做勾选簿记提交,不硬跑 `git commit` 让 "nothing to commit" 以非零退出误报失败。
    ```bash
@@ -73,5 +85,5 @@ description: "Tier 1 manual execution entry: implement tasks.md checklist items 
 
 - 唯一准入 = tier 字段为 1 且无 plan;绝不绕过 review 进 syncing。
 - tier 字段只读;缺失/非法报错退出,不猜默认值。
-- tasks.md 勾选是文档编辑,不用 tick-task verb。
+- tasks.md 勾选是文档编辑,不用 tick-task 伴生脚本。
 - 卡住(条目不可实现、验证反复失败、指令不清)就停下求助,不盲猜。

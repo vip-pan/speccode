@@ -5,9 +5,23 @@ description: "Dispatch a fresh subagent per task with dual reviews plus a final 
 
 # Subagent 驱动开发(Subagent-Driven Development)
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 执行 plan 的方式:每个任务派发一个全新的实现者子代理,其后做一次任务审查(spec 符合性 + 代码质量),最后做一次覆盖整支的终审。
 
 > **宿主能力依赖**:本 skill 依赖宿主的子代理派发能力。宿主无子代理时,按 `executing-plans` 在当前会话串行执行同一 plan,任务审查与终审由主代理自查替代。
+
+> **伴生脚本锚点**:本 skill 的执行机器是随 skill 分发的伴生脚本,位于本 skill 目录下的 `scripts/`(宿主加载 skill 时报告的 base directory;下文统一写作 `<scripts>`)。宿主未报告 base directory 时,以 `$(speccode plugin-root --cwd .)/skills/subagent-driven-development/scripts` 兜底。调用形态 `node <scripts>/<name>.mjs …`,输出单行 JSON(`ok:false` 即失败、exit 非零)。
 
 **为什么用 subagent:** 你把任务委派给拥有隔离上下文的专门代理。通过精确构造它们的指令与上下文,你确保它们聚焦并胜任自己的任务。它们绝不应继承你会话的上下文或历史——你要精确构造它们需要的一切。这也把你自己的上下文留给协调工作。
 
@@ -51,6 +65,8 @@ digraph when_to_use {
 1. 运行 `speccode read-knowledge --cwd . --index` 读 `_index.md`(恒读,便宜);`exists:false` → 静默跳过本节。
 2. 判断本任务相关主题 → `speccode read-knowledge --cwd . --topic <名称>` 读对应 topic 文件;`exists:false` → 静默跳过该主题。
 3. 读取失败或目录不存在 → 静默跳过,绝不阻断主流程(T0 兜底,永不报错)。
+
+lite 模式按锚点段降级表直读文件;文件不存在 = 无知识,静默继续(T0 兜底的 lite 等价)。
 
 ## 流程
 
@@ -123,18 +139,18 @@ digraph process {
 
 确保工作发生在隔离工作区中:你应当已经在 speccode worktree 里(由 `/speccode:creating-worktree` 创建)。未经人类伙伴明确同意,MUST NOT 在 main/master 分支上开始实现。
 
-**绑定功能分支**:运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。
+**绑定功能分支**:运行 `speccode reconcile --cwd .`,用返回的 features 找到当前 worktree 所属的功能分支 F;找不到 → 报错"当前 worktree 无法关联任何 active feature",退出。lite 模式(锚点段探测失败)下本步降级:以 `git rev-parse --abbrev-ref HEAD` 取当前分支为 F(须为 `<type>/<slug>` 形态,否则报错退出,提示安装引擎),不做对账与状态推进。
 
 **读记忆**:运行 `speccode read-memory --cwd . --branch <F>`;返回非 null 时把 memory 内容作为既有上下文参考,再继续——memory 上下文 MUST 参与下面的 plan 通读与 pre-flight 冲突扫描。
 
 对话记忆扛不过压缩(compaction)。真实会话中,丢了位置的控制器曾把整段已完成任务序列重新派发——这是观测到的最昂贵失败。用 ledger 文件跟踪进度,而不是只靠 todo。
 
 - 每个 plan 拥有一个工作区:命令开始时运行
-  `speccode sdd-workspace --cwd . --plan <PLAN_FILE>`——它输出 JSON,取 `dir` 字段即该 plan 的目录(`<repo-root>/.speccode/sdd/<plan-basename>/`),本 plan 的所有工件都放这里:ledger、brief、报告、review package。
+  `node <scripts>/sdd-workspace.mjs <PLAN_FILE>`——它输出 JSON,取 `dir` 字段即该 plan 的目录(`<repo-root>/.speccode/sdd/<plan-basename>/`),本 plan 的所有工件都放这里:ledger、brief、报告、review package。
   另一个 plan 的目录永远不归你读写。
 - 检查本 plan 的 ledger 是否在 `<workspace>/progress.md`。如果它第一行写的是你的 plan 文件,那么凡是有 `Task <N>: complete` 行的任务都是 DONE——不要重新派发;从第一个没有完成行的任务继续。最后一行是 fix round 的任务处于循环中途:从下一轮继续循环。第一行写的是别的 plan 文件——或是旧扁平路径 `.speccode/sdd/progress.md` 上的流浪 ledger——那是别的 plan 的进度:留在原地,自己从零开一个新的。
 - 创建 ledger 时,第一行写它的身份:
-  `# SDD ledger — plan: <plan file path>`。
+  `# SDD ledger — plan: <plan file path>`。(`task-done.mjs` 在 ledger 尚不存在时也会先写同一身份行)
 - ledger 是你的恢复地图:它记录的 commit 即使在你的上下文已经遗忘之后,仍然存在于 git 里。压缩之后,相信 ledger 和 `git log`,而不是你自己的回忆。
 - 工作区在目标项目里是 untracked 的草稿区;插件会在 `.speccode/sdd/` 下维护一份内容为 `*` 的 `.gitignore` 自忽略(只写插件自有目录内的文件,不碰用户的 `.gitignore`),使各 plan 工作区不进 `git status`、不被 `git clean -fd`(无 `-x`)摧毁。`git clean -fdx` 仍会摧毁工作区;若发生,从 `git log` 恢复。
 
@@ -177,10 +193,9 @@ digraph process {
 
 ### 1. 派发实现者
 
-派发前记录 BASE(`git rev-parse HEAD`)——review package 与修复轮次的 diff 都需要它。
+派发前运行 `node <scripts>/task-start.mjs <PLAN_FILE> <N>`——一次调用写出该任务 brief 并记录 BASE:输出 JSON 的 `brief` 字段是 brief 文件路径,`base` 字段是 HEAD 全 sha(review package 与修复轮次的 diff 都以它为起点)。
 
-- **任务 brief:** 派发实现者之前,运行
-  `speccode task-brief --cwd . --plan <PLAN_FILE> --task <N>`——它把该任务的完整文本提取到一个唯一命名的文件,输出 JSON,取 `path` 字段。组织派发内容,让 brief 保持为需求的唯一来源。你的派发应包含:(1) 一行说明该任务在项目中的位置;(2) brief 路径,介绍语为"先读这个——它是你的需求,其中的精确取值要逐字使用";(3) brief 不可能知道的、来自先前任务的接口与决策;(4) 你对 brief 中注意到的任何歧义的裁决;(5) 报告文件路径与报告契约。精确取值(数字、magic string、签名、测试用例)只出现在 brief 里。永远不要让子代理去读整个 plan 文件。
+- **任务 brief:** `task-start.mjs` 已把该任务的完整文本提取到唯一命名的 brief 文件。组织派发内容,让 brief 保持为需求的唯一来源。你的派发应包含:(1) 一行说明该任务在项目中的位置;(2) brief 路径,介绍语为"先读这个——它是你的需求,其中的精确取值要逐字使用";(3) brief 不可能知道的、来自先前任务的接口与决策;(4) 你对 brief 中注意到的任何歧义的裁决;(5) 报告文件路径与报告契约。精确取值(数字、magic string、签名、测试用例)只出现在 brief 里。永远不要让子代理去读整个 plan 文件。
 - **报告文件:** 实现者的报告文件按 brief 命名(brief `…/task-N-brief.md` → 报告 `…/task-N-report.md`),并写进派发 prompt。实现者把完整报告写进该文件,只返回 status、commit、一行测试摘要、以及 concerns。
 - 一个派发 prompt 描述一个任务,而不是会话的历史。不要把累积的先前任务摘要("Task 1-3 之后的状态")粘贴进后续派发——一个真实会话的派发曾达到 42k 字符,其中 99% 是粘贴的历史。一个全新的子代理需要它的任务、它触碰的接口、以及全局约束。仅此而已。
 - 如果先前任务在本任务触及的区域 park 过发现,在派发里带上指向该 ledger 条目的指针。
@@ -193,7 +208,7 @@ digraph process {
 
 实现者子代理报告四种 status 之一。分别妥善处理:
 
-**DONE:** 生成 review package(`speccode review-package --cwd . --plan <PLAN_FILE> --base <BASE> --head <HEAD>`——它输出 JSON,取 `path` 字段即它写出的唯一文件路径;BASE 是你派发实现者前记录的 commit——永远不要用 `HEAD~1`,那会悄悄丢掉多 commit 任务里除最后一个之外的所有 commit),然后用打印出的路径派发任务审查者。
+**DONE:** 生成 review package(`node <scripts>/review-package.mjs <PLAN_FILE> <BASE> <HEAD>`——它输出 JSON,取 `path` 字段即它写出的唯一文件路径;BASE 是你派发实现者前记录的 commit——永远不要用 `HEAD~1`,那会悄悄丢掉多 commit 任务里除最后一个之外的所有 commit),然后用打印出的路径派发任务审查者。
 
 **DONE_WITH_CONCERNS:** 实现者完成了工作但标记了疑虑。继续之前先读 concerns。如果 concerns 关乎正确性或范围,在审查前处理。如果只是观察(例如"这个文件越来越大了"),记下来并继续审查。
 
@@ -214,7 +229,7 @@ digraph process {
 每任务审查是任务范围的门禁。整支广审只在最后的整支终审做一次。永远不要跳过任务审查,也永远不要接受缺少任一 verdict 的报告——spec 符合性和任务质量两者都要。实现者自审永远不能替代任务审查;两者都需要。
 
 - 把 diff 以文件形式交给审查者:运行
-  `speccode review-package --cwd . --plan <PLAN_FILE> --base <BASE> --head <HEAD>`,把 JSON 里 `path` 字段的文件路径传给审查者(或者不用 bash 时:对该范围跑 `git log --oneline`、`git diff --stat`、`git diff -U10`,重定向到一个唯一命名的文件)。输出绝不进入你自己的上下文,审查者一次 Read 调用就能看到 commit 列表、stat 摘要和带上下文的完整 diff。用你派发实现者前记录的 BASE——永远不要用 `HEAD~1`,那会悄悄截断多 commit 任务。永远不要在没有 diff 文件的情况下派发任务审查者。
+  `node <scripts>/review-package.mjs <PLAN_FILE> <BASE> <HEAD>`,把 JSON 里 `path` 字段的文件路径传给审查者(或者不用 bash 时:对该范围跑 `git log --oneline`、`git diff --stat`、`git diff -U10`,重定向到一个唯一命名的文件)。输出绝不进入你自己的上下文,审查者一次 Read 调用就能看到 commit 列表、stat 摘要和带上下文的完整 diff。用你派发实现者前记录的 BASE——永远不要用 `HEAD~1`,那会悄悄截断多 commit 任务。永远不要在没有 diff 文件的情况下派发任务审查者。
 - **审查者输入:** 任务审查者拿到三个路径——同一个 brief 文件、报告文件、review package——外加约束该任务的全局约束。
 - 你交给审查者的全局约束块是它的注意力透镜。从 plan 的 Global Constraints 节或 spec 中逐字拷贝有约束力的要求:精确取值、精确格式、组件之间陈述的关系("与 X 同一布局"、"匹配 Y")。审查者模板已自带流程规则(YAGNI、测试卫生、审查方法)——约束块是给本项目的 spec 要求用的。
 - 不要加"检查所有调用点"或"有用的话跑一下竞态测试"这类没有具体任务相关理由的开放式指令
@@ -242,7 +257,7 @@ digraph process {
 **每一轮,无论哪条路:** 实现者修复、重跑覆盖被改代码的测试、把修复报告追加到同一报告文件、返回短契约。重新派发审查者之前,确认修复报告含有覆盖测试、运行的命令和输出;三者齐备才派发 re-review。在修复消息里点名覆盖测试文件——一行修复不需要整个测试套件。
 
 **re-review 是范围化的。** 运行
-`speccode review-package --cwd . --plan <PLAN_FILE> --base <FIX_BASE> --head <HEAD>`,其中 FIX_BASE 是上一轮审查看过的 head,然后派发
+`node <scripts>/review-package.mjs <PLAN_FILE> <FIX_BASE> <HEAD>`,其中 FIX_BASE 是上一轮审查看过的 head,然后派发
 `$(speccode plugin-root --cwd .)/references/re-review-prompt.md`,带上发现列表、brief、报告文件和打印出的 diff 路径。re-reviewer 对每条发现裁决 ADDRESSED 或 NOT ADDRESSED,只标记修复 diff 里的新破坏。修复 diff 里新的 Critical/Important 破坏并入未决发现列表。范围外的观察记进 ledger 作为 deferred minor——它们永远不延长循环。
 
 **每轮之后,** 追加到 ledger:
@@ -261,10 +276,12 @@ digraph process {
 
 ### 5. 完成任务
 
-当审查干净返回——或每条未决发现都在熔断处带 ruling park 了——把完成行追加到 ledger,与其他簿记写在同一条消息里:
+当审查干净返回——或每条未决发现都在熔断处带 ruling park 了——经伴生脚本把完成行追加到 ledger(MUST NOT 手写该行),与其他簿记写在同一条消息里:
 
-- `Task <N>: complete (commits <base7>..<head7>, review clean)`
-- `Task <N>: complete (commits <base7>..<head7>, <K> parked)`(熔断触发后)
+- `node <scripts>/task-done.mjs <PLAN_FILE> <N> <BASE> --note "review clean"`
+- `node <scripts>/task-done.mjs <PLAN_FILE> <N> <BASE> --note "<K> parked"`(熔断触发后)
+
+脚本以单次追加写入 `Task <N>: complete (commits <base7>..<head7>, <note>)`(ledger 不存在时先写身份首行),输出 JSON 的 `line` 字段即写入的行。
 
 同一完成点触发 onTaskCompleted 钩子(每个 task 完成时,payload 带 `"task": <N>`):
 
@@ -277,10 +294,10 @@ echo '{"command":"subagent-driven-development","feature_branch":"<F>","worktree_
 **勾选 plan 进度(与 ledger 同点)**:在写完 ledger `complete` 行、触发 `onTaskCompleted` 之后,运行
 
 ```bash
-speccode tick-task --cwd . --plan <PLAN_FILE> --task <N>
+node <scripts>/tick-task.mjs <PLAN_FILE> <N>
 ```
 
-把 plan 中 Task N 的 step checkbox 勾选为 `[x]`。verb 输出 `ticked`(本次真正勾选的 step 行)与 `already`(此前已是 `[x]` 的行):`ticked` 非空才提交勾选 diff
+把 plan 中 Task N 的 step checkbox 勾选为 `[x]`。脚本输出 `ticked`(本次真正勾选的 step 行)与 `already`(此前已是 `[x]` 的行):`ticked` 非空才提交勾选 diff
 
 ```bash
 git add <PLAN_FILE> && git commit -m "docs(speccode): tick task <N>"
@@ -295,11 +312,11 @@ git add <PLAN_FILE> && git commit -m "docs(speccode): tick task <N>"
 ## 终审(Final Review)
 
 整支终审也拿一个 package:运行
-`speccode review-package --cwd . --plan <PLAN_FILE> --base <MERGE_BASE> --head <HEAD>`(MERGE_BASE = 分支起点 commit,例如 `git merge-base main HEAD`),把 JSON 里 `path` 字段的路径放进终审派发,让终审者读一个文件,而不是用 git 命令重新推导分支 diff。用可用的最强模型派发(见模型选择),使用 `/speccode:requesting-code-review` 的
+`node <scripts>/review-package.mjs <PLAN_FILE> <MERGE_BASE> <HEAD>`(MERGE_BASE = 分支起点 commit,例如 `git merge-base main HEAD`),把 JSON 里 `path` 字段的路径放进终审派发,让终审者读一个文件,而不是用 git 命令重新推导分支 diff。用可用的最强模型派发(见模型选择),使用 `/speccode:requesting-code-review` 的
 `$(speccode plugin-root --cwd .)/references/code-reviewer.md`。把 ledger 里的 deferred-minor 与 parked 行指给它,让它分诊哪些必须在合并前修复。
 
 如果整支终审返回发现,派发一个修复子代理带完整发现列表——不是每个发现一个修复者。按发现派修复者会各自重建上下文、重跑套件;一个真实会话的终审修复波次花费超过了它所有任务的总和。然后对修复波次跑恰好一次范围化 re-review(对修复范围运行
-`speccode review-package --cwd . --plan <PLAN_FILE> --base <FIX_BASE> --head <HEAD>`,
+`node <scripts>/review-package.mjs <PLAN_FILE> <FIX_BASE> <HEAD>`,
 `$(speccode plugin-root --cwd .)/references/re-review-prompt.md`)。残余发现按任务循环的熔断器裁决:带 ruling park,或对承重的停下。没有第二波修复——残余的承重发现会在 `/speccode:finishing-worktree` 呈现选项时浮出给人类伙伴。
 
 ## 收尾(Finish)
@@ -340,12 +357,12 @@ You: 我在用 Subagent 驱动开发执行这个 plan。
 
 [Setup: worktree 已确认]
 [通读一遍 plan 文件: docs/plans/feature-plan.md]
-[解析工作区: speccode sdd-workspace --cwd . --plan docs/plans/feature-plan.md — 里面没有 ledger,全新开始]
+[解析工作区: node <scripts>/sdd-workspace.mjs docs/plans/feature-plan.md — 里面没有 ledger,全新开始]
 [为所有任务建 todo]
 
 Task 1: Hook 安装脚本
 
-[对 Task 1 跑 task-brief;带 brief + 报告路径 + 上下文派发实现者]
+[对 Task 1 跑 task-start.mjs(brief + BASE);带 brief + 报告路径 + 上下文派发实现者]
 
 Implementer: "开始前问一句——hook 装在用户级还是系统级?"
 
@@ -357,7 +374,7 @@ Implementer: [稍后]
   - 自审:发现漏了 --force flag,已补上
   - 已提交
 
-[跑 review-package --plan PLAN_FILE --base BASE --head HEAD;用打印出的路径派发任务审查者]
+[跑 review-package.mjs PLAN_FILE BASE HEAD;用打印出的路径派发任务审查者]
 Task reviewer: Spec ✅ - 所有需求满足,没有多余。
   Strengths: 测试覆盖好,干净。Issues: 无。Task quality: Approved。
 
@@ -365,14 +382,14 @@ Task reviewer: Spec ✅ - 所有需求满足,没有多余。
 
 Task 2: 恢复模式
 
-[对 Task 2 跑 task-brief;带 brief + 报告路径 + 上下文派发实现者]
+[对 Task 2 跑 task-start.mjs(brief + BASE);带 brief + 报告路径 + 上下文派发实现者]
 
 Implementer: [无提问]
   - 加了 verify/repair 模式
   - 8/8 测试通过
   - 已提交
 
-[跑 review-package --plan PLAN_FILE --base BASE --head HEAD;用打印出的路径派发任务审查者]
+[跑 review-package.mjs PLAN_FILE BASE HEAD;用打印出的路径派发任务审查者]
 Task reviewer: Spec ❌:
   - Missing: 进度报告(spec 说"每 100 项报告一次")
   Issues (Important): Magic number(100)
@@ -381,7 +398,7 @@ Task reviewer: Spec ❌:
 Implementer: 加了进度报告,提取了 PROGRESS_INTERVAL 常量。
   重跑 test/recovery.test.js — 10/10 通过。修复报告已追加。
 
-[跑 review-package --plan PLAN_FILE --base FIX_BASE --head HEAD;派发范围化 re-review]
+[跑 review-package.mjs PLAN_FILE FIX_BASE HEAD;派发范围化 re-review]
 Re-reviewer: 缺进度报告 — ADDRESSED (src/recovery.js:41)。
   Magic number — ADDRESSED (src/recovery.js:7)。新破坏:无。
   Verdict: 所有发现已解决。
@@ -392,7 +409,7 @@ Re-reviewer: 缺进度报告 — ADDRESSED (src/recovery.js:41)。
 ...
 
 [所有任务完成后]
-[跑 review-package --plan PLAN_FILE --base MERGE_BASE --head HEAD;用最强模型派发终审 code-reviewer]
+[跑 review-package.mjs PLAN_FILE MERGE_BASE HEAD;用最强模型派发终审 code-reviewer]
 Final reviewer: 所有需求满足。Deferred minor 分诊:无一阻塞合并。
 
 [删除本 plan 的工作区——记录现在活在 git 里]

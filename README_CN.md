@@ -15,7 +15,7 @@
 
 依赖 [Node.js ≥ 24](#前置依赖) 与 `git`。安装后命令以 `/speccode:` 前缀出现,如 `/speccode:init`、`/speccode:status`、`/speccode:finishing-worktree`。
 
-**其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主还需把引擎装进 PATH——`npm i -g speccode`(由 npm 管理与升级,全宿主通用)或从检出运行 `bash scripts/install-shim.sh`;同一台机器二选一即可。维护者:npm 发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
+**其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主经双通道接入引擎(可并存):**PATH 通道**——`npm i -g speccode`,供 skills 裸调 `speccode`(npm 包待首次发布;发布前以检出内 `bash scripts/install-shim.sh` 为可用 PATH 通路);**MCP 通道**——按各宿主文档注册 `npx -y -p speccode speccode-mcp`,把 verb 以 tool 形态提供给宿主原生 agent(同样待首次发布后可用;skills 裸调链路仍需 PATH 通道)。维护者:npm 发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
 
 ## 前置依赖
 
@@ -43,6 +43,8 @@
 - ✅ **多需求并行** —— 双层拓扑:开发分支(`<type>/<slug>`,git worktree)从 trunk 一步直达;对账算法自动归属每个 worktree,多需求并行施工互不干扰。
 - ✅ **文档仓内托管** —— spec 文档(`speccode/changes → spec/ → archive/`)所有分支 tracked、落盘即提交,随 PR 链路上 trunk。
 - ✅ **流程标准化** —— 全套 `/speccode:*` 命令 + 生命周期 hooks(封闭枚举)+ 跨会话 memory,团队约定变成可执行原语。
+- ✅ **无引擎也能跑** —— `speccode` 不在 PATH 时 SDD 文档流完整可用:含引擎调用的 skill 携带 lite 降级表(读类直读 `cat`/`git`),需求咨询优先会话可见的代码智能工具、缺失则回退普通读码,编排命令中止并提示安装引擎。
+- ✅ **MCP 前端** —— stdio MCP server 把 CLI verb 1:1 镜像为 tool 并自报契约版本——同一引擎,两个可互换前端。
 - ✅ **自托管自动化开发** —— 本仓库用 speccode 开发自身(dogfood):每次变更走完整 SDD 链路,规格主档与归档仓内托管,开发工作流 skills 自动化仓库自身流程。一个可运行的自动化开发体系样板,而不只是一个待安装的插件。
 
 ## 基础工作流
@@ -62,8 +64,8 @@
 *压缩重放——真实会话中每条命令之间含模型思考。*
 
 ```console
-$ /speccode:init                      # 探测远端/主干/代码智能工具,写 .speccode/config.json
-✓ config 就绪: trunk=main, remote=origin, pr_tool=gh
+$ /speccode:init                      # 写入最小 config 标记
+✓ config 就绪: pr_tool=gh, worktree_dir=.speccode/worktrees
 ✓ language: en confirmed
 $ /speccode:creating-worktree
 ✓ feature/demo-api 已切出到独立 worktree,基线测试全通过

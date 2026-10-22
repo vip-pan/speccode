@@ -1,7 +1,28 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, basename } from 'node:path';
-import { git } from './git.mjs';
-import { writeTextAtomic } from './atomic.mjs';
+// Shared plan/workspace logic for the SDD companion scripts, moved verbatim
+// from the retired lib/sdd.mjs — the fence state machine and section
+// boundaries are incident-tested; do not "simplify" them. Self-contained on
+// purpose: these scripts travel with the skill (plugin), the engine's lib/
+// travels with the npm package. Never import across that boundary.
+import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
+import { join, basename, dirname } from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+export function git(args, opts = {}) {
+  const { cwd, allowFail = false } = opts;
+  const r = spawnSync('git', args, { cwd, encoding: 'utf8' });
+  const result = { code: r.status ?? 1, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
+  if (!allowFail && result.code !== 0) {
+    throw new Error(`git ${args.join(' ')} failed (${result.code}): ${result.stderr}`);
+  }
+  return result;
+}
+
+function writeTextAtomic(path, text) {
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, text);
+  renameSync(tmp, path);
+}
 
 // SDD execution artifacts (task briefs, reports, review packages, ledgers).
 // Workspace root = CURRENT worktree root (`--show-toplevel`), deliberately NOT

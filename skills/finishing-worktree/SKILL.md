@@ -3,6 +3,18 @@ name: finishing-worktree
 description: "Finish a development branch and merge by merge_target (local squash into the integration branch / PR to trunk, test gate; supports --resume) (完成分支) Interact in the user's language; ask when it cannot be determined."
 ---
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 完成一个开发分支并按 `merge_target` 路由合并。支持 `--resume`。
 
 ## 语言守护
@@ -15,9 +27,10 @@ description: "Finish a development branch and merge by merge_target (local squas
 
 ## 前置
 
+0. **lite 门**:按「引擎可用性」锚点段探测;引擎缺失 → 打印「本命令依赖编排引擎(state/对账/PR),lite 模式不可用;已中止,未做任何改动」并中止(不做任何 git/state/记忆操作)。
 1. `read-config` 加载 config;为 null → 提示先 `/speccode:init` 并退出。
 2. HEAD 必须在功能分支(`<type>/<slug>`、非 trunk);否则退出。
-3. `speccode reconcile --cwd . --advance-pr`;conflicts 非空 → 报告退出(v3 恒空,出现即异常);找到本分支 state,读取 `merge_target`(缺省语义 = trunk)。
+3. `speccode reconcile --cwd . --advance-pr`;conflicts 非空 → 报告退出(v3 恒空,出现即异常);找到本分支 state,读取 `merge_target`(缺省语义 = `<default-branch>`,运行 `speccode default-branch --cwd .` 取 `branch` 字段)。
 4. 读记忆 `read-memory --branch <F>`。
 5. `--resume`:state 的 `pending_operation.command="finishing-worktree"` 时按 phase 续跑。
 
@@ -44,14 +57,14 @@ description: "Finish a development branch and merge by merge_target (local squas
 
 ### merge_target 缺省(trunk)——菜单恰好三项
 
-1. 同步 base:`git push origin <config.trunk>`;non-fast-forward → 中止提示处理分叉。
+1. 同步 base:`git push origin <default-branch>`;non-fast-forward → 中止提示处理分叉。
 2. 建 PR 前探测:运行 `speccode repo-merge-config --cwd .`;`squashOnly:false` → 打印警告「建议在仓库设置启用 squash-only 合并」+ 指路,不阻断;`config:null` → 静默(无法探测)。
 3. `git push -u origin <branch>`;pr_tool 建 PR(base=trunk);`pr_tool=none` → 打印等效命令并中止。
 4. onPrOpened 钩子(payload 带 pr_number)。
 5. **PR+等待**:每 30s `query-pr`,超时 30min;MERGED → 清理 + state completed;CLOSED/CONFLICTING → 报错退出;UNKNOWN 连续 3 次中止;TIMEOUT → 写 `pending_operation{command:"finishing-worktree", phase:"waiting_worktree_pr", pr_number}` 提示 `--resume`。
 6. **PR+不等待**:state 置 `pr_open` + pr_number,不清理不阻塞。
 7. **保留 worktree**:不合并不清理,state 不动。
-8. 任一合并完成路径(MERGED)后:切回 trunk 并 `fetch & pull`。
+8. 任一合并完成路径(MERGED)后:切回 default branch 并 `fetch & pull`。
 
 ### 丢弃路径(仅显式要求)
 
@@ -59,11 +72,14 @@ description: "Finish a development branch and merge by merge_target (local squas
 
 ## 清理(来源限定)
 
-仅处理「路径位于 resolve-worktree-dir 解析结果之下 或 state 有登记」的 worktree;先离开被清理目录(`cd <主仓根>` 或全程 `git -C`);`worktree remove --force` + `branch -D` + 询问删远端 + `worktree prune`。不满足 → 原样保留并说明。
+仅处理「路径位于 resolve-worktree-dir 解析结果之下 或 state 有登记」的 worktree;先离开被清理目录(`cd <主仓根>` 或全程 `git -C`);不满足 → 原样保留并说明。
+
+1. **purge 分支记忆**:`speccode purge-memory --cwd . --branch <branch>`(MUST 先于 `git worktree remove`——显式、幂等、可报告的清理(自忽略目录并不阻塞 remove,但静默消亡不可审计);丢弃路径经 --force 连记忆一起消亡,亦符合本轮笔记定位)。
+2. `worktree remove --force` + `branch -D` + 询问删远端 + `worktree prune`。
 
 ## 收尾
 
 1. `feature-progress --branch <所属父分支或本分支>` 取进度。
 2. onWorktreeFinished 钩子(有 PR 带 pr_number)。
-3. 状态报告:`<分支> 进度 X/Y done`;大需求场景按父实体 children 派生渲染;建议后续(finishing-feature / finishing-worktree 下一子分支)。任一完成路径(本地 squash 汇入或 PR MERGED)在报告后附一句可选提示:「本分支 memory 已留存,确认不再需要可经 `speccode purge-memory --cwd . --branch <branch>` 清理」——仅提示,不主动清理。
-4. 写记忆(经用户确认或内置判据)。
+3. 状态报告:`<分支> 进度 X/Y done`;大需求场景按父实体 children 派生渲染;建议后续(finishing-feature / finishing-worktree 下一子分支)。任一完成路径在报告后附注:分支记忆已随清理消亡(本地 squash 汇入或 PR MERGED);经 `PR+不等待` 保留 worktree 的路径,记忆仍留该 worktree,续跑 `--resume` 时可见。
+4. **收尾摘要不入分支记忆**:分支记忆已随清理消亡(或随保留的 worktree 存续)——完成摘要直接呈现在本命令的最终报告里,不再 write-memory;仅当走「保留 worktree」或「PR+不等待」路径(记忆存续、供 --resume 续读)且距上次写入已隔多个阶段时,才补一次 write-memory 摘要。

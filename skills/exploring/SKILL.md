@@ -3,6 +3,18 @@ name: exploring
 description: "Explore a requirement: learn, probe and clarify with questions; conclusions stay in session context without writing documents; guides branch creation at the end (探索需求) Interact in the user's language; ask when it cannot be determined."
 ---
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 进入探索模式。深入思考,自由可视化,跟随对话的方向。**应在 trunk 分支上运行**(校验见「前置」:不符仅警告,MUST NOT 硬阻断)。
 
 **重要:探索模式是用来思考的,不是用来实现的。** 你可以读文件、搜代码、调查代码库,但 MUST NOT 写代码或实现功能,也 MUST NOT 写任何文档文件——探索结论只存在于会话上下文(`.speccode/memory/` 运行时记忆不属于文档,其书写由「完成后的衔接」段的统一接线负责)。如果用户让你直接实现,提醒他们先结束探索、按形态确认衔接(普通需求 `/speccode:creating-worktree`,大需求 `/speccode:creating-feature`,随后 proposing 流程)。
@@ -13,9 +25,9 @@ description: "Explore a requirement: learn, probe and clarify with questions; co
 
 ## 前置
 
-1. `read-config` 加载 config;为空或缺失不报错(读取方式与处理规则见「代码智能工具咨询」)。
-1b. 前置动作:先执行 `git fetch origin && git pull`(以 config.trunk 为当前分支时);失败(如离线)仅打印警告,MUST NOT 阻断。
-2. 检查 HEAD:若不在 `config.trunk` 上,打印警告「exploring 应在 trunk 执行,当前在 <branch>,建议切回」——警告 MUST NOT 硬阻断(用户可能有意在分支上查看)。
+1. `read-config` 加载 config;为空或缺失不报错(代码智能工具的使用规则见「代码智能工具咨询」)。
+1b. 前置动作:先执行 `git fetch origin && git pull`(以 `<default-branch>` 为当前分支时;该值经 `speccode default-branch --cwd .` 取 `branch` 字段);失败(如离线)仅打印警告,MUST NOT 阻断。
+2. 检查 HEAD:若不在 `<default-branch>` 上,打印警告「exploring 应在 default branch 执行,当前在 <branch>,建议切回」——警告 MUST NOT 硬阻断(用户可能有意在分支上查看)。
 
 ## 姿态
 
@@ -35,16 +47,15 @@ description: "Explore a requirement: learn, probe and clarify with questions; co
 
 ## 代码智能工具咨询
 
-开头运行 `speccode read-config --cwd .` 读取 config:
-- 若 `code_intel_tools` 非空:逐项判断其能力在当前会话是否可用(对应 MCP server/agent/CLI 是否在场);可用 → 参考代码时 MUST 优先用它(减少代码索引的 token 消耗、更好理解项目);不可用 → 回退 Grep/Glob/Read。
-- 若 `code_intel_tools` 为空或 config 缺失:静默使用基础工具。
-- 任何情况下工具缺失或不可用 MUST NOT 导致报错。
+若当前会话中可用的代码智能工具(如代码图谱/索引类 MCP 或 CLI),参考代码时 MUST 优先使用;不可用或不存在则静默回退 Grep/Glob/Read;任何情况下工具缺失 MUST NOT 导致报错。本段不读取任何配置登记,探测与登记机制已随 config v3 瘦身退役。
 
 ## 知识库入口
 
 1. 运行 `speccode read-knowledge --cwd . --index` 读 `_index.md`(恒读,便宜);`exists:false` → 静默跳过本节。
 2. 判断本任务相关主题 → `speccode read-knowledge --cwd . --topic <名称>` 读对应 topic 文件;`exists:false` → 静默跳过该主题。
 3. 读取失败或目录不存在 → 静默跳过,绝不阻断主流程(T0 兜底,永不报错)。
+
+lite 模式按锚点段降级表直读文件;文件不存在 = 无知识,静默继续(T0 兜底的 lite 等价)。
 
 ## 你不必做的事
 
@@ -87,6 +98,8 @@ echo '{"command":"exploring"}' | speccode run-hook --cwd . --event onExplored
   {"mode":"append","content":"<摘要>"}
   EOF
   ```
+
+topic 记忆临时落**主仓**(untracked,拒建分支则原地保留);移入分支发生在 creating-worktree / creating-feature 的承接事务内(先建后移)。
 
 **长会话主动记忆**:在以下时机 MUST 主动执行 write-memory(append),不等命令出入口:①一个开发阶段/任务完成且距上次写入已隔多个阶段;②会话上下文显著增长(接近 compact 风险);③compact 恢复后继续工作的首个阶段完成时。写入内容 MUST 是关键决策/进度/待办的摘要,并经用户确认或遵循本命令内置判据。探索会话中该键为当前(或拟新建的)topic 键 `_exploring/<topic>`;topic 尚未确定时先经用户确认再写,MUST NOT 写无斜杠 `_exploring` 键。
 

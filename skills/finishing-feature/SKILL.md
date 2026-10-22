@@ -3,6 +3,18 @@ name: finishing-feature
 description: "Large-requirement finale: single PR from the integration branch to trunk (gate: all children completed; blocks waiting for the merge), removes the parent state, returns to trunk Interact in the user's language; ask when it cannot be determined."
 ---
 
+> **引擎可用性(lite 探测)**:命令开始时运行 `command -v speccode`——在场则一切照本命令正文调用引擎;不在场(lite 模式)则本命令内的 `speccode <verb>` 调用按下列降级表替换,其余步骤照常执行:
+>
+> - `read-config` → `cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.speccode/config.json"`(主仓根定位;文件缺失 = 未初始化,按各命令的未初始化分支处理)
+> - `read-knowledge --index` / `--topic <t>` → `cat "$(git rev-parse --show-toplevel)/speccode/knowledge/_index.md"` / `…/speccode/knowledge/<t>.md`(worktree 根定位;文件不存在 = 无知识,静默继续)
+> - `read-memory --branch <F>` / `list-memory` → `cat` / `ls` 记忆文件(分支键 `<type>/<slug>` 编码为文件名 `<type>__<slug>.md`;分支记忆位于其 worktree 的 `.speccode/memory/`,保留键与 `_exploring__<topic>` 位于主仓 `.speccode/memory/`)
+> - `write-memory` → 手动编辑对应文件(单分支假设;append 语义 = 文件末尾补一行)
+> - `write-config` → 仅 init:手写最小 config(JSON 数行,可 review);其余写类 verb 不可用
+> - `plugin-root` → 本 skill 目录的上两级(`<skill base>/../..`;宿主加载 skill 时报告的 base directory)
+> - `default-branch` → `git symbolic-ref --short refs/remotes/origin/HEAD`(剥 `origin/` 前缀),失败则依次 `git rev-parse --verify -q refs/heads/main`、`refs/heads/master`,全败兜底 `main`
+> - `run-hook` → 静默跳过(hook 本为 warn-only,lite 等价)
+> - `reconcile` / state 读写 / PR / 清理 / 知识蒸馏写 → **编排与蒸馏不可用**:lite 模式不支持并行编排;依赖之的命令中止并提示安装引擎(`npm i -g speccode` 或宿主 PATH shim)后重跑
+
 大需求终局:集成分支 → trunk 单 PR。**opt-in 命令**,仅父实体(kind:integration)使用。支持 `--resume`。
 
 ## 语言守护
@@ -15,6 +27,7 @@ description: "Large-requirement finale: single PR from the integration branch to
 
 ## 前置
 
+0. **lite 门**:按「引擎可用性」锚点段探测;引擎缺失 → 打印「本命令依赖编排引擎(state/对账/PR),lite 模式不可用;已中止,未做任何改动」并中止(不做任何 git/state/记忆操作)。
 1. `read-config`;为 null → 提示 init。
 2. HEAD 必须在功能分支(`<type>/<slug>`);否则退出。
 3. `reconcile --cwd . --advance-pr`;orphans 中有本父实体残留 → 提示先清理。
@@ -38,6 +51,7 @@ description: "Large-requirement finale: single PR from the integration branch to
 
 1. `delete-state --branch <集成分支>`(父实体 state;子分支 state 已随各自 finishing-worktree 完成/清理)。
 2. onFeatureFinished 钩子。
-3. `git checkout <config.trunk>` + `fetch & pull`(集成分支与子分支保留作历史,speccode 不删)。
+3. `git checkout <default-branch>`(default branch 经 `speccode default-branch --cwd .` 取 `branch` 字段)+ `fetch & pull`(集成分支与子分支保留作历史,speccode 不删)。
 4. 打印:大需求已交付,`<branch>` 已合并进 trunk。
-5. 写记忆(经用户确认或内置判据)。
+5. **终局摘要不入父主记忆**:父主记忆即将被下一步清理——完成摘要(含 PR url)直接呈现在最终报告;若需留痕,写 trunk 级 `_knowledge` 键(知识维护摘要语义)。
+6. **purge 父主记忆**:`speccode purge-memory --cwd . --branch <父分支>`(父记忆在主仓,终局清理)。

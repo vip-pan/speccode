@@ -42,9 +42,10 @@ test('version triple-sync: package.json == .claude-plugin == .zcode-plugin', () 
   assert.equal(pkg.version, zc.version, 'package.json 与 .zcode-plugin 版本必须一致');
 });
 
-test('npm metadata shape: bin points at speccode.mjs, files whitelist, zero deps', () => {
+test('npm metadata shape: bin exposes both engine fronts, files whitelist, zero deps', () => {
   const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
   assert.equal(pkg.bin?.speccode, 'bin/speccode.mjs');
+  assert.equal(pkg.bin?.['speccode-mcp'], 'bin/speccode-mcp.mjs');
   assert.deepEqual([...pkg.files].sort(), ['bin', 'hooks', 'lib', 'references', 'skills']);
   assert.equal(pkg.dependencies, undefined, '零第三方依赖不变量');
   assert.equal(pkg.type, 'module');

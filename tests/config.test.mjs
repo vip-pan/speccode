@@ -96,18 +96,31 @@ test('backupConfig rotation leaves other files and under-window backups alone', 
 
 test('validateConfigShape: clean pass + warning surface', () => {
   assert.deepEqual(
-    validateConfigShape({ version: 3, trunk: 'main', remote: 'origin', pr_tool: 'gh', worktree_dir: '.wt', code_intel_tools: [] }),
+    validateConfigShape({ version: 3, pr_tool: 'gh', worktree_dir: '.wt' }),
     []);
   assert.deepEqual(validateConfigShape(null), []);
   const w = validateConfigShape({
-    version: 2, trunk: 1, remote: 'origin', pr_tool: 'baz', worktree_dir: '.wt',
-    code_intel_tools: 'no', host: 'zcode', worktree_prefix: 'wt-', display: {},
+    version: 2, pr_tool: 'baz', worktree_dir: 5,
+    host: 'zcode', worktree_prefix: 'wt-', display: {},
     hooks: { onPrOpened: 5 }, language: 7,
   }).join('\n');
-  for (const needle of ['trunk', 'pr_tool', 'code_intel_tools', 'hooks', 'language']) {
+  for (const needle of ['pr_tool', 'worktree_dir', 'hooks', 'language']) {
     assert.ok(w.includes(needle), `warning should mention ${needle}`);
   }
   for (const retired of ['version', 'host', 'worktree_prefix', 'display']) {
     assert.ok(!w.includes(retired), `退役键/版本不再产出警告: ${retired}`);
   }
+});
+
+test('validateConfigShape tolerates retired keys (trunk/remote/code_intel_tools) silently', () => {
+  const w = validateConfigShape({
+    version: 3, initialized_at: '2026-01-01T00:00:00Z',
+    trunk: 'main', remote: 'origin', code_intel_tools: [],
+  });
+  assert.deepEqual(w, []);
+  // 退役键即使携带不当类型也不再产出警告 —— 它们已是普通未知键(零警告语义)。
+  assert.deepEqual(
+    validateConfigShape({ version: 3, trunk: 1, remote: 42, code_intel_tools: 'no' }),
+    [],
+  );
 });

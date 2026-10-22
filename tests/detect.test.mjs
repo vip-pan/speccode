@@ -1,169 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  CODE_INTEL_TOOL_DETECTORS, detectCodeIntelTools, resolveWorktreeDir,
-  isPathInside, worktreeDirIgnoreState, DEFAULT_WORKTREE_DIR,
+  resolveWorktreeDir, isPathInside, worktreeDirIgnoreState, DEFAULT_WORKTREE_DIR, resolveDefaultBranch,
 } from '../lib/detect.mjs';
-
-test('CODE_INTEL_TOOL_DETECTORS covers the five required tools', () => {
-  const ids = CODE_INTEL_TOOL_DETECTORS.map((t) => t.id);
-  assert.deepEqual(ids, ['understand-anything', 'codegraph', 'graphify', 'codemap', 'gitnexus']);
-});
-
-test('plugin hit short-circuits commandV probe for tools with a bin', () => {
-  const readJson = (p) => (p.endsWith('installed_plugins.json')
-    ? { version: 2, plugins: { 'codegraph@codegraph': [{ version: '1.0.0' }] } }
-    : null);
-  const probedBins = [];
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson,
-    commandV: (bin) => { probedBins.push(bin); return true; },
-    exists: () => false,
-  });
-  const cg = tools.find((t) => t.id === 'codegraph');
-  assert.deepEqual(cg.available, { value: true, evidence: 'codegraph@codegraph' });
-  assert.ok(!probedBins.includes('codegraph'),
-    'commandV must not be invoked for codegraph once its pluginHit already exists');
-});
-
-test('plugin installed but no project integration → available-only', () => {
-  const readJson = (p) => (p.endsWith('installed_plugins.json')
-    ? { version: 2, plugins: { 'understand-anything@understand-anything': [{ version: '2.9.4' }] } }
-    : null);
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson, commandV: () => false, exists: () => false,
-  });
-  const ua = tools.find((t) => t.id === 'understand-anything');
-  assert.deepEqual(ua.available, { value: true, evidence: 'understand-anything@understand-anything' });
-  assert.deepEqual(ua.integrated, { value: false, evidence: null });
-});
-
-test('project .mcp.json → both available and integrated', () => {
-  const readJson = (p) => (p.endsWith('/repo/.mcp.json') ? { mcpServers: { CodeGraph: {} } } : null);
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson, commandV: () => false, exists: () => false,
-  });
-  const cg = tools.find((t) => t.id === 'codegraph');
-  assert.equal(cg.available.value, true);
-  assert.deepEqual(cg.integrated, { value: true, evidence: '.mcp.json:CodeGraph' });
-});
-
-test('user ~/.claude.json mcp → available-only (not integrated)', () => {
-  const readJson = (p) => (p.endsWith('/home/u/.claude.json') ? { mcpServers: { 'gitnexus-mcp': {} } } : null);
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson, commandV: () => false, exists: () => false,
-  });
-  const gn = tools.find((t) => t.id === 'gitnexus');
-  assert.equal(gn.available.value, true);
-  assert.equal(gn.integrated.value, false);
-});
-
-test('projects[cwd].mcpServers → both available and integrated', () => {
-  const readJson = (p) => (p.endsWith('/home/u/.claude.json')
-    ? { projects: { '/repo': { mcpServers: { graphify: {} } } } } : null);
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson, commandV: () => false, exists: () => false,
-  });
-  const gf = tools.find((t) => t.id === 'graphify');
-  assert.equal(gf.available.value, true);
-  assert.deepEqual(gf.integrated, { value: true, evidence: '~/.claude.json[projects]:graphify' });
-});
-
-test('project dir → integrated only (legacy .codemaker/codemap, real .codemaker/codeindex absent)', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: () => false,
-    exists: (p) => p === '/repo/.codemaker/codemap',
-  });
-  const cm = tools.find((t) => t.id === 'codemap');
-  assert.deepEqual(cm.available, { value: false, evidence: null });
-  assert.deepEqual(cm.integrated, { value: true, evidence: '.codemaker/codemap' });
-});
-
-test('.codemaker/codeindex present → codemap integrated (real project index dir)', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: () => false,
-    exists: (p) => p === '/repo/.codemaker/codeindex',
-  });
-  const cm = tools.find((t) => t.id === 'codemap');
-  assert.deepEqual(cm.integrated, { value: true, evidence: '.codemaker/codeindex' });
-});
-
-test('.codemaker/codeindex wins over .codemaker/codemap when both present (first-existing wins)', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: () => false,
-    exists: (p) => p === '/repo/.codemaker/codeindex' || p === '/repo/.codemaker/codemap',
-  });
-  const cm = tools.find((t) => t.id === 'codemap');
-  assert.deepEqual(cm.integrated, { value: true, evidence: '.codemaker/codeindex' });
-});
-
-test('.gitnexus dir present → gitnexus integrated', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: () => false,
-    exists: (p) => p === '/repo/.gitnexus',
-  });
-  const gn = tools.find((t) => t.id === 'gitnexus');
-  assert.deepEqual(gn.available, { value: false, evidence: null });
-  assert.deepEqual(gn.integrated, { value: true, evidence: '.gitnexus' });
-});
-
-test('gitnexus cli → available-only', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null,
-    commandV: (bin) => bin === 'gitnexus', exists: () => false,
-  });
-  const gn = tools.find((t) => t.id === 'gitnexus');
-  assert.equal(gn.available.value, true);
-  assert.equal(gn.integrated.value, false);
-});
-
-test('.understand-anything (legacy dir) present → understand-anything integrated', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: () => false,
-    exists: (p) => p === '/repo/.understand-anything',
-  });
-  const ua = tools.find((t) => t.id === 'understand-anything');
-  assert.deepEqual(ua.integrated, { value: true, evidence: '.understand-anything' });
-});
-
-test('cli → available-only', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null,
-    commandV: (bin) => bin === 'graphify', exists: () => false,
-  });
-  const gf = tools.find((t) => t.id === 'graphify');
-  assert.equal(gf.available.value, true);
-  assert.equal(gf.integrated.value, false);
-});
-
-test('no hits → all five tools have available=false and integrated=false', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: () => false, exists: () => false,
-  });
-  assert.equal(tools.length, 5);
-  for (const t of tools) {
-    assert.deepEqual(t.available, { value: false, evidence: null });
-    assert.deepEqual(t.integrated, { value: false, evidence: null });
-  }
-});
-
-test('understand-anything has no cli probe (generic `understand` binary must not false-positive)', () => {
-  // understand-anything's old bin name `understand` collides with unrelated
-  // binaries, so it must not carry a cli probe — only plugin/mcp/dir probes.
-  assert.equal(
-    CODE_INTEL_TOOL_DETECTORS.find((t) => t.id === 'understand-anything').bin,
-    undefined,
-  );
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: () => true, exists: () => false,
-  });
-  const ua = tools.find((t) => t.id === 'understand-anything');
-  assert.equal(ua.available.value, false,
-    'understand-anything must not be detected via a generic `understand` binary');
-  // the other tools keep their cli probes
-  const gf = tools.find((t) => t.id === 'graphify');
-  assert.equal(gf.available.value, true);
-});
 
 test('resolveWorktreeDir three states', () => {
   assert.deepEqual(resolveWorktreeDir({ worktree_dir: '.wt' }), { dir: '.wt', source: 'config' });
@@ -184,42 +23,45 @@ test('worktreeDirIgnoreState: 仓库外目录返回 outside 且不碰 git', () =
   assert.deepEqual(worktreeDirIgnoreState('/repo', '/outside/dir'), { scope: 'outside' });
 });
 
-// ---- 宿主中立探测(host-neutral-engine:门控撤销,恒全量)----
-
-const CLAUDE_PROBE_HITS = {
-  '/home/u/.claude/plugins/installed_plugins.json': { plugins: { 'codemap@x': [] } },
-  '/home/u/.claude.json': { mcpServers: { 'codemap-mcp': {} } },
-};
-const readClaudeProbes = (p) => (CLAUDE_PROBE_HITS[p] ? structuredClone(CLAUDE_PROBE_HITS[p]) : null);
-
-test('code_intel: 恒全量探测,opts.host 被忽略(原非 claude-code 跳过分支已撤销)', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: readClaudeProbes, commandV: () => false, exists: () => false,
-    host: 'codex',
-  });
-  const cm = tools.find((t) => t.id === 'codemap');
-  assert.equal(cm.available.value, true, '~/.claude 探测命中物在任何环境下一律生效');
-});
-
-test('code_intel: 无 host 输入时保持全量探测行为', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: readClaudeProbes, commandV: () => false, exists: () => false,
-  });
-  const cm = tools.find((t) => t.id === 'codemap');
-  assert.equal(cm.available.value, true);
-});
-
-test('code_intel: bin 探测恒开(带来源前缀)', () => {
-  const tools = detectCodeIntelTools('/repo', {
-    homeDir: '/home/u', readJson: () => null, commandV: (b) => b === 'codegraph', exists: () => false,
-  });
-  const cg = tools.find((t) => t.id === 'codegraph');
-  assert.deepEqual(cg.available, { value: true, evidence: 'codegraph' });
-});
-
 test('worktree_dir 缺省中性且单源', () => {
   assert.equal(DEFAULT_WORKTREE_DIR, '.speccode/worktrees');
   assert.deepEqual(resolveWorktreeDir({}), { dir: DEFAULT_WORKTREE_DIR, source: 'default' });
   assert.deepEqual(resolveWorktreeDir(null), { dir: DEFAULT_WORKTREE_DIR, source: 'default' });
   assert.deepEqual(resolveWorktreeDir({ worktree_dir: '  ' }), { dir: DEFAULT_WORKTREE_DIR, source: 'default' });
+});
+
+const fake = (behaviors) => (args) => {
+  const key = args.join(' ');
+  const b = behaviors[key];
+  if (b === undefined) return { code: 1, stdout: '', stderr: '' };
+  return typeof b === 'string' ? { code: 0, stdout: b, stderr: '' } : b;
+};
+
+test('resolveDefaultBranch: remote-head path strips the origin/ prefix', () => {
+  const r = resolveDefaultBranch(fake({
+    'symbolic-ref --short refs/remotes/origin/HEAD': 'origin/main\n',
+  }));
+  assert.deepEqual(r, { branch: 'main', source: 'remote-head' });
+});
+
+test('resolveDefaultBranch: fallback-main when origin/HEAD is unset but main exists', () => {
+  const r = resolveDefaultBranch(fake({
+    'rev-parse --verify --quiet refs/heads/main': { code: 0, stdout: '', stderr: '' },
+  }));
+  assert.deepEqual(r, { branch: 'main', source: 'fallback-main' });
+});
+
+test('resolveDefaultBranch: fallback-master when only master exists', () => {
+  const r = resolveDefaultBranch(fake({
+    'rev-parse --verify --quiet refs/heads/master': { code: 0, stdout: '', stderr: '' },
+  }));
+  assert.deepEqual(r, { branch: 'master', source: 'fallback-master' });
+});
+
+test('resolveDefaultBranch: last-resort when everything misses (incl. empty symbolic-ref output)', () => {
+  assert.deepEqual(resolveDefaultBranch(fake({})), { branch: 'main', source: 'last-resort' });
+  assert.deepEqual(
+    resolveDefaultBranch(fake({ 'symbolic-ref --short refs/remotes/origin/HEAD': '   \n' })),
+    { branch: 'main', source: 'last-resort' },
+  );
 });
