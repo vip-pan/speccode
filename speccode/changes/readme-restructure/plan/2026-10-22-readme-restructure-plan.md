@@ -61,9 +61,9 @@
 
 5. **demo.tape d1 fixture + README console 块**:tape 的 d1 fixture 中 `✓ probed: trunk=main | remote=origin | pr_tool=gh` 行改为 `✓ config ready: pr_tool=gh, worktree_dir=.speccode/worktrees`(与 README console 块现行输出一致;README console 块本身已正确——核对无漂移即可)。若 `command -v vhs` 在场:仓库根执行 `vhs docs/assets/demo.tape` 重录 GIF 并清理 fixture 目录(d d1-d4);缺 vhs 则 tape 源就位即可(报告标注 GIF 待重录)。
 
-- [ ] **Step 1** 应用五处改动(EN 先行,CN 逐句)
-- [ ] **Step 2** `node --test ./tests/*.test.mjs` 全绿 347;`grep -c "^## "` EN=CN=15;`grep -n "trunk=\|code_intel_tools\|Other coding agents" README*.md` 零命中
-- [ ] **Step 3** commit `git add README.md README_CN.md docs/assets/ && git commit -m "docs(readme): pure-prose core + mountable engine — identity first screen, three-step install, lite/MCP compare rows"`
+- [x] **Step 1** 应用五处改动(EN 先行,CN 逐句)
+- [x] **Step 2** `node --test ./tests/*.test.mjs` 全绿 347;`grep -c "^## "` EN=CN=15;`grep -n "trunk=\|code_intel_tools\|Other coding agents" README*.md` 零命中
+- [x] **Step 3** commit `git add README.md README_CN.md docs/assets/ && git commit -m "docs(readme): pure-prose core + mountable engine — identity first screen, three-step install, lite/MCP compare rows"`
 
 ### Task 2: CHANGELOG + 验证
 
