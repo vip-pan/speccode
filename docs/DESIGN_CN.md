@@ -41,7 +41,7 @@ speccode 是一个面向 coding-agent CLI 的流程编排插件——Claude Code
 
 | 命令 | 作用 | 前置(运行分支) |
 |---|---|---|
-| `/speccode:init` | 初始化/更新:探测远端、主干、代码智能工具,配置 worktree 目录与 hooks,写 `.speccode/config.json`(config v3) | 任意分支(首次通常在 trunk) |
+| `/speccode:init` | 初始化/更新:从远端 URL 探测并确认 pr_tool,询问 worktree 目录、可选工作语言与 hooks,写最小 `.speccode/config.json` 标记(config v3) | 任意分支(首次通常在 trunk) |
 | `/speccode:exploring` | 探索需求(不产文档,结论在会话上下文;代码智能工具优先;出口做需求形态确认三岔) | trunk |
 | `/speccode:creating-feature` | **opt-in(大需求)**:从 trunk 切出集成分支并推送,登记父实体 state,建 memory 骨架 | trunk |
 | `/speccode:creating-worktree` | 从 trunk 或集成分支切出开发分支(普通需求唯一入口;worktree_dir 可配置、check-ignore 校验、项目 setup、基线测试) | trunk(普通需求)或集成分支(父实体场景);对 HEAD 无要求 |
@@ -119,7 +119,7 @@ origin/<trunk>  (大需求一次落地)
 
 要点:
 
-- **trunk**:主干分支(默认 `master`),spec 文档 tracked。
+- **trunk**:主干分支(名称经 `default-branch` verb 运行时解析,不存 config),spec 文档 tracked。
 - **`<type>/<slug>` 开发分支**:普通需求从 trunk 切出(通过 `git worktree add`,多个可并行),无 `worktree-` 前缀;大需求场景从集成分支切出,`merge_target` 指向集成分支。
 - **集成分支(opt-in 大需求)**:由 `/speccode:creating-feature` 从 trunk 建立,登记父实体 state(`kind:"integration"`);`children` 仅登记子 slug(纯身份),状态实时派生自各子分支 state;终局由 `/speccode:finishing-feature` 一次 PR 上 trunk。
 - **拓扑只有两层**:普通需求 trunk ↔ 开发分支直达;集成分支是大需求的 opt-in 聚合层,不构成默认必经层。`speccode/` 文档在所有分支 tracked,随 PR 链路上 trunk。
@@ -171,16 +171,16 @@ speccode/
 
 ```
 .speccode/
-├── config.json                          # 静态配置(config v3),init / reset 整体写入;creating-worktree 可回写 worktree_dir
+├── config.json                          # config 标记(config v3),init / reset 整体写入;creating-worktree 可回写 worktree_dir
 ├── config.json.bak.<timestamp>          # init 幂等 / reset 流程改写 config 前的显式备份(backup-config verb)
 ├── state/branches/<type>__<slug>.json   # 动态状态,按分支隔离
-├── memory/                              # feature 级记忆 + 按 topic 分文件的 _exploring__<topic>.md / _knowledge.md(自忽略 .gitignore)
+├── memory/                              # 记忆目录:保留 trunk 级键(_exploring__<topic>.md / _knowledge.md)与无 worktree 分支的记忆;已登记分支的记忆位于 <worktree>/.speccode/memory/(自忽略 .gitignore)
 └── sdd/                                 # SDD 执行工件:task brief / review 包 / ledger(自忽略 .gitignore)
 ```
 
-- **`config.json`**:全局静态配置,config v3 字段集:`version`(=3)、`initialized_at`、`trunk`、`remote`、`pr_tool`、`worktree_dir`、`code_intel_tools`;`hooks` 仅在用户配置时存在(字段集之外的键按普通未知键对待:读取容忍、不消费)。整体写入只发生在 `/speccode:init`(全新或幂等)与 `/speccode:reset`;此外 `/speccode:creating-worktree` 在 config 缺少 `worktree_dir` 时会询问存放目录,并经 `write-config` 把该字段回写进 config(读当前 config → 加字段 → 整体写回)。**备份不是 `write-config` 的自动行为**:`config.json.bak.<timestamp>` 由 init 幂等流程与 reset 流程在改写前显式调用 `backup-config` 生成,creating-worktree 的单字段回写不产生备份。备份有轮转:每次新备份只保留最新 5 份 `config.json.bak.*` 同前缀文件(`BACKUP_KEEP` 常量;仅触碰该前缀,绝不动其他文件)。
+- **`config.json`**:全局静态配置——**config v3 是标记,不是环境登记簿**:必填字段为 `version`(=3)与 `initialized_at`;`init` 另写入 `pr_tool`(从远端 URL 探测、经用户确认)与 `worktree_dir`(默认 `.speccode/worktrees`);`hooks` 与 `language` 仅在用户配置时存在。`trunk` / `remote` / 代码智能工具登记为**历史已删除**(退役)字段:旧代 config 遗留的这类键按普通未知键对待——读取容忍、不消费——下次 init 整体重写 config 时自然消失。主干名称经 `default-branch` verb 运行时解析(`origin/HEAD` → 本地 `main` → 本地 `master` → 兜底 `"main"`),不存 config。整体写入只发生在 `/speccode:init`(全新或幂等)与 `/speccode:reset`;此外 `/speccode:creating-worktree` 在 config 缺少 `worktree_dir` 时会询问存放目录,并经 `write-config` 把该字段回写进 config(读当前 config → 加字段 → 整体写回)。**备份不是 `write-config` 的自动行为**:`config.json.bak.<timestamp>` 由 init 幂等流程与 reset 流程在改写前显式调用 `backup-config` 生成,creating-worktree 的单字段回写不产生备份。备份有轮转:每次新备份只保留最新 5 份 `config.json.bak.*` 同前缀文件(`BACKUP_KEEP` 常量;仅触碰该前缀,绝不动其他文件)。
 - **`state/branches/`**:每条 active 分支一个独立文件(`<type>__<slug>.json`,双下划线分隔 type 与 slug),记录该分支状态(`pending | in_progress | pr_open | completed`)与挂起的 `pending_operation`(供 `--resume` 续跑);父实体(`kind:"integration"`)另存 children 清单(仅子 slug,纯身份),子分支状态实时派生、不存储于父实体。多分支并行各写各的文件,无需加锁。
-- **`memory/`**:feature 级会话记忆(见第 8 节),插件自写 `.gitignore`(内容 `*`)使其对 `git status` 隐身、免于 `git clean -fd`。
+- **`memory/`**:会话记忆(见第 8 节)——主仓目录存放保留 trunk 级键与无 worktree 分支的记忆,已登记分支的记忆位于其自己的 worktree 之内;各目录均由插件自写 `.gitignore`(内容 `*`)对 `git status` 隐身、免于 `git clean -fd`。
 - **`sdd/`**:SDD 执行工件,归属**当前 worktree 根**(而非主仓根),随 `git worktree remove` 一并清理;同样自忽略。
 - 所有对 `config.json` 与 `state/branches/*.json` 的写入均采用「写临时文件 + rename 覆盖」的原子策略,避免进程中断导致半写状态;memory 文本写入同策。
 
@@ -214,39 +214,33 @@ CR 导致提问乱码。清洗逻辑位于 `lib/sanitize.mjs`(纯函数、有单
 
 ## 8. memory
 
-speccode 为每个 feature 维护一份跨会话记忆:`.speccode/memory/<type>__<slug>.md`。
+speccode 为每个 feature 维护一份跨会话记忆:`.speccode/memory/<type>__<slug>.md`,以分支为键,归属目录跟随该分支的 worktree。
 
-- **untracked,多 worktree 共享**:memory 路径解析自**主仓根**的 `.speccode/`(与 config/state 一致),同一 feature 的多个 worktree 读写同一份文件;目录由插件自写 `.gitignore` 自忽略,不污染 `git status`。
-- **按 topic 分文件的探索记忆与 `_knowledge.md` 是 trunk 级例外**:exploring 在 trunk 上进行、不属于任何 feature,其结论写入 `memory/_exploring__<topic>.md`(每个 topic 一个文件;分期需求用 `<主题>-p1` 这类共同前缀);探索结论的承接宿主是 creating-worktree(普通需求/子需求,命中 slug 即原子 rename 迁移)与 creating-feature(大需求父 topic)。knowledge 系列命令经 creating-worktree 统一入口在 `chore/knowledge-*` worktree 分支上运行、经 finishing-worktree 统一收尾,其维护摘要仍写入 `memory/_knowledge.md`。
+- **worktree 归属,state 驱动**:已登记分支的 state 携带其 worktree,该分支的记忆就存放在 worktree 之内(`<worktree>/.speccode/memory/`)。保留的 trunk 级键——`_knowledge`(知识命令维护摘要)与按 topic 分文件的 `_exploring/<topic>`(每个 topic 一个文件;分期需求用 `<主题>-p1` 这类共同前缀)——以及一切没有 worktree 的分支,没有 worktree 归属,存放在**主仓根**的 `.speccode/memory/`(与 config/state 同目录;父实体记忆同在此)。每个归属目录均由插件自写 `.gitignore`(内容 `*`)自忽略,不污染 `git status`。
+- **记忆随 worktree 消亡,收尾摘要绕行消亡中的记忆**:`git worktree remove` 会把分支记忆一并带走;finishing-worktree 在 remove 之前先显式清理(`purge-memory`——可审计、幂等,而非静默消亡),完成摘要直接呈现在命令的最终报告里,不写入正在消亡的记忆;只有「保留 worktree」与「PR+不等待」路径会留下记忆,供后续 `--resume` 续读。
+- **承接是 create-then-move 事务**:探索结论先诞生在主仓的 trunk 级目录;creating-worktree(普通需求/子需求)与 creating-feature(大需求父 topic)在 slug 命中时经原子 rename 把 topic 整文件迁入 feature 记忆——一次整文件移动,拒绝覆盖既有目标(绝不合并、绝不覆写;跨设备降级为先原子落盘再删源,读端永远看不到半截文件)。knowledge 系列命令经 creating-worktree 统一入口在 `chore/knowledge-*` worktree 分支上运行、经 finishing-worktree 统一收尾,其维护摘要仍写入主仓的 `memory/_knowledge.md`。
 - **命令入口读、出口写**:SDD 各命令开始时读本 feature 的 memory 恢复上下文,结束时把结论/决定/待办写回。
 - **长会话主动书写三判据**:① 一个阶段完成(如 propose 落盘、计划评审通过);② 上下文显著增长(关键决策增多);③ 经历 compact / 会话恢复后——命中任一即应主动写 memory,而不是等命令出口。
 
 ## 9. 代码智能工具
 
-`/speccode:init` 探测五类代码智能工具:**understand-anything / CodeGraph / Graphify / CodeMap / GitNexus**,覆盖四类来源:
+代码智能工具(代码图谱 / 索引类 MCP 与 CLI)仍是 `/speccode:exploring`、`/speccode:proposing`、`/speccode:brainstorming` 的**优先咨询对象**——但插件不再管理它们。曾经的 init 期探测与登记流程——扫描已装插件、MCP 配置、CLI 与项目目录,确认后把清单登记进 config——已于 **2026-10** 随 config 瘦身一并**退役**。咨询改为**基于会话可见性**:命令直接使用当前会话实际可见的代码智能工具,工具缺失或调用失败时回退常规代码阅读、永不报错——代码智能工具是增强,不是依赖;相关内容不写入也不读取 config。
 
-1. **插件**:`~/.claude/plugins/installed_plugins.json`
-2. **MCP**:项目 `.mcp.json`、`~/.claude.json`(含项目 local scope)
-3. **CLI**:`command -v <bin>`
-4. **项目目录**:如 `.ua/`、`.codegraph/` 等
-
-探测结果区分「可用 available」与「集成 integrated」两个维度;仅 `available` 与 `integrated` 都为 true 的工具才逐项用 AskUserQuestion 展示,经用户确认后登记进 config 的 `code_intel_tools`;可用但未集成的工具 MUST NOT 登记;一个都未确认则写空数组。
-
-使用约定:`/speccode:exploring`、`/speccode:proposing`、`/speccode:brainstorming` 优先咨询已登记的代码智能工具;工具缺失或调用失败时**回退到常规代码阅读,永不报错**——代码智能工具是增强,不是依赖。
+退役探测机器的幸存部分是环境无关的 worktree 选址:`lib/detect.mjs` 仍负责 worktree 目录解析(config `worktree_dir`,缺省回落 `.speccode/worktrees`)与 creating-worktree 依赖的 gitignore 校验——三岔判定:仓库外目录永不被 git 跟踪(`outside`,不调用 git);仓库内目录经 `git check-ignore` 查询(带尾斜杠按目录语义判定),归入已忽略 / 未忽略两岔。
 
 ## 10. 风险与缓解(R1–R13)
 
 > 编号沿用历史风险表:R1 / R7 / R10 随 v0.1 四层拓扑(标的分支层 + 临时收尾分支)一并废止,详见 [CHANGELOG.md](../CHANGELOG.md);其余保留并更新到新命令名。
 
 - **R2 — ancestor 判定在 cherry-pick 跨 feature 场景下会误判** → 对账采用**路径识别**(worktree_dir 之下 + state 登记),不做 ancestry 判定,该误判面不存在。
-- **R3 — init 逐字段幂等时用户可能误改 trunk 等字段** → 缓解:每个变化字段确认时 MUST 显示 `[旧值] → [新值]` diff,只有用户选择「改用新值」后才写入。
+- **R3 — init 逐字段幂等时用户可能误改 `pr_tool` 等字段** → 缓解:每个变化字段确认时 MUST 显示 `[旧值] → [新值]` diff,只有用户选择「改用新值」后才写入。
 - **R4 — `.speccode/` 不在 `.gitignore`,`git clean -fdx` 会丢配置** → 缓解:在 init 提示与本 README 中明确警告;不在命令层面强制保护(与「插件不改 `.gitignore`、不越权改写用户 git 机制」的原则一致)。见第 14 节的重要警告。
 - **R5 — 阻塞等 PR 合并默认 30 分钟超时,长 PR review 可能不够** → 缓解:超时是软限制,挂起态写入 `pending_operation`,`--resume` 允许后续续跑,不会永久卡死命令。
 - **R6 — worktree 目录可配置,默认 `.speccode/worktrees`** → 缓解:`.speccode/` 本身是 untracked 的运行时数据域,git 不会误扫为待提交内容;init 时可通过 config `worktree_dir` 覆盖默认值,`creating-worktree` 建目录前做 check-ignore 校验。
 - **R8 — 跨平台(Windows / macOS / Linux)路径与命令差异** → 缓解:实现以 macOS / Linux 为主,Windows 支持不在目标范围内;命令实现尽量依赖 `git` / `gh` / `glab` 自身的跨平台行为,不在 shell 层做平台判断。
 - **R9 — `pr_open` 的分支依赖对账推进** → 缓解:`creating-worktree` / `finishing-worktree` / `finishing-feature` / `status` 入口都会跑对账,任一命令执行都会把已合并的 `pr_open` 分支推进为 `completed`;若用户合并 PR 后从不再跑任何 speccode 命令,状态不会自动更新——可接受,`status` 是显式查询入口,随时可手动触发。
 - **R11 — hooks 以 `sh -c` 在当前用户完整权限下执行** → 缓解与威胁模型:① 失败语义 warn-only(30s 超时、`run-hook` 永远 exit 0),hook 不能破坏主流程;② `config.hooks` 之所以安全,是因为 `.speccode/` **按约定 untracked**——hook 命令不可能经由 clone / PR / merge 进入他人仓库,能写 config 的只有本机用户自己跑的 `init`;③ hook payload 的取值由 `slug.mjs` 结构性约束(type 是封闭枚举、slug 匹配 `/^[a-z0-9-]+$/`),路径类字段由引擎生成,不含任意用户输入。
-- **R12 — memory 并发写 last-writer-wins** → 同一 feature 的多个 worktree 共享一份 memory 文件,两个会话同时「出口写」时后写覆盖先写。缓解:写前必读(read-before-write,在现有内容上做增量而非整文件替换);涉及大段覆盖性重写前向用户确认。
+- **R12 — memory 并发写 last-writer-wins** → 分支记忆位于其 worktree 之内,同一 worktree 上的两个会话仍可能同时「出口写」,后写覆盖先写。缓解:写前必读(read-before-write,在现有内容上做增量而非整文件替换);涉及大段覆盖性重写前向用户确认。
 - **R13 — trunk 文档 churn** → spec 文档在所有分支 tracked,多 feature 并行落地会让 trunk 的 `speccode/` 目录频繁变更,增加合并冲突面。缓解:`syncing` 只做**增量合并且幂等**(重跑无脏变更);`archiving` 是目录整体**移动**而非删除,review diff 干净、历史可追溯;文档与代码同 PR 上 trunk,review 时可见。
 
 ## 11. 安装与更新
@@ -278,7 +272,12 @@ Claude Code 是主宿主;另有五个宿主从同一仓库安装(薄 per-host ad
 | OpenCode | `.opencode/INSTALL.md` | `references/host-mapping/opencode.md` | 待验证 |
 | Pi | `.pi/extensions/speccode.ts` | `references/host-mapping/pi.md` | 待验证(扩展 API 为假定) |
 
-非 Claude Code 宿主还需把引擎装进 PATH:`npm i -g speccode`(npm bin 机制,机器级、全宿主通用;`v*` tag CI 自动发布 npm)或从检出运行 `bash scripts/install-shim.sh`——同一台机器二选一。发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
+**引擎接入通道**——非 Claude Code 宿主上,引擎经以下两条通道之一触达 skills(可并存):
+
+- **PATH 通道**(skills 裸调 `speccode` verb):`npm i -g speccode`——待首次 npm 发布;发布前用本仓检出运行 `bash scripts/install-shim.sh`,或直接 `node <repo>/bin/speccode.mjs`。同一台机器一条 PATH 通道。
+- **MCP 通道**(宿主原生 agent 把引擎 verb 当 MCP 工具消费):`npx -y -p speccode speccode-mcp`——同样待首次发布后可用;各宿主注册样例见 `references/host-mapping/`。
+
+发布由 tag 触发 CI(`v*` tag;需一次性配置仓库 secret `NPM_TOKEN`)。两条通道都不在场时,SDD 文档流依然完整可用——每个含引擎调用的 skill 自带 lite 降级表,用普通文件操作替换引擎 verb——但编排(state / 对账 / PR)需要引擎:受影响命令会中止并提示安装,而非静默降级。
 
 ## 12. 理念
 

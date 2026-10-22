@@ -15,7 +15,7 @@
 
 Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, commands appear under the `/speccode:` prefix, e.g. `/speccode:init`, `/speccode:status`, `/speccode:finishing-worktree`.
 
-**Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts also need the engine on PATH — either `npm i -g speccode` (npm manages and upgrades it for every host) or `bash scripts/install-shim.sh` from a checkout; pick one channel per machine. Maintainers: npm publishing is tag-triggered CI and requires the repo secret `NPM_TOKEN` (one-time setup).
+**Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts wire the engine in through two channels (they can coexist): the **PATH channel** — `npm i -g speccode`, serving the bare `speccode` calls skills make (the npm package is pending its first publish; until then `bash scripts/install-shim.sh` from a checkout is the working PATH route) — and the **MCP channel** — per-host registration of `npx -y -p speccode speccode-mcp`, exposing the verbs as tools for the host's native agent (usable once published; the skills' bare-call path still needs the PATH channel). Maintainers: npm publishing is tag-triggered CI and requires the repo secret `NPM_TOKEN` (one-time setup).
 
 ## Prerequisites
 
@@ -43,6 +43,8 @@ For the full path from requirement to PR, see [The Basic Workflow](#the-basic-wo
 - ✅ **Parallel multi-requirement development** — a two-layer topology: development branches (`<type>/<slug>` git worktrees) cut straight from trunk in one step; a reconciliation algorithm automatically assigns every worktree, so multiple requirements proceed in parallel without interfering with each other.
 - ✅ **In-repo document hosting** — spec documents (`speccode/changes → spec/ → archive/`) are tracked on every branch and committed on save, riding the PR chain up to trunk.
 - ✅ **Standardized workflow** — the full `/speccode:*` command set + lifecycle hooks (closed enumeration) + cross-session memory turn team conventions into executable primitives.
+- ✅ **Works without the engine** — the SDD document flow runs end-to-end with `speccode` off PATH: engine-calling skills carry a lite degrade table (reads fall back to direct `cat`/`git`), requirement consults prefer the session's visible code intelligence tools with a plain-reading fallback, and orchestration commands abort with install guidance.
+- ✅ **MCP front** — a stdio MCP server mirrors the CLI verbs 1:1 as tools and self-reports its contract version — same engine, two interchangeable fronts.
 - ✅ **Self-hosting automated development** — this repo develops itself with speccode (dogfood): every change walks the full SDD chain, the spec master and archive live in-repo, and development-workflow skills automate the repo's own process. A working reference for an automated development system, not just a plugin to install.
 
 ## The Basic Workflow
@@ -62,8 +64,8 @@ For the full path from requirement to PR, see [The Basic Workflow](#the-basic-wo
 *Condensed replay — a real session includes Claude thinking between commands.*
 
 ```console
-$ /speccode:init                      # probe remote/trunk/code intelligence, write .speccode/config.json
-✓ config ready: trunk=main, remote=origin, pr_tool=gh
+$ /speccode:init                      # write the minimal config marker
+✓ config ready: pr_tool=gh, worktree_dir=.speccode/worktrees
 ✓ language: en confirmed
 $ /speccode:creating-worktree
 ✓ feature/demo-api checked out in its own worktree, baseline tests all pass

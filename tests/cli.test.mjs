@@ -967,12 +967,12 @@ test('咨询 prose: 4 认知命令保留「代码智能工具」措辞,全 skill
   }
 });
 
-test('docs/DESIGN.md / DESIGN_CN.md 字段集 + 探测描述用 code_intel_tools,不残留 knowledge_tools 字段名', () => {
+test('docs/DESIGN.md / DESIGN_CN.md 为标记语义描述,旧字段仅以历史已删除身份出现', () => {
   for (const f of ['DESIGN.md', 'DESIGN_CN.md']) {
     const md = readFileSync(join(__dirname, '..', 'docs', f), 'utf8');
-    assert.ok(md.includes('code_intel_tools'), `${f} 必须含 code_intel_tools`);
+    assert.ok(!md.includes('code_intel_tools'), `${f} 不得再含 code_intel_tools(探测已退役,守卫随 docs-i18n 翻转)`);
+    assert.ok(md.includes('历史已删除') || md.includes('historical deleted') || md.includes('retired'), `${f} 必须含历史字段退役叙述`);
     assert.ok(!md.includes('knowledge_tools'), `${f} 不得残留 knowledge_tools 字段名`);
-    // 措辞(非字段名):代码工具一律叫 code intelligence / 代码智能工具
     assert.ok(!md.includes('knowledge-base'), `${f} 不得残留 "knowledge-base" 措辞`);
     assert.ok(!md.includes('知识库工具'), `${f} 不得残留"知识库工具"措辞`);
   }
