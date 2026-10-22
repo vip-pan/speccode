@@ -67,5 +67,5 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/host-neutral-prose -->
-**prose 宿主中立纪律**:skills/*/SKILL.md 正文零宿主专属 token(AskUserQuestion、Task tool、subagent_type、TodoWrite、${CLAUDE_PLUGIN_ROOT}、宿主指令文件名,grep 守卫测试固化——新增宿主 token 进守卫清单即持久防回潮)。**通用动词**:提问以「向用户提问(一次一问、给选项)」语义表达,子代理派发以「派发子代理」语义表达——宿主绑定经 references/host-mapping/<host>.md 映射文档承载(Kimi Code 另经 manifest skillInstructions 内嵌摘要),MUST NOT 回流正文(skill 正文不引用 host-mapping)。**降级路由**:依赖子代理的命令显式声明依赖与无子代理宿主的降级路径(串行/executing-plans/自查)。**插件内文件引用**:经 `speccode plugin-root --cwd .` 解析,禁用宿主变量。(出自 archive/2026-09-05-neutralize-prose、2026-09-17-zcode-plugin-manifest)
+**prose 宿主中立纪律**:skills/*/SKILL.md 正文零宿主专属 token(AskUserQuestion、Task tool、subagent_type、TodoWrite、${CLAUDE_PLUGIN_ROOT}、宿主指令文件名,grep 守卫测试固化——新增宿主 token 进守卫清单即持久防回潮)。**通用动词**:提问以「向用户提问(一次一问、给选项)」语义表达,子代理派发以「派发子代理」语义表达——宿主绑定经 references/host-mapping/<host>.md 映射文档承载(Kimi Code 另经 manifest skillInstructions 内嵌摘要),MUST NOT 回流正文(skill 正文不引用 host-mapping)。**降级路由**:依赖子代理的命令显式声明依赖与无子代理宿主的降级路径(串行/executing-plans/自查)。**插件内文件引用**:经 `speccode plugin-root --cwd .` 解析,禁用宿主变量;lite(无引擎)下按锚点段降级表用 skill base 目录上两级。(出自 archive/2026-09-05-neutralize-prose、2026-09-17-zcode-plugin-manifest)
 <!-- /distilled -->

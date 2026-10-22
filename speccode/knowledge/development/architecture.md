@@ -33,7 +33,7 @@
 <!-- /distilled -->
 
 <!-- distilled-from: cap/plugin-packaging -->
-**引擎/双前端/命令/伴生脚本分层(现行)**:确定性逻辑实现为 `lib/*.mjs` 下经单测的 Node.js ESM 模块(verb 表单源在 `lib/verbs.mjs`,导出 VERBS / runVerb / STDIN_MODE);两个薄前端共享它——`bin/speccode.mjs`(CLI,输出单行 JSON)与 `bin/speccode-mcp.mjs`(MCP stdio server,tools 与 verb 1:1 同名、写类以 payload 参数替代 stdin、contract-version 自报契约版本);命令 markdown 仅负责交互层(提问/确认/调 verb/解析 JSON/报告),不重复实现逻辑。确定性逻辑绝不写进命令 markdown:编排脊柱下沉 lib,SDD 执行机器下沉随 skill 分发的伴生脚本(skills/<skill>/scripts/,MUST NOT import lib)。两个前端入口守卫 = realpath 比对(兼容 npm bin 符号链接;argv 后缀检查在 `speccode` 链接名下静默失效,是 #69 的真 bug,2026-10 修复)。
+**引擎/双前端/命令/伴生脚本分层(现行)**:确定性逻辑实现为 `lib/*.mjs` 下经单测的 Node.js ESM 模块(verb 表单源在 `lib/verbs.mjs`,导出 VERBS / runVerb / STDIN_MODE);两个薄前端共享它——`bin/speccode.mjs`(CLI,输出单行 JSON)与 `bin/speccode-mcp.mjs`(MCP stdio server,tools 与 verb 1:1 同名、写类以 payload 参数替代 stdin、contract-version 自报契约版本);命令 markdown 仅负责交互层(提问/确认/调 verb/解析 JSON/报告),不重复实现逻辑。确定性逻辑绝不写进命令 markdown:编排脊柱下沉 lib,SDD 执行机器下沉随 skill 分发的伴生脚本(skills/<skill>/scripts/,MUST NOT import lib);无引擎时 skill 按自带「引擎可用性」锚点段降级(lite 语义:读类直读、编排中止引导安装,SDD 文档流完整可用)。两个前端入口守卫 = realpath 比对(兼容 npm bin 符号链接;argv 后缀检查在 `speccode` 链接名下静默失效,是 #69 的真 bug,2026-10 修复)。
 
 **版本断言不变量化**:plugin.json 的 version 规格约束 = 合法语义化版本 + 与 CHANGELOG.md 最新版本小节一致,MUST NOT 钉死字面量(否则每次发版必然制造规格漂移)。
 
