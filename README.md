@@ -1,6 +1,6 @@
 # speccode
 
-**An end-to-end SDD (Spec-Driven Development) and automated development system for coding-agent CLIs.** speccode turns multi-requirement parallel development, in-repo spec document hosting, and a standardized PR flow into a default path — the full `/speccode:*` command set. Claude Code is the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host install status in [references/host-mapping/README.md](./references/host-mapping/README.md)). This repo dogfoods all of it: the spec master, every archived change, and the workflow skills that automate the repo's own development live in-repo.
+**An end-to-end SDD (Spec-Driven Development) and automated development system for coding-agent CLIs — a pure-prose plugin core with a mountable engine.** The document flow runs the moment the plugin is installed (no engine on PATH needed); parallel-requirement orchestration mounts on demand via PATH or MCP. speccode turns multi-requirement parallel development, in-repo spec hosting, and a standardized PR flow into a default path — the full `/speccode:*` command set. Claude Code is the primary, dogfooded host, with adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi (per-host status in [references/host-mapping/README.md](./references/host-mapping/README.md)). This repo dogfoods all of it.
 
 [English](README.md) | [简体中文](README_CN.md)
 
@@ -8,14 +8,18 @@
 
 ## Install
 
+**1. Install the plugin** (the only step every host needs):
+
 ```bash
 /plugin marketplace add vip-pan/speccode
 /plugin install speccode@speccode
 ```
 
-Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, commands appear under the `/speccode:` prefix, e.g. `/speccode:init`, `/speccode:status`, `/speccode:finishing-worktree`.
+Requires [Node.js ≥ 24](#prerequisites) and `git`. Commands appear under the `/speccode:` prefix.
 
-**Other coding agents?** speccode ships thin adapters for Codex, Kimi Code, ZCode, OpenCode, and Pi — see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, and verification status. Non-Claude-Code hosts wire the engine in through two channels (they can coexist): the **PATH channel** — `npm i -g speccode`, serving the bare `speccode` calls skills make (the npm package is pending its first publish; until then `bash scripts/install-shim.sh` from a checkout is the working PATH route) — and the **MCP channel** — per-host registration of `npx -y -p speccode speccode-mcp`, exposing the verbs as tools for the host's native agent (usable once published; the skills' bare-call path still needs the PATH channel). Maintainers: npm publishing is tag-triggered CI and requires the repo secret `NPM_TOKEN` (one-time setup).
+**2. Just start — the document flow works now.** Proposing, planning, spec documents, review, and archive run with no engine installed: engine-calling skills carry a lite degrade table (reads fall back to direct `cat`/`git`); orchestration commands abort with install guidance when they need the engine.
+
+**3. Add the engine when you want orchestration** (parallel worktrees, state reconciliation, PR automation) — two coexisting channels: the **PATH channel** (`npm i -g speccode`, serving the bare `speccode` calls skills make — the npm package is pending its first publish; until then `bash scripts/install-shim.sh` from a checkout is the working route) and the **MCP channel** (per-host registration of `npx -y -p speccode speccode-mcp`, exposing the verbs as tools for the host's native agent; see [references/host-mapping/README.md](./references/host-mapping/README.md) for each host's install entry, tool mapping, MCP registration, and verification status). Maintainers: npm publishing is tag-triggered CI and requires the repo secret `NPM_TOKEN` (one-time setup).
 
 ## Prerequisites
 
@@ -27,7 +31,7 @@ Requires [Node.js ≥ 24](#prerequisites) and `git`. After installation, command
 ## Quickstart (5-Minute Minimal Loop)
 
 1. [Install](#install) the plugin.
-2. Run `/speccode:init` in your project to initialize configuration.
+2. Run `/speccode:init` in your project to initialize configuration. (No engine install needed for the document flow — orchestration commands guide you when they need one.)
 3. Run `/speccode:creating-worktree` to cut your first development branch (a git worktree) and get baseline tests green.
 4. Run `/speccode:status` to see the whole picture.
 
@@ -116,6 +120,8 @@ See [design doc §3](./docs/DESIGN.md) for the full topology and key points.
 | Two-layer branch topology + reconciliation (parallel worktrees) | ✅ | — | — | — | — |
 | In-repo spec document hosting (tracked on all branches) | ✅ | — | partial | partial | — |
 | Multi-host install (6 coding agents) | ✅ (CC + ZCode verified; others per-host status in host-mapping) | ✅ | ✅ (cross-agent CLI) | — (npx installer) | — |
+| Works without its engine (lite document flow) | ✅ | — | — | — | — |
+| Engine as MCP server (1:1 tools + contract version) | ✅ | — | — | — | — |
 | SDD methodology (explore / document / plan / execute / review) | ✅ (self-contained port) | ✅ (source) | — | ✅ (own system) | — |
 | Lifecycle hooks + cross-session memory | ✅ | — | — | — | — |
 | Standardized PR/MR flow | ✅ | — | — | — | — |

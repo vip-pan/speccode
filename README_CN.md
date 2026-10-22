@@ -1,6 +1,6 @@
 # speccode
 
-**面向 coding-agent CLI 的整套 SDD(规格驱动开发)与自动化开发体系。** speccode 把多需求并行开发、spec 文档仓内托管、PR 流程标准化固化为默认路径——全套 `/speccode:*` 命令。Claude Code 为经过持续 dogfood 的主宿主,并为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供适配(各宿主安装状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))。本仓库 dogfood 全部成果:规格主档、每次变更的归档、自动化仓库自身开发的开发工作流 skills,全部仓内托管。
+**面向 coding-agent CLI 的整套 SDD(规格驱动开发)与自动化开发体系——纯 prose 插件核 + 可挂载引擎。** 装上插件文档流即可运行(无需引擎在 PATH);并行编排按需经 PATH 或 MCP 挂载。speccode 把多需求并行开发、spec 文档仓内托管、PR 流程标准化固化为默认路径——全套 `/speccode:*` 命令。Claude Code 为经过持续 dogfood 的主宿主,并为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供适配(各宿主状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))。本仓库 dogfood 全部成果。
 
 [English](README.md) | [简体中文](README_CN.md)
 
@@ -8,14 +8,18 @@
 
 ## 安装
 
+**1. 安装插件**(每个宿主都需要的唯一步骤):
+
 ```bash
 /plugin marketplace add vip-pan/speccode
 /plugin install speccode@speccode
 ```
 
-依赖 [Node.js ≥ 24](#前置依赖) 与 `git`。安装后命令以 `/speccode:` 前缀出现,如 `/speccode:init`、`/speccode:status`、`/speccode:finishing-worktree`。
+依赖 [Node.js ≥ 24](#前置依赖) 与 `git`。安装后命令以 `/speccode:` 前缀出现。
 
-**其他 coding agent?** speccode 为 Codex、Kimi Code、ZCode、OpenCode、Pi 提供薄适配——各宿主的安装入口、工具映射与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md)。非 Claude Code 宿主经双通道接入引擎(可并存):**PATH 通道**——`npm i -g speccode`,供 skills 裸调 `speccode`(npm 包待首次发布;发布前以检出内 `bash scripts/install-shim.sh` 为可用 PATH 通路);**MCP 通道**——按各宿主文档注册 `npx -y -p speccode speccode-mcp`,把 verb 以 tool 形态提供给宿主原生 agent(同样待首次发布后可用;skills 裸调链路仍需 PATH 通道)。维护者:npm 发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
+**2. 直接开始——文档流现在就能跑。** proposing、计划、spec 文档、评审、归档在未安装引擎时全部可用:含引擎调用的 skill 携带 lite 降级表(读类直读 `cat`/`git`);编排命令在需要引擎时中止并提示安装。
+
+**3. 需要编排时再加引擎**(多 worktree 并行、状态对账、PR 自动化)——双通道可并存:**PATH 通道**(`npm i -g speccode`,供 skills 裸调 `speccode`——npm 包待首次发布;发布前以检出内 `bash scripts/install-shim.sh` 为可用通路)与 **MCP 通道**(按各宿主注册 `npx -y -p speccode speccode-mcp`,把 verb 以 tool 形态提供给宿主原生 agent;各宿主的安装入口、工具映射、MCP 注册与验证状态见 [references/host-mapping/README.md](./references/host-mapping/README.md))。维护者:npm 发布由 tag 触发 CI,需一次性配置仓库 secret `NPM_TOKEN`。
 
 ## 前置依赖
 
@@ -27,7 +31,7 @@
 ## Quickstart (5 分钟最小闭环)
 
 1. 先[安装](#安装)插件。
-2. 在你的项目里运行 `/speccode:init` 初始化配置。
+2. 在你的项目里运行 `/speccode:init` 初始化配置。(文档流无需安装引擎——编排命令需要时会引导你。)
 3. 运行 `/speccode:creating-worktree` 切出首个开发分支(git worktree),基线测试转绿。
 4. 运行 `/speccode:status` 查看全貌。
 
@@ -116,6 +120,8 @@ origin/trunk ── 集成分支 ──┬── feature/s1 ── finishing-wor
 | 双层分支拓扑 + 对账(多 worktree 并行) | ✅ | — | — | — | — |
 | spec 文档仓内托管(全分支 tracked) | ✅ | — | 部分 | 部分 | — |
 | 多宿主安装(6 个 coding agent) | ✅(CC + ZCode 已验证;其余宿主状态见 host-mapping) | ✅ | ✅(跨 agent CLI) | —(npx 安装器) | — |
+| 无引擎可用的文档流(lite) | ✅ | — | — | — | — |
+| 引擎即 MCP server(1:1 tools + 契约版本) | ✅ | — | — | — | — |
 | SDD 方法论(探索/文档/计划/执行/评审) | ✅(自包含移植) | ✅(来源) | — | ✅(自有体系) | — |
 | 生命周期 hooks + 跨会话 memory | ✅ | — | — | — | — |
 | PR/MR 流程标准化 | ✅ | — | — | — | — |
