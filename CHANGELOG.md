@@ -1,12 +1,8 @@
-# Changelog
-
-本文件记录 speccode 插件的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/),版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
-
-纪律:bump `plugin.json` version 的提交必须同步更新本文件对应版本小节(见 `speccode/spec/plugin-packaging/spec.md`「版本发布纪律」)。
-
-> **English highlights**: each version section below carries a one-line English summary at its top (`> EN: …`) for readers arriving from the English README. The Chinese entries remain the authoritative body.
-
 ## [Unreleased]
+
+## [0.8.0] - 2026-10-22
+
+> EN: the prose-core split — the plugin works without its engine (lite document flow in 22 skills), the engine mounts via PATH or MCP with a self-reported contract version, memories live in their worktrees, config is a marker; two BREAKING retirements (SDD verbs → companion scripts; trunk/remote/code_intel_tools fields → default-branch verb).
 
 - Added: npm 引擎分发通道——根 `package.json`(`npm i -g speccode` 全宿主引擎 PATH;`v*` tag CI 自动发布,需一次性配置仓库 secret `NPM_TOKEN`)。
 - Added: MCP 前端——`bin/speccode-mcp.mjs`(stdio JSON-RPC 2.0,零依赖手写协议最小面:initialize / initialized / ping / tools/list / tools/call;tools 与 verb 1:1 同名,写类 tool 以 `payload` 参数替代 stdin,verb 失败映射 `isError`);npm `bin` 增 `speccode-mcp`。
