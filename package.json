@@ -1,6 +1,6 @@
 {
   "name": "speccode",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "type": "module",
   "description": "Multi-requirement parallel development, in-repo spec hosting, standardized PR flow, and SDD methodology for coding-agent CLIs — process orchestration plugin and engine.",
   "license": "MIT",
